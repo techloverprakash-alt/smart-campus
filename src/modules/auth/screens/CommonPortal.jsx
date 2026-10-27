@@ -58,7 +58,7 @@ const COLORS = {
   onPrimaryFixedVariant: "#003dab",
   outline: "#737686",
   onTertiaryFixedVariant: "#802a00",
-  onPrimary: "#ffffff",
+  onPrimary: "#b5c4ff",
   onSecondary: "#ffffff",
   onPrimaryContainer: "#d4dcff",
   surfaceTint: "#1353d8",
@@ -570,22 +570,6 @@ export default function CommonPortal({ route, navigation }) {
                 </Text>
               </View>
             </View>
-
-            <TouchableOpacity
-              style={[styles.notificationButton, activeScreen === "portal" && styles.notificationButtonPortal]}
-              activeOpacity={0.7}
-              onPress={() =>
-                Alert.alert("Notifications", "You are all caught up!")
-              }
-            >
-              <MaterialIcons
-                name="notifications"
-                size={24}
-                color={activeScreen === "portal" ? "#ffffff" : COLORS.onSurfaceVariant}
-              />
-
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
           </View>
         </BlurView>
       </View>
@@ -593,7 +577,6 @@ export default function CommonPortal({ route, navigation }) {
       {/* ================= BODY SCREEN CONTENT ================= */}
       {activeScreen === "portal" && <PortalScreen navigation={navigation} />}
       {activeScreen === "circulars" && <CircularsScreen />}
-      {activeScreen === "timetable" && <TimetableScreen />}
       {activeScreen === "calendar" && <CalendarScreen />}
       {activeScreen === "more" && <MoreScreen />}
 
@@ -621,14 +604,6 @@ export default function CommonPortal({ route, navigation }) {
               label="Circulars"
               active={activeScreen === "circulars"}
               onPress={() => setActiveScreen("circulars")}
-              isDarkPortal={activeScreen === "portal"}
-            />
-
-            <BottomNavItem
-              icon="schedule"
-              label="Timetable"
-              active={activeScreen === "timetable"}
-              onPress={() => setActiveScreen("timetable")}
               isDarkPortal={activeScreen === "portal"}
             />
 
@@ -986,10 +961,6 @@ function CircularsScreen() {
                 Controller of Examinations
               </Text>
             </View>
-
-            <Text style={styles.noticeTime}>
-              Today, 09:30 AM
-            </Text>
           </View>
 
           <View style={styles.noticeContent}>
@@ -1521,12 +1492,12 @@ function CalendarCard({ selectedMonth }) {
       </View>
 
       <View style={styles.weekHeader}>
-        {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
           <Text
             key={index}
             style={[
               styles.weekDay,
-              index >= 5 && { color: COLORS.error },
+              index >= 5 && styles.weekDayWeekend,
             ]}
           >
             {day}
@@ -1604,17 +1575,20 @@ function CalendarDay({ day, type }) {
 
       {(type === "today" ||
         type === "exam" ||
-        type === "event") && (
+        type === "event" ||
+        type === "holiday") && (
         <View
           style={[
             styles.dayDot,
             {
               backgroundColor:
                 type === "today"
-                  ? COLORS.primary
+                  ? "#ffffff"
                   : type === "exam"
-                  ? COLORS.tertiary
-                  : COLORS.secondary,
+                  ? "#ea580c"
+                  : type === "holiday"
+                  ? "#dc2626"
+                  : "#7c3aed",
             },
           ]}
         />
@@ -1627,19 +1601,19 @@ function CalendarLegend() {
   return (
     <View style={styles.legend}>
       <LegendItem
-        color={COLORS.primary}
-        label="Instructional Days"
+        color="#2563eb"
+        label="Working Days (Mon–Fri)"
       />
       <LegendItem
-        color={COLORS.tertiary}
+        color="#dc2626"
+        label="Weekends & Holidays"
+      />
+      <LegendItem
+        color="#ea580c"
         label="Exams / CIA"
       />
       <LegendItem
-        color={COLORS.secondaryContainer}
-        label="Festivals / Holidays"
-      />
-      <LegendItem
-        color={COLORS.secondary}
+        color="#7c3aed"
         label="College Events"
       />
     </View>
@@ -1935,32 +1909,6 @@ function AboutNexusView() {
           roll="715024243004"
           description="Core developer contributing to frontend interfaces, module data binding, student portal integrations, and cross-device responsiveness."
           tags={["Frontend UI", "Module Integration", "Component Design"]}
-        />
-      </View>
-
-      {/* FACULTY MENTORS */}
-      <View style={styles.aboutSection}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionHeading}>
-            <Text style={styles.sectionTitle}>Faculty Mentors</Text>
-          </View>
-          <Text style={styles.academicGuidance}>Academic Guidance</Text>
-        </View>
-
-        <MentorCard
-          initials="VV"
-          name="Mr. VASANTH V"
-          role="Project Supervisor & Faculty Guide"
-          department="Associate Professor, Dept. of AI & DS • Room 304, Turing Block"
-          quote={`"NEXUS bridges academic tracking and everyday campus life through intuitive, student-first engineering. The team demonstrates high technical rigor in solving campus pain points."`}
-        />
-
-        <MentorCard
-          initials="AP"
-          name="Dr. ARULPRAKASH P"
-          role="Head of Department & Academic Mentor"
-          department="Department of Artificial Intelligence & Data Science"
-          description="Provided institutional support, autonomous curriculum dataset clearance, and sponsored deployment on the college private cloud cluster."
         />
       </View>
 
@@ -4129,8 +4077,12 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.onSurfaceVariant,
+    fontWeight: "700",
+    color: "#475569",
+  },
+
+  weekDayWeekend: {
+    color: "#dc2626",
   },
 
   calendarGrid: {
@@ -4151,16 +4103,18 @@ const styles = StyleSheet.create({
   },
 
   dayTextBase: {
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   dayNormal: {
-    backgroundColor: COLORS.surfaceContainerLow,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
   },
 
   dayText: {
-    color: COLORS.onSurface,
+    color: "#2563eb",
   },
 
   dayOutside: {
@@ -4168,76 +4122,94 @@ const styles = StyleSheet.create({
   },
 
   dayOutsideText: {
-    color: COLORS.surfaceDim,
+    color: "#cbd5e1",
+    fontWeight: "400",
   },
 
   dayWeekend: {
-    backgroundColor: COLORS.surfaceContainerLow,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
   },
 
   dayWeekendText: {
-    color: "rgba(67,70,84,0.40)",
+    color: "#dc2626",
   },
 
   daySunday: {
-    backgroundColor: COLORS.surfaceContainerLow,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fee2e2",
   },
 
   daySundayText: {
-    color: "rgba(186,26,26,0.60)",
+    color: "#dc2626",
   },
 
   dayHoliday: {
-    backgroundColor: COLORS.secondaryFixed,
+    backgroundColor: "#fee2e2",
+    borderWidth: 1,
+    borderColor: "#fca5a5",
   },
 
   dayHolidayText: {
-    color: COLORS.onSecondaryFixed,
-    fontWeight: "700",
+    color: "#dc2626",
+    fontWeight: "800",
   },
 
   dayExam: {
-    backgroundColor: COLORS.tertiaryFixed,
+    backgroundColor: "#ffedd5",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
   },
 
   dayExamText: {
-    color: COLORS.onTertiaryFixed,
+    color: "#ea580c",
     fontWeight: "700",
   },
 
   dayToday: {
-    backgroundColor: COLORS.primaryFixed,
+    backgroundColor: "#2563eb",
+    shadowColor: "#2563eb",
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   dayTodayText: {
-    color: COLORS.primary,
-    fontWeight: "700",
+    color: "#ffffff",
+    fontWeight: "800",
   },
 
   dayEvent: {
-    backgroundColor: COLORS.secondaryFixed,
+    backgroundColor: "#ede9fe",
+    borderWidth: 1,
+    borderColor: "#ddd6fe",
   },
 
   dayEventText: {
-    color: COLORS.onSecondaryFixed,
+    color: "#7c3aed",
     fontWeight: "700",
   },
 
   daySpecial: {
-    backgroundColor: COLORS.surfaceContainerHigh,
+    backgroundColor: "#f1f5f9",
   },
 
   daySpecialText: {
-    color: COLORS.onSurface,
+    color: "#0f172a",
+    fontWeight: "700",
   },
 
   dayFinalExam: {
-    backgroundColor: COLORS.primaryContainer,
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#fde68a",
   },
 
   dayFinalExamText: {
-    color: COLORS.onPrimary,
-    fontWeight: "700",
+    color: "#b45309",
+    fontWeight: "800",
   },
 
   dayDot: {
@@ -4695,7 +4667,17 @@ const styles = StyleSheet.create({
   },
 
   filterTextActive: {
-    color: COLORS.onPrimary,
+    color: "#b5c4ff",
+    fontWeight: "700",
+  },
+
+  activeFilterText: {
+    color: "#b5c4ff",
+    fontWeight: "700",
+  },
+
+  inactiveFilterText: {
+    color: COLORS.onSurfaceVariant,
   },
 
   /* ================= URGENT ================= */

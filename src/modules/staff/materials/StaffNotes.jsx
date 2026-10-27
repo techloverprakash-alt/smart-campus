@@ -186,18 +186,6 @@ function Header({ navigation, user, profile }) {
 
       <View style={styles.headerRight}>
         <TouchableOpacity
-          style={styles.notificationButton}
-          activeOpacity={0.7}
-          onPress={() => navigation?.navigate("StaffProfile")}
-        >
-          <MaterialIcons
-            name="notifications"
-            size={24}
-            color="#434654"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => navigation?.navigate("StaffProfile")}
         >

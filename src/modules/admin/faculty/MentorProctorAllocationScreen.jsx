@@ -316,13 +316,6 @@ export default function MentorProctorAllocationScreen({ navigation }) {
           <Text style={styles.brand}>NEXUS • Admin Portal</Text>
         </View>
         <Pressable
-          style={styles.iconButton}
-          onPress={() => Alert.alert('Notifications', 'No pending allocation alerts.')}
-        >
-          <Text style={styles.headerIcon}>♧</Text>
-          <View style={styles.notificationDot} />
-        </Pressable>
-        <Pressable
           style={styles.profileCircle}
           onPress={() => navigation?.navigate('AdminProfile')}
         >

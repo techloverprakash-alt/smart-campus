@@ -46,7 +46,7 @@ const AdminLogin = ({ navigation }) => {
           onPress={() => navigation.navigate('Login')}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="arrow-back" size={20} color="#334155" />
+          <MaterialIcons name="arrow-back" size={20} color="#126decff" />
           <Text style={styles.backButtonText}>Roles</Text>
         </TouchableOpacity>
 
@@ -55,7 +55,7 @@ const AdminLogin = ({ navigation }) => {
           onPress={() => navigation.navigate('CommonPortal', { role: 'admin' })}
           activeOpacity={0.8}
         >
-          <MaterialIcons name="public" size={16} color="#003fb1" />
+          <MaterialIcons name="public" size={16} color="#8d8f94ff" />
           <Text style={styles.campusHubButtonText}>Campus Hub</Text>
         </TouchableOpacity>
       </View>
@@ -173,7 +173,7 @@ const AdminLogin = ({ navigation }) => {
             {/* Error Banner */}
             {!!error && (
               <View style={styles.errorBanner}>
-                <MaterialIcons name="error-outline" size={16} color="#b91c1c" />
+                <MaterialIcons name="error-outline" size={16} color="#c61616ff" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}

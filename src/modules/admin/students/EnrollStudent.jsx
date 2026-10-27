@@ -432,11 +432,6 @@ export default function EnrollStudent({ navigation }) {
         </View>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <MaterialIcons name="notifications-none" size={24} color={Colors.onSurfaceVariant} />
-            <View style={styles.notifBadge} />
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.profileAvatarButton}
             activeOpacity={0.8}

@@ -134,20 +134,6 @@ export default function AdminEditProfile({ navigation }) {
                 </Text>
               </View>
             </View>
-
-            <TouchableOpacity
-              style={styles.notificationButton}
-              accessibilityLabel="Notifications"
-            >
-              <MaterialIcons
-                name="notifications"
-                size={24}
-                color="#434654"
-              />
-
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
-
           </View>
         </BlurView>
 
