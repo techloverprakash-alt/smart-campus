@@ -6,6 +6,8 @@ export * from './screens/StaffLogin';
 export { default as StaffLogin } from './screens/StaffLogin';
 export * from './screens/AdminLogin';
 export { default as AdminLogin } from './screens/AdminLogin';
+export * from './screens/ServicesLogin';
+export { default as ServicesLogin } from './screens/ServicesLogin';
 export * from './screens/CommonPortal';
 export { default as CommonPortal } from './screens/CommonPortal';
 export * from './context/AuthContext';

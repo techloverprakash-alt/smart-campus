@@ -825,56 +825,58 @@ export default function StaffTimetable({ navigation }) {
           <View style={styles.toolsSection}>
             <Text style={styles.toolsHeading}>Timetable Tools & Support</Text>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() => setFacultyOpen(true)}
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#dce2f3" }]}>
-                <MaterialIcons name="badge" size={20} color="#003fb1" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>View Faculty Contact Details</Text>
-                <Text style={styles.toolSubtitle}>
-                  Office hours, cabin numbers & email IDs
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={20} color="#737686" />
-            </TouchableOpacity>
+            <View style={styles.toolsGrid}>
+              <TouchableOpacity
+                style={styles.toolCard}
+                activeOpacity={0.7}
+                onPress={() => setFacultyOpen(true)}
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#dce2f3" }]}>
+                  <MaterialIcons name="badge" size={20} color="#003fb1" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>View Faculty Contact Details</Text>
+                  <Text style={styles.toolSubtitle}>
+                    Office hours, cabin numbers & email IDs
+                  </Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color="#737686" />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() => showToast("Downloading timetable PDF.")}
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#dbe1ff" }]}>
-                <MaterialIcons name="file-download" size={20} color="#003fb1" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>Download Offline PDF Timetable</Text>
-                <Text style={styles.toolSubtitle}>
-                  Official college seal signed copy (Sem 5)
-                </Text>
-              </View>
-              <MaterialIcons name="file-download" size={20} color="#737686" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.toolCard}
+                activeOpacity={0.7}
+                onPress={() => showToast("Downloading timetable PDF.")}
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#dbe1ff" }]}>
+                  <MaterialIcons name="file-download" size={20} color="#003fb1" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>Download Offline PDF Timetable</Text>
+                  <Text style={styles.toolSubtitle}>
+                    Official college seal signed copy (Sem 5)
+                  </Text>
+                </View>
+                <MaterialIcons name="file-download" size={20} color="#737686" />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() => showToast("Timetable issue report opened.")}
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#e2e1ed" }]}>
-                <MaterialIcons name="flag" size={20} color="#585f6c" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>Report Timetable Issue / Clash</Text>
-                <Text style={styles.toolSubtitle}>
-                  Direct ticket to Class Advisor & HOD office
-                </Text>
-              </View>
-              <MaterialIcons name="report" size={20} color="#737686" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.toolCard}
+                activeOpacity={0.7}
+                onPress={() => showToast("Timetable issue report opened.")}
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#e2e1ed" }]}>
+                  <MaterialIcons name="flag" size={20} color="#585f6c" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>Report Timetable Issue / Clash</Text>
+                  <Text style={styles.toolSubtitle}>
+                    Direct ticket to Class Advisor & HOD office
+                  </Text>
+                </View>
+                <MaterialIcons name="report" size={20} color="#737686" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Bottom spacing for bottom nav */}
@@ -1167,11 +1169,11 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
     width: "100%",
-    maxWidth: 540,
+    maxWidth: 1280,
     alignSelf: "center",
   },
 
@@ -1286,11 +1288,12 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 12,
   },
 
   kpiCard: {
-    width: "48.5%",
+    flex: 1,
+    minWidth: 150,
     backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 14,
@@ -1605,10 +1608,14 @@ const styles = StyleSheet.create({
   },
 
   scheduleCardList: {
-    gap: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
   },
 
   scheduleCard: {
+    flex: 1,
+    minWidth: 320,
     backgroundColor: "#ffffff",
     borderRadius: 14,
     padding: 14,
@@ -2123,7 +2130,7 @@ const styles = StyleSheet.create({
   tableCard: {
     backgroundColor: "#ffffff",
     borderRadius: 14,
-    padding: 12,
+    padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -2132,7 +2139,8 @@ const styles = StyleSheet.create({
   },
 
   tableInner: {
-    minWidth: 580,
+    width: "100%",
+    minWidth: 640,
     gap: 8,
   },
 
@@ -2140,14 +2148,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#ededf8",
-    paddingBottom: 6,
+    paddingBottom: 8,
   },
 
   tableHeaderCell: {
-    width: 96,
+    flex: 1,
+    minWidth: 96,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
 
   tableHeaderCellActive: {
@@ -2171,7 +2180,7 @@ const styles = StyleSheet.create({
   },
 
   tableTimeCell: {
-    width: 96,
+    width: 104,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -2189,9 +2198,10 @@ const styles = StyleSheet.create({
   },
 
   tableSubjectCell: {
-    width: 92,
+    flex: 1,
+    minWidth: 92,
     marginHorizontal: 2,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 8,
     alignItems: "center",
@@ -2241,7 +2251,7 @@ const styles = StyleSheet.create({
 
   /* ================= TOOLS ================= */
   toolsSection: {
-    gap: 10,
+    gap: 12,
   },
 
   toolsHeading: {
@@ -2250,7 +2260,15 @@ const styles = StyleSheet.create({
     color: "#191b23",
   },
 
+  toolsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+
   toolCard: {
+    flex: 1,
+    minWidth: 260,
     backgroundColor: "#ffffff",
     borderRadius: 14,
     padding: 12,
