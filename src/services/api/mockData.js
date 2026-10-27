@@ -218,27 +218,8 @@ export const MOCK_REPORTS = {
 export function getMockResponse(path, options = {}) {
   const cleanPath = path.split('?')[0];
 
-  // Auth endpoints
-  if (cleanPath.includes('/auth/login')) {
-    let body = {};
-    try { body = typeof options.body === 'string' ? JSON.parse(options.body) : (options.body || {}); } catch {}
-    const role = (body.role || 'STUDENT').toUpperCase();
-    const user = DEMO_PROFILES[role] || DEMO_PROFILES.STUDENT;
-    return {
-      access_token: 'mock-access-token-' + role.toLowerCase(),
-      refresh_token: 'mock-refresh-token-' + role.toLowerCase(),
-      user,
-    };
-  }
-
-  if (cleanPath.includes('/auth/logout') || cleanPath.includes('/auth/refresh')) {
-    return { success: true };
-  }
-
-  // Profile endpoints
-  if (cleanPath === '/profiles/me') {
-    return DEMO_PROFILES.STUDENT;
-  }
+  // Auth and profile endpoints are handled strictly by the authoritative backend database.
+  // No mock fallback permitted for authentication, sessions, or personal user profiles.
 
   if (cleanPath.includes('/profiles/cohort-options')) {
     return {

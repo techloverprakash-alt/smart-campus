@@ -228,6 +228,7 @@ export default function EnrollStudent({ navigation }) {
       const payload = {
         full_name: fullName.trim(),
         register_number: registerNumber.trim().toUpperCase(),
+        password: generatedPassword,
         department_code: departmentCode,
         batch_name: admittedBatch,
         section_name: selectedSection,

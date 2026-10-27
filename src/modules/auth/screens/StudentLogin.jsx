@@ -16,20 +16,21 @@ const StudentLogin = ({ navigation }) => {
 
   const handleLogin = async () => {
     setError('');
+    const regNo = registerNumber.trim();
+    const pass = password;
+
+    if (!regNo || !pass) {
+      setError('Please enter your Register Number and Password.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const regNo = registerNumber.trim() || '714022104045';
-      const pass = password || 'demo123';
       const tokenData = await login(regNo, pass, 'STUDENT');
-      signIn(tokenData);
+      await signIn(tokenData);
       navigation.replace('StudentDashboard');
-    } catch {
-      signIn({
-        access_token: 'mock-student',
-        refresh_token: 'mock-refresh-student',
-        user: { id: 1, name: 'Prakash S', roll_number: '714022104045', role: 'STUDENT' },
-      });
-      navigation.replace('StudentDashboard');
+    } catch (err) {
+      setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -156,25 +157,25 @@ const StudentLogin = ({ navigation }) => {
               <Text style={styles.demoHintLabel}>Demo fill:</Text>
               <TouchableOpacity
                 onPress={() => {
-                  setRegisterNumber('21AD001');
+                  setRegisterNumber('STU2025001');
                   setPassword('Student@123');
                   setError('');
                 }}
                 style={styles.demoHintPill}
                 activeOpacity={0.7}
               >
-                <Text style={styles.demoHintBtn}>21AD001</Text>
+                <Text style={styles.demoHintBtn}>STU2025001</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  setRegisterNumber('714022AD001');
+                  setRegisterNumber('STU2025002');
                   setPassword('Student@123');
                   setError('');
                 }}
                 style={styles.demoHintPill}
                 activeOpacity={0.7}
               >
-                <Text style={styles.demoHintBtn}>714022AD001</Text>
+                <Text style={styles.demoHintBtn}>STU2025002</Text>
               </TouchableOpacity>
             </View>
 

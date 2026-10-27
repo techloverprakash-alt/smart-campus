@@ -33,7 +33,10 @@ class Settings(BaseModel):
     
     # Search settings
     default_top_k: int = 5
-    max_top_k: int = 50
+    # JWT and Security Settings
+    jwt_secret: str = os.getenv("JWT_SECRET", "nexus-smart-campus-super-secret-jwt-key-2026")
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
 
     class Config:
         arbitrary_types_allowed = True

@@ -8,8 +8,11 @@ from app.api.routes_engine import router as engine_router
 from app.api.routes_items import router as items_router
 from app.api.routes_matching import router as matching_router
 from app.modules.lost_and_found.router import router as lost_and_found_router
+from app.modules.auth.router import auth_router, profile_router
+from app.modules.auth.service import AuthService
 from app.config import settings
 from app.database import Base, SessionLocal, engine as db_engine
+import app.modules.auth.models  # Register Tables 1-7 (users, roles, profiles, refresh_tokens)
 import app.modules.core.models  # Register core models
 import app.modules.lost_and_found.models  # Register Tables 34-41 models
 from app.modules.lost_and_found.models import ItemCategory
@@ -73,6 +76,13 @@ async def lifespan(app: FastAPI):
             db.add_all(locations)
             db.commit()
             logger.info("Seeded default campus locations.")
+
+        # Seed default auth data (Roles, 23 Users, Profiles, Refresh Tokens)
+        try:
+            auth_service = AuthService(db)
+            auth_service.seed_default_data()
+        except Exception as e:
+            logger.warning(f"Auth seeder notice: {e}")
     except Exception as e:
         logger.warning(f"Initial seed notice: {e}")
         db.rollback()
@@ -126,7 +136,11 @@ app.add_middleware(
 )
 
 # Include API Routers
-# Mount under /api/v1/lost-found for standard frontend client integration
+# Mount auth and profile routers under both /api/v1 and /api for seamless frontend client compatibility
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication (v1)"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(profile_router, prefix="/api/v1/profiles", tags=["Profiles & Management (v1)"])
+app.include_router(profile_router, prefix="/api/profiles", tags=["Profiles & Management"])
 app.include_router(lost_and_found_router, prefix="/api/v1/lost-found", tags=["Lost & Found (v1 Frontend)"])
 app.include_router(lost_and_found_router, prefix="/api/lost-found", tags=["Lost & Found System"])
 app.include_router(engine_router)

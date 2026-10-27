@@ -47,13 +47,28 @@ export function AuthProvider({ children }) {
         const { user: storedUser, refreshToken: storedRefresh } =
           await tokenStorage.getTokens();
         if (storedUser && storedRefresh) {
-          setUser(storedUser);
-          setRefreshToken(storedRefresh);
-          // Load full profile
-          try {
-            const prof = await getMyProfile();
-            if (prof) setProfile(prof);
-          } catch {}
+          if (
+            storedRefresh.startsWith('mock-') ||
+            storedUser.name === 'Prakash S' ||
+            storedUser.roll_number === '714022104045'
+          ) {
+            // Invalidate legacy mock session so authentic login is required
+            await tokenStorage.clearTokens();
+            setUser(null);
+            setProfile(null);
+            setRefreshToken(null);
+          } else {
+            setUser(storedUser);
+            setRefreshToken(storedRefresh);
+            // Load authoritative profile from database
+            try {
+              const prof = await getMyProfile();
+              if (prof) {
+                setProfile(prof);
+                setUser((prev) => ({ ...prev, ...prof }));
+              }
+            } catch {}
+          }
         }
       } catch (e) {
         // Corrupted storage — start fresh
@@ -84,10 +99,15 @@ export function AuthProvider({ children }) {
     const { user: newUser, refresh_token } = tokenData;
     setUser(newUser);
     setRefreshToken(refresh_token);
-    // Fetch full profile immediately
+    // Fetch full profile immediately from DB
     try {
       const prof = await getMyProfile();
-      if (prof) setProfile(prof);
+      if (prof) {
+        setProfile(prof);
+        setUser((prev) => ({ ...prev, ...prof }));
+      } else {
+        setProfile(newUser);
+      }
     } catch {
       setProfile(newUser);
     }

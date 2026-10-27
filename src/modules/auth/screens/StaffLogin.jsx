@@ -17,20 +17,21 @@ const StaffLogin = ({ navigation }) => {
 
   const handleLogin = async () => {
     setError('');
+    const id = staffId.trim();
+    const pass = password;
+
+    if (!id || !pass) {
+      setError('Please enter your Faculty ID and Password.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const id = staffId.trim() || 'FAC-AIDS-018';
-      const pass = password || 'demo123';
       const tokenData = await login(id, pass, 'STAFF');
-      signIn(tokenData);
+      await signIn(tokenData);
       navigation.replace('StaffDashboard');
-    } catch {
-      signIn({
-        access_token: 'mock-staff',
-        refresh_token: 'mock-refresh-staff',
-        user: { id: 2, name: 'Prof. M. Selvam', faculty_id: 'FAC-AIDS-018', role: 'STAFF' },
-      });
-      navigation.replace('StaffDashboard');
+    } catch (err) {
+      setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -163,6 +164,33 @@ const StaffLogin = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Quick Demo Credentials Row */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+              <Text style={{ fontSize: 11, color: Colors.onSurfaceVariant, fontWeight: '500' }}>Demo fill:</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setStaffId('FAC101');
+                  setPassword('Staff@123');
+                  setError('');
+                }}
+                style={{ backgroundColor: '#eef2ff', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: '#dbe1ff' }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '600', color: '#003fb1' }}>FAC101</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setStaffId('FAC102');
+                  setPassword('Staff@123');
+                  setError('');
+                }}
+                style={{ backgroundColor: '#eef2ff', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: '#dbe1ff' }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '600', color: '#003fb1' }}>FAC102</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Quick Access to Common Hub */}
             <TouchableOpacity

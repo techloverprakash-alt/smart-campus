@@ -5,23 +5,7 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 
-
-class User(Base):
-    """
-    Core authoritative user model for students, staff, security officers, and administrators.
-    """
-    __tablename__ = "users"
-
-    id = Column(String(64), primary_key=True, default=lambda: str(uuid.uuid4()))
-    identifier = Column(String(64), unique=True, nullable=False, index=True)  # Roll no / Faculty ID / Admin username
-    full_name = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=True, index=True)
-    phone = Column(String(64), nullable=True)
-    role = Column(String(32), default="STUDENT", nullable=False, index=True)  # STUDENT, STAFF, ADMIN, OFFICER
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-    def __repr__(self):
-        return f"<User {self.identifier} ({self.role})>"
+from app.modules.auth.models import User
 
 
 class Location(Base):

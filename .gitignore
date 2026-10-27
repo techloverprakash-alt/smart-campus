@@ -80,6 +80,7 @@ backend/venv/
 *.db
 *.sqlite
 *.sqlite3
+*.sql
 
 # ── ML Models & Large Checkpoints ───────────────────────────────────────────
 *.pt
