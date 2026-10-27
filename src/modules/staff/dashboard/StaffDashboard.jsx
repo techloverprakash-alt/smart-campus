@@ -111,6 +111,40 @@ const StaffDashboard = ({ navigation }) => {
             ))}
           </View>
 
+          {/* Student & Faculty Services Quick Banner */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#eff6ff',
+              borderRadius: 12,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: '#bfdbfe',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+            activeOpacity={0.85}
+            onPress={() => navigation?.navigate('StudentFacultyPortal')}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' }}>
+                <MaterialIcons name="support-agent" size={22} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1e3a8a' }}>Student & Faculty Portal</Text>
+                  <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#1d4ed8' }}>CAMPUS HUB</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 11, color: '#4b5563', marginTop: 2 }}>
+                  Lab repairs, infrastructure tickets & Lost & Found desk
+                </Text>
+              </View>
+            </View>
+            <MaterialIcons name="arrow-forward" size={18} color="#2563eb" />
+          </TouchableOpacity>
+
           {/* Upcoming Classes */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionCardHeader}>

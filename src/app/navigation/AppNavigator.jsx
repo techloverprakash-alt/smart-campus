@@ -15,6 +15,7 @@ import {
   AdminDashboard, ReportManagement, AdminTimetable, AdminStaffOnboardingScreen,
   MentorProctorAllocationScreen, EnrollStudent, EnrollmentSuccess, AdminProfile, AdminEditProfile,
 } from '../../modules/admin';
+import { StudentFacultyDashboard } from '../../modules/services';
 
 /**
  * One entry per screen. `role` drives the access guard + sidebar in <Shell>;
@@ -27,6 +28,12 @@ export const ROUTES = [
   { name: 'StaffLogin', path: '/login/staff', component: StaffLogin },
   { name: 'AdminLogin', path: '/login/admin', component: AdminLogin },
   { name: 'CommonPortal', path: '/portal', component: CommonPortal },
+  { name: 'StudentFacultyPortal', path: '/services', component: StudentFacultyDashboard },
+  {
+    name: 'LostAndFound',
+    path: '/lost-found',
+    component: (props) => <StudentFacultyDashboard {...props} initialTab="Lost & Found Claims" />,
+  },
 
   // Student
   { name: 'StudentDashboard', path: '/student', component: StudentDashboard, role: 'STUDENT' },

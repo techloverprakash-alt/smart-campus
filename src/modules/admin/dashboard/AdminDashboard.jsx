@@ -118,6 +118,7 @@ const AdminDashboard = ({ navigation }) => {
   ];
 
   const quickActions = [
+    { label: 'Campus Services', icon: 'support-agent', color: Colors.primary },
     { label: 'Add Student', icon: 'person-add', color: Colors.primary },
     { label: 'Add Staff', icon: 'badge', color: Colors.tertiary },
     { label: 'Assign Subjects', icon: 'library-books', color: Colors.secondary },
@@ -264,7 +265,8 @@ const AdminDashboard = ({ navigation }) => {
                   style={styles.quickActionItem}
                   activeOpacity={0.7}
                   onPress={() => {
-                    if (action.label === 'Add Student') navigation?.navigate('EnrollStudent');
+                    if (action.label === 'Campus Services') navigation?.navigate('StudentFacultyPortal');
+                    else if (action.label === 'Add Student') navigation?.navigate('EnrollStudent');
                     else if (action.label === 'Add Staff') navigation?.navigate('AdminStaffOnboarding');
                     else if (action.label === 'Assign Subjects') navigation?.navigate('MentorProctorAllocation');
                     else if (action.label === 'Generate Reports') navigation?.navigate('ReportManagement');

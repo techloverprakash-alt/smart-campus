@@ -15,7 +15,7 @@ const HOME = { STUDENT: 'StudentDashboard', STAFF: 'StaffDashboard', ADMIN: 'Adm
  *  - ≥1100px : persistent sidebar replaces the per-screen bottom navigation
  *  - <1100px : mobile layout (screens render their own bottom navigation)
  */
-function InspectorBar({ activeRole, onSelectRole, onCampusHub, onLogin }) {
+function InspectorBar({ activeRole, onSelectRole, onCampusServices, onCampusHub, onLogin }) {
   return (
     <div className="nexus-inspector-bar">
       <div className="nexus-inspector-pill">
@@ -40,6 +40,13 @@ function InspectorBar({ activeRole, onSelectRole, onCampusHub, onLogin }) {
           onClick={() => onSelectRole('ADMIN', 'AdminDashboard')}
         >
           🏛️ Admin
+        </button>
+        <button
+          type="button"
+          className="nexus-inspector-btn hub-btn"
+          onClick={onCampusServices}
+        >
+          🏢 Services & Lost-Found
         </button>
         <button
           type="button"
@@ -79,13 +86,15 @@ export function Shell({ children }) {
     navigation.navigate(screenName);
   };
 
-  const sidebar = !!(required || role) && isDesktop && loc.path !== '/' && !loc.path.startsWith('/login') && loc.path !== '/portal';
+  const isCustomLayout = loc.path === '/' || loc.path.startsWith('/login') || loc.path === '/portal' || loc.path === '/services' || loc.path === '/lost-found';
+  const sidebar = !!(required || role) && isDesktop && !isCustomLayout;
   return (
     <ShellContext.Provider value={{ sidebar }}>
       <div className={`app-shell${sidebar ? ' with-sidebar' : ''}`}>
         <InspectorBar
           activeRole={role}
           onSelectRole={handleSelectRole}
+          onCampusServices={() => navigation.navigate('StudentFacultyPortal')}
           onCampusHub={() => navigation.navigate('CommonPortal')}
           onLogin={() => navigation.navigate('Login')}
         />

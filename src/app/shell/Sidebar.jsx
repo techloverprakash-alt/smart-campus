@@ -67,6 +67,13 @@ export function Sidebar({ role, active }) {
             </button>
           );
         })}
+        <button
+          className={`sidebar-link${active === 'StudentFacultyPortal' ? ' active' : ''}`}
+          onClick={() => navigation.navigate('StudentFacultyPortal')}
+        >
+          <MaterialIcons name="support-agent" size={20} />
+          <span>Campus Services</span>
+        </button>
         <button className="sidebar-link" onClick={() => navigation.navigate('CommonPortal')}>
           <MaterialIcons name="public" size={20} />
           <span>Campus hub</span>
