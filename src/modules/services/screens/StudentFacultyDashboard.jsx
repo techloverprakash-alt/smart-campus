@@ -6,6 +6,7 @@ import ReportInfrastructureView from '../components/ReportInfrastructureView';
 import MatchSuggestionsView from '../components/MatchSuggestionsView';
 import FieldOperationsConsole from '../components/FieldOperationsConsole';
 import CampusAdminControlCenter from '../../admin/screens/CampusAdminControlCenter';
+import CAMPUS_MAP_IMAGE from '@/assets/campus-map.jpg';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
   HelpCircle, LayoutDashboard, MapPin, Plus, Search, ShieldCheck,
@@ -88,14 +89,14 @@ const navGroups = [
   },
 ];
 
-function Modal({ title, onClose, children }) {
+function Modal({ title, onClose, maxWidth = 'max-w-lg', children }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl animate-fade-in">
-        <div className="mb-5 flex items-center justify-between">
+      <div className={`w-full ${maxWidth} rounded-2xl bg-white p-6 shadow-2xl animate-fade-in my-auto max-h-[92vh] overflow-y-auto`}>
+        <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
           <button
             onClick={onClose}
@@ -1143,26 +1144,42 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
       {['map', 'help', 'history'].includes(modal) && (
         <Modal
           title={modal === 'map' ? 'Campus Map & Facilities' : modal === 'help' ? 'Help Desk' : 'Activity History'}
+          maxWidth={modal === 'map' ? 'max-w-4xl' : 'max-w-lg'}
           onClose={() => setModal(null)}
         >
           {modal === 'map' ? (
-            <div className="space-y-3">
-              <div
-                className="relative h-40 rounded-xl overflow-hidden border border-slate-200"
-                style={{
-                  background:
-                    'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%), radial-gradient(circle at 70% 30%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)',
-                }}
-              >
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-slate-950/70 to-transparent" />
-                <div className="absolute bottom-3 left-3 text-white">
-                  <p className="font-bold">Quad Security Desk #02</p>
-                  <p className="text-xs text-slate-200">Central Science Concourse • Open 24/7</p>
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner">
+                <img
+                  src={CAMPUS_MAP_IMAGE}
+                  alt="Info College Campus Map & Facilities"
+                  className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-lg"
+                />
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-blue-950">Campus Layout & Facilities Directory</p>
+                  <p className="text-blue-700 mt-0.5">
+                    1: Academic Block • 2: Library • 3: Hostel • 4: Cafeteria • 5: Sports Complex • 6: Science & Lab Block • 7: Auditorium • 8: Parking Area • 9: Green Area / Garden
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-slate-600">
-                Nearest custodial intake desk: Science Quad, approximately 120m from Computer Science Block A.
-              </p>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
+                <p>
+                  Nearest custodial intake desk: Science & Lab Block (6), central concourse.
+                </p>
+                <a
+                  href={CAMPUS_MAP_IMAGE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-800"
+                >
+                  <ExternalLink size={14} /> Open full size map
+                </a>
+              </div>
             </div>
           ) : modal === 'help' ? (
             <div className="space-y-3 text-sm text-slate-600">
