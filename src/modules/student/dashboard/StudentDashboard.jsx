@@ -25,12 +25,18 @@ const PROFILE_IMAGE =
 const STUDENT_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCVXP3laCjvBlZEVugtzpX20kCifG87-9yGGVWnUCmaIhNtCcDdG9HmCKcyaSa4oTc-QPnHNb5RR_pO0Xd8oVLNtxyVdxbttBW5KjbrzMiMJD0HcqApHxFuVbC5_KEUHnW0qOr98kurfIJ2NAVvw464MLzvDAN8LdJTSZXSqkbDkysN8V9Lzled9wZvQVwVorYcKfLMT1do8whwEUyopOcVpVMNt3wTCpl8mQ00dAziqalPOmZQTqcZ";
 
-const QFIX_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBjVGZU-O3RWVwEN8AtBMnFwZXpsJcWo5krqtoRUqCI4sGUG2i9qP_iXMCZzNBh0De5pB8ecCaxZnblyuUjIuv1zFudR-yxR-PwfMNYbgOyLEhSH24OCCpfrezClp9nutwOp7nE5lVZ9KxpaW_5QiBp9wjHxvJmV6BNIzKcEE4f2kTMaQlv5hwbVMxWROvAyeLYVaWL2RTJBMv2gAuM0Iwb7g9RgO5kcVp94LBDKW82YYKioYc50XA4smckFXkC67LVXw";
+const QFIX_LOGO =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCx6E3-GQ8z-16S2X4wAfJG5rljnzMl1XATUZWc688SYv98QXGEGTsoaEAq16QM3QrOz0KFxVihkSwFcID1QG2pEJi1q7O9TWouexXI6uqLKptQF0rMyoRnJzk1fk2sTrx2AqYhIN3ar6ZVar92pc7F5iJKsmcaDbE7jICTfcvTt8MVWJ1CReuOOi784VBSBVVycX0nqpPe7AZNltojurAJHGoMii5kL-y1_nIKuDGJr4-ow2ZE4_RzahCzK7Ki4UIo5w";
 
 import TIMETABLE_IMAGE from '@/assets/timetable-3yr.jpeg';
 
 const services = [
+  {
+    key: "pay-fees",
+    title: "Pay Fees",
+    description: "Fee payments, online receipts, and scholarship tracking",
+    logo: QFIX_LOGO,
+  },
   {
     key: "services-portal",
     title: "Campus Services",
@@ -330,6 +336,7 @@ function ServiceHeader() {
   );
 }
 
+<<<<<<< HEAD
 function QFixCard({ onLaunch }) {
   return (
     <View style={styles.qfixCard}>
@@ -377,6 +384,9 @@ function QFixCard({ onLaunch }) {
 }
 
 function ServiceCard({ title, description, icon, onPress }) {
+=======
+function ServiceCard({ title, description, icon, logo, onPress }) {
+>>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   return (
     <TouchableOpacity
       style={styles.serviceCard}
@@ -384,11 +394,15 @@ function ServiceCard({ title, description, icon, onPress }) {
       onPress={onPress}
     >
       <View style={styles.serviceIcon}>
-        <MaterialIcons
-          name={icon}
-          size={22}
-          color="#003fb1"
-        />
+        {logo ? (
+          <Image source={{ uri: logo }} style={styles.serviceIconImage} resizeMode="contain" />
+        ) : (
+          <MaterialIcons
+            name={icon}
+            size={22}
+            color="#003fb1"
+          />
+        )}
       </View>
 
       <View style={styles.serviceCardText}>
@@ -416,6 +430,7 @@ function ServicesGrid({ onServicePress }) {
           title={service.title}
           description={service.description}
           icon={service.icon}
+          logo={service.logo}
           onPress={() => onServicePress(service.key)}
         />
       ))}
@@ -538,6 +553,8 @@ export default function StudentDashboard({ navigation }) {
   const handleServicePress = (key) => {
     if (key === "website") {
       openSCE();
+    } else if (key === "pay-fees") {
+      openQFix();
     } else if (key === "services-portal") {
       navigation?.navigate("StudentFacultyPortal");
     } else if (key === "timetable") {
@@ -577,7 +594,6 @@ export default function StudentDashboard({ navigation }) {
           {/* Campus Services */}
           <View style={styles.servicesSection}>
             <ServiceHeader />
-            <QFixCard onLaunch={openQFix} />
             <ServicesGrid onServicePress={handleServicePress} />
           </View>
 
@@ -1258,6 +1274,7 @@ const styles = StyleSheet.create({
     color: "#585f6c",
   },
 
+<<<<<<< HEAD
   /* ================= Q-FIX ================= */
 
   qfixCard: {
@@ -1345,6 +1362,8 @@ const styles = StyleSheet.create({
     color: "#003fb1",
   },
 
+=======
+>>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   /* ================= SERVICE GRID ================= */
 
   servicesGrid: {
@@ -1380,6 +1399,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f3fe",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  serviceIconImage: {
+    width: 30,
+    height: 30,
   },
 
   serviceCardText: {

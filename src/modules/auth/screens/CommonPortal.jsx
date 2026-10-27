@@ -86,6 +86,9 @@ const QFIX_LOGO =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCx6E3-GQ8z-16S2X4wAfJG5rljnzMl1XATUZWc688SYv98QXGEGTsoaEAq16QM3QrOz0KFxVihkSwFcID1QG2pEJi1q7O9TWouexXI6uqLKptQF0rMyoRnJzk1fk2sTrx2AqYhIN3ar6ZVar92pc7F5iJKsmcaDbE7jICTfcvTt8MVWJ1CReuOOi784VBSBVVycX0nqpPe7AZNltojurAJHGoMii5kL-y1_nIKuDGJr4-ow2ZE4_RzahCzK7Ki4UIo5w";
 
 import TIMETABLE_IMAGE from '@/assets/timetable-3yr.jpeg';
+import KAMESH_IMAGE from '@/assets/kamesh-n.png';
+import CHRIST_NOBLE_IMAGE from '@/assets/christ-noble-s.png';
+import ABISHEK_RK_IMAGE from '@/assets/abishek-rk.png';
 
 const COLLEGE_BADGE = "/info_logo.png";
 
@@ -1848,12 +1851,12 @@ function MoreScreen() {
 
 const INITIAL_CREATORS = [
   {
-    id: "esakki",
-    image: ESAKKI_IMAGE,
-    initials: "EM",
-    name: "ESAKKI MUTHU  M",
-    roll: "715024243026",
-    department: "B.Tech AI & Data Science (2024–2029)",
+    id: "kamesh",
+    image: KAMESH_IMAGE,
+    initials: "KN",
+    name: "KAMESH N",
+    roll: "715024243040",
+    department: "B.Tech AI & Data Science (2024-2028)",
     description:
       "Spearheaded overall system architecture, database schema, end-to-end responsive UI/UX system, timetable engine, and mobile viewport optimizations.",
     tags: ["System Design", "UI/UX", "API Integration"],
@@ -1864,29 +1867,29 @@ const INITIAL_CREATORS = [
     initials: "GP",
     name: "GNANA PRAKASH V",
     roll: "715024243030",
-    department: "B.Tech AI & Data Science (2024–2029)",
+    department: "B.Tech AI & Data Science (2024-2028)",
     description:
       "Architected the real-time attendance analytics engine, automated margin calculator, multi-role authentication security, and session management.",
     tags: ["Cloud Backend", "Attendance Engine", "Security"],
   },
   {
     id: "abishek",
-    image: null,
+    image: ABISHEK_RK_IMAGE,
     initials: "AR",
     name: "ABISHEK R K",
     roll: "715024243004",
-    department: "B.Tech AI & Data Science (2024–2029)",
+    department: "B.Tech AI & Data Science (2024-2028)",
     description:
       "Core developer contributing to frontend interfaces, module data binding, student portal integrations, and cross-device responsiveness.",
     tags: ["Frontend UI", "Module Integration", "Component Design"],
   },
   {
-    id: "member4",
-    image: null,
-    initials: "TM",
-    name: "TEAM MEMBER 4",
-    roll: "715024243015",
-    department: "B.Tech AI & Data Science (2024–2029)",
+    id: "christ-noble",
+    image: CHRIST_NOBLE_IMAGE,
+    initials: "CN",
+    name: "CHRIST NOBLE S",
+    roll: "715024243017",
+    department: "B.Tech AI & Data Science (2024-2028)",
     description:
       "Core developer contributing to system features, component integration, data pipeline workflows, and UI testing.",
     tags: ["Frontend UI", "Testing & QA", "API Integration"],

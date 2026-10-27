@@ -626,7 +626,7 @@ export default function ReportInfrastructureView({ onBack, onSubmitTicket, onVie
               </div>
               <p className="text-xs font-bold text-slate-700">
                 {photo ? (
-                  <span className="text-emerald-700 font-extrabold">Photo Attached Successfully</span>
+                  <span className="text-emerald-700 font-extrabold">Attach The Photo</span>
                 ) : (
                   <>Drop photo here or <span className="text-blue-600 underline">browse local drive</span></>
                 )}
