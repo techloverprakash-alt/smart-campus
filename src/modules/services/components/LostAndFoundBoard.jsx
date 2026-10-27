@@ -724,62 +724,6 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                       <p className="mt-1 text-[11px] text-slate-400">
                         PNG, JPG, or WEBP up to 5MB. Visual signatures help campus security match intake records faster.
                       </p>
-
-                      {/* Quick sample image chips */}
-                      <div
-                        className="mt-3 flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-200/60"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span className="text-[10px] font-bold text-slate-400 mr-1">Quick Sample Photos:</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSampleImage(
-                              'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMhKzMBnY70PvwVXOnp0IRt6siQjnzjCUJO2Ew5bMx7yVAdcKm5QsMJo0gMZhizP9xTFUZIT-LDp1xlp4ukk01QB2inRLxgmY7NY9nAcLdFxwrsEWxoDwXG9SY4KatrvdGg3LZ4UCmXU0Gvj-5YfVGMeDZ-62GXWJ6tEQPLwOjUfZfpJsYnQ79mS490eDr1XibrYXw2_Qt8K9_URessUwF4IWmcJMLbLJud66YIYW4QRmUxC0DwoA',
-                              'casio_calculator.jpg'
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                          📷 Calculator
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSampleImage(
-                              'https://lh3.googleusercontent.com/aida-public/AB6AXuDjMLDFmDJ_pEgknJSLl_nX1TW7ctugA08YLnyth0KyNq-QnqjyW5RZY2qkz40PHUaVc82v5z2HONxqaxkticlCKEr7h0UBhJQ7jkPAr9IYv1f-tYURwGVmk-l-7cl_FrleiW6cXu5yGE2JxI95b_X4NvtCFUSeaTa0j_HKzzydg21xlm2bWCZkUPBQMZdHF3yFFN-BlsEh2LV1wvyrMd9mMmiY7uFOyDGcUR0a3QqcqosEOuAXG_-z',
-                              'blue_hydroflask.jpg'
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                          📷 Bottle
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSampleImage(
-                              'https://lh3.googleusercontent.com/aida-public/AB6AXuBR8wiotPeLc5bm7jLTFhUx0EvywmccNYJADk9Dtt7H82Z_UvLJttkDfnvSisBVHMvKeIIHyXxOlbn1OeRvXFkrc3qTKe-jkPS7eOC9AcRdYoHlNSZ7tfNBGHEqIRze5QwggG51DB-gZKjL6H6fpO2_Rw8fn87lqhl2FNpOp-sgygwH-kAJnZpIyNVCOUM6yJ9-etUVAW_xOG8pOqm9SeUDwmZZn9VyFOJ_T3OkR9xaXnTO7tHFJ40q',
-                              'rfid_wallet.jpg'
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                          📷 Wallet
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSampleImage(
-                              'https://lh3.googleusercontent.com/aida-public/AB6AXuDxlZUuXLyQ6NL4vgeTmiZ6HOzM5z3qKOHxpyhhRdZRd52ayl2A9cl9a0cIwmvzycFlJ-tlXShMr_rDf58BEm7woD-eLQG9OiikUzdkEczXDwWo1-yCysxyK2_dqT3VSjTOWlNWQ1H6TjZIym4uZjW6fECIPrHB93UqfyBRiVDLVvhG5hBAx-pnDThuKQ_-ESG8BqpVOfuTv_jn7xaqwdnYGsWIhasKJGYJBmdJwTJbezAhFQYwDomy',
-                              'airpods_pro.jpg'
-                            )
-                          }
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                          📷 AirPods
-                        </button>
-                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between rounded-2xl border-2 border-indigo-200 bg-indigo-50/40 p-3 shadow-sm animate-fade-in">

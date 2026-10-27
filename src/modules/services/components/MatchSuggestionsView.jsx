@@ -415,38 +415,6 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
         </div>
       )}
 
-      {/* Breadcrumb Navigation & Engine Live Badge */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 font-bold text-blue-700 hover:text-blue-900 transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Back to Services Overview
-          </button>
-          <span>•</span>
-          <span className="text-slate-600 font-semibold">Campus Security Command</span>
-          <span>•</span>
-          <span className="text-slate-900 font-bold">Lost & Found Reconciliation Desk</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
-            AI Multimodal Reconciliation Live
-          </span>
-          {onViewBoard && (
-            <button
-              onClick={onViewBoard}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2"
-            >
-              Open Public Board
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Main Page Title & Top Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -749,22 +717,12 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         </div>
                       </div>
 
-                      {/* Photo Thumbnail */}
-                      <div className="mt-4 pt-3 border-t border-slate-200/60">
-                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          <span>{candidate.lost.imageLabel}</span>
-                          <span className="text-blue-600 font-semibold">Self-uploaded</span>
-                        </div>
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          <img
-                            src={candidate.lost.image}
-                            alt={candidate.lost.title}
-                            className="h-full w-full object-cover transition hover:scale-105 duration-300"
-                          />
-                          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                            Student Photo
-                          </span>
-                        </div>
+                      {/* Verification Status */}
+                      <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Record Verification</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600">
+                          <CheckCircle2 size={13} /> Self-reported item
+                        </span>
                       </div>
                     </div>
 
@@ -867,22 +825,10 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         </div>
                       </div>
 
-                      {/* Security Scan Photo */}
-                      <div className="mt-4 pt-3 border-t border-slate-200/60">
-                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          <span>{candidate.found.imageLabel}</span>
-                          <span className="font-mono text-emerald-700 font-extrabold">{candidate.found.tag}</span>
-                        </div>
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          <img
-                            src={candidate.found.image}
-                            alt={candidate.found.title}
-                            className="h-full w-full object-cover transition hover:scale-105 duration-300"
-                          />
-                          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                            {candidate.found.scansCount} Scan Verified
-                          </span>
-                        </div>
+                      {/* Security Scan Verification */}
+                      <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Security Vault Intake</span>
+                        <span className="font-mono text-emerald-700 font-extrabold text-xs">{candidate.found.tag} • Verified</span>
                       </div>
                     </div>
                   </div>

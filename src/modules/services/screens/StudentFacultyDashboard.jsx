@@ -70,21 +70,14 @@ const navGroups = [
   {
     title: 'Workspace',
     links: [
-      { id: 'Overview / Dashboard', label: 'Overview / Dashboard', icon: LayoutDashboard },
-      { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
-      { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
-      { id: 'Match Suggestions & Verification', label: 'Match Suggestions & AI Triage', icon: Sparkles },
-      { id: 'Field Operations & Work Orders', label: 'Field Operations & Work Orders', icon: Activity },
+      { id: 'Overview / Dashboard', label: 'Overview', icon: LayoutDashboard },
+      { id: 'Report Infrastructure Issue', label: 'Report Issue', icon: Wrench },
+      { id: 'Lost & Found Claims', label: 'Lost & Found', icon: PackageSearch },
+      { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
+      { id: 'Field Operations & Work Orders', label: 'Field Operations', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
-      { id: 'Campus Admin Control Center', label: 'Admin Control Center', icon: Shield },
-      { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
-    ],
-  },
-  {
-    title: 'Support & Logs',
-    links: [
-      { id: 'Activity History', label: 'Activity History', icon: Clock3 },
-      { id: 'Help Desk', label: 'Help Desk', icon: HelpCircle },
+      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
+      { id: 'Campus Map & Facilities', label: 'Campus Map', icon: MapPin },
     ],
   },
 ];
@@ -403,7 +396,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur shadow-xs">
         {/* Row 1: Brand & Actions Bar */}
         <div className="border-b border-slate-100">
-          <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-10">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -450,61 +443,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                 <span>Campus Desks Online</span>
               </div>
 
-              {/* Quick Report CTA Button */}
-              <button
-                onClick={() => setActiveNav('Report Infrastructure Issue')}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
-              >
-                <Plus size={14} />
-                Report Issue
-              </button>
-
-              {/* Notifications */}
-              <div className="relative">
-                <button
-                  onClick={() => setNotifications(!notifications)}
-                  aria-label="Notifications"
-                  className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600"
-                >
-                  <Bell size={19} />
-                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
-                    3
-                  </span>
-                </button>
-                {notifications && (
-                  <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl animate-fade-in">
-                    <div className="mb-2 font-bold text-slate-900 flex items-center justify-between">
-                      <span>Notifications</span>
-                      <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">3 new</span>
-                    </div>
-                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                      <strong className="text-slate-800">CMP-104</strong>: Projector repair in Lab 302 is now in progress.
-                    </p>
-                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                      <strong className="text-indigo-700">LNF-204</strong>: 94% AI Match detected for your Casio calculator!
-                    </p>
-                    <p className="py-2 text-xs text-slate-600">All campus facility service desks are online.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Role indicator */}
-              <label className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 sm:flex">
-                <span className="text-[11px] text-slate-400">View as:</span>
-                <select
-                  aria-label="Select portal role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="border-0 bg-transparent py-1 pr-4 text-xs font-bold text-blue-700 focus:ring-0 cursor-pointer"
-                >
-                  <option>Student</option>
-                  <option>Faculty</option>
-                  <option>Admin</option>
-                </select>
-              </label>
-
-              <div className="hidden h-6 w-px bg-slate-200 sm:block" />
-
               {/* User Avatar */}
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white ring-2 ring-blue-100 shadow-sm">
@@ -521,93 +459,68 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
         {/* Row 2: Service & Lost Found Header Navigation Bar */}
         <div className="border-t border-slate-100 bg-slate-50/90">
-          <div className="mx-auto flex max-w-[1720px] items-center px-4 sm:px-6 lg:px-8">
-            <nav
-              ref={navRef}
-              onWheel={handleNavWheel}
-              aria-label="Services and Lost & Found Navigation"
-              className="flex w-full items-center gap-1.5 overflow-x-auto py-2.5 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {/* Workspace Navigation Links */}
-              {navGroups[0].links.map((link) => {
-                const IconComp = link.icon;
-                const isActive = activeNav === link.id || (link.id === 'Campus Map & Facilities' && modal === 'map');
-                const isComplaints = link.id === 'My Complaints';
-                const isMatch = link.id === 'Match Suggestions & Verification';
-                return (
-                  <button
-                    key={link.id}
-                    onClick={() => navClick(link.id)}
-                    className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
-                        : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-xs'
-                    }`}
-                  >
-                    <IconComp
-                      size={15}
-                      className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
-                    />
-                    <span>{link.label}</span>
-                    {isComplaints && (
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                          isActive
-                            ? 'bg-blue-700 text-white'
-                            : 'bg-slate-200 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700'
-                        }`}
-                      >
-                        {complaints.filter((c) => c.status === 'Active').length}
-                      </span>
-                    )}
-                    {isMatch && (
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                          isActive
-                            ? 'bg-amber-400 text-slate-900'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        94% Match
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-
-              {/* Support & Logs Divider */}
-              <div className="mx-1 h-5 w-px bg-slate-200 shrink-0" />
-
-              {/* Support & Logs Navigation Links */}
-              {navGroups[1].links.map((link) => {
-                const IconComp = link.icon;
-                const isActive = (link.id === 'Activity History' && modal === 'history') ||
-                  (link.id === 'Help Desk' && modal === 'help');
-                return (
-                  <button
-                    key={link.id}
-                    onClick={() => navClick(link.id)}
-                    className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
-                        : 'text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs'
-                    }`}
-                  >
-                    <IconComp
-                      size={14}
-                      className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
-                    />
-                    <span>{link.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+          <div className="mx-auto flex w-full max-w-[1600px] items-center px-4 sm:px-6 lg:px-10">
+            <div className="relative flex w-full items-center gap-1.5 py-2">
+              <nav
+                ref={navRef}
+                onWheel={handleNavWheel}
+                aria-label="Services and Lost & Found Navigation"
+                className="flex w-full items-center gap-2 overflow-x-auto py-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {/* Workspace Navigation Links */}
+                {navGroups[0].links.map((link) => {
+                  const IconComp = link.icon;
+                  const isActive = activeNav === link.id || (link.id === 'Campus Map & Facilities' && modal === 'map');
+                  const isComplaints = link.id === 'My Complaints';
+                  const isMatch = link.id === 'Match Suggestions & Verification';
+                  return (
+                    <button
+                      key={link.id}
+                      onClick={() => navClick(link.id)}
+                      className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
+                          : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-xs'
+                      }`}
+                    >
+                      <IconComp
+                        size={15}
+                        className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
+                      />
+                      <span>{link.label}</span>
+                      {isComplaints && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            isActive
+                              ? 'bg-blue-700 text-white'
+                              : 'bg-slate-200 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                          }`}
+                        >
+                          {complaints.filter((c) => c.status === 'Active').length}
+                        </span>
+                      )}
+                      {isMatch && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            isActive
+                              ? 'bg-amber-400 text-slate-900'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          94% Match
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Dynamic Content Main Area (Side Navigation Removed, Full-Width Layout) */}
-      <main className="mx-auto w-full max-w-[1720px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8 pb-16" id="top">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-10 pb-16" id="top">
           {/* TAB 0: DETAILED REPORT INFRASTRUCTURE ISSUE (FULL PAGE FROM IMAGE 1) */}
           {activeNav === 'Report Infrastructure Issue' && (
             <ReportInfrastructureView
@@ -623,18 +536,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
           {/* TAB 1: EMBEDDED LOST & FOUND BOARD */}
           {activeNav === 'Lost & Found Claims' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <button
-                  onClick={() => setActiveNav('Overview / Dashboard')}
-                  className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-                >
-                  <ArrowLeft size={14} />
-                  Back to Services Overview
-                </button>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                  NEXUS Lost & Found Custody Engine
-                </span>
-              </div>
               <LostAndFoundBoard
                 openReportModal={openLostReport}
                 onReportModalClosed={() => setOpenLostReport(false)}
@@ -773,7 +674,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                   </button>
                 </div>
               )}
-
               {/* 3 Quick Action Wizard Cards */}
               <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
                 {[
@@ -1174,66 +1074,94 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
         </Modal>
       )}
 
-      {/* Support Modals: Map / Help / History */}
-      {['map', 'help', 'history'].includes(modal) && (
+      {/* Campus Map & Facilities Modal */}
+      {modal === 'map' && (
         <Modal
-          title={modal === 'map' ? 'Campus Map & Facilities' : modal === 'help' ? 'Help Desk' : 'Activity History'}
-          maxWidth={modal === 'map' ? 'max-w-4xl' : 'max-w-lg'}
+          title="Campus Map & Facilities"
+          maxWidth="max-w-4xl"
           onClose={() => setModal(null)}
         >
-          {modal === 'map' ? (
-            <div className="space-y-4">
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner">
-                <img
-                  src={CAMPUS_MAP_IMAGE}
-                  alt="Info College Campus Map & Facilities"
-                  className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-lg"
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner">
+              <img
+                src={CAMPUS_MAP_IMAGE}
+                alt="Info College Campus Map & Facilities"
+                className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-lg"
+              />
+            </div>
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-blue-950">Campus Layout & Facilities Directory</p>
-                  <p className="text-blue-700 mt-0.5">
-                    1: Academic Block • 2: Library • 3: Hostel • 4: Cafeteria • 5: Sports Complex • 6: Science & Lab Block • 7: Auditorium • 8: Parking Area • 9: Green Area / Garden
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
-                <p>
-                  Nearest custodial intake desk: Science & Lab Block (6), central concourse.
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-blue-950">Campus Layout & Facilities Directory</p>
+                <p className="text-blue-700 mt-0.5">
+                  1: Academic Block • 2: Library • 3: Hostel • 4: Cafeteria • 5: Sports Complex • 6: Science & Lab Block • 7: Auditorium • 8: Parking Area • 9: Green Area / Garden
                 </p>
-                <a
-                  href={CAMPUS_MAP_IMAGE}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-800"
-                >
-                  <ExternalLink size={14} /> Open full size map
-                </a>
               </div>
             </div>
-          ) : modal === 'help' ? (
-            <div className="space-y-3 text-sm text-slate-600">
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
               <p>
-                <strong className="text-slate-900">Campus Services Help Desk</strong>
+                Nearest custodial intake desk: Science & Lab Block (6), central concourse.
               </p>
-              <p>
-                For critical electrical or hazardous safety concerns, immediately clear the area and notify the security desk at extension 4001.
-              </p>
-              <p>For all standard classroom, lab, or hostel repairs, use "Report Infrastructure Issue" above.</p>
+              <a
+                href={CAMPUS_MAP_IMAGE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-800"
+              >
+                <ExternalLink size={14} /> Open full size map
+              </a>
             </div>
-          ) : (
-            <div className="space-y-2 text-sm">
-              {historyItems.map((x) => (
-                <div key={x} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-slate-700 text-xs font-medium">
-                  {x}
-                </div>
-              ))}
-            </div>
-          )}
+          </div>
+          <button
+            onClick={() => setModal(null)}
+            className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"
+          >
+            Close
+          </button>
+        </Modal>
+      )}
+
+      {/* Activity History Modal */}
+      {modal === 'history' && (
+        <Modal
+          title="Activity History"
+          maxWidth="max-w-lg"
+          onClose={() => setModal(null)}
+        >
+          <div className="space-y-2 text-sm">
+            {historyItems.map((x) => (
+              <div key={x} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-slate-700 text-xs font-medium">
+                {x}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setModal(null)}
+            className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"
+          >
+            Close
+          </button>
+        </Modal>
+      )}
+
+      {/* Help Desk Modal */}
+      {modal === 'help' && (
+        <Modal
+          title="Help Desk"
+          maxWidth="max-w-lg"
+          onClose={() => setModal(null)}
+        >
+          <div className="space-y-3 text-sm text-slate-600">
+            <p>
+              <strong className="text-slate-900">Campus Services Help Desk</strong>
+            </p>
+            <p>
+              For critical electrical or hazardous safety concerns, immediately clear the area and notify the security desk at extension 4001.
+            </p>
+            <p>For all standard classroom, lab, or hostel repairs, use "Report Infrastructure Issue".</p>
+          </div>
           <button
             onClick={() => setModal(null)}
             className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"

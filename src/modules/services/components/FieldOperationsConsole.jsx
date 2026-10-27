@@ -194,39 +194,6 @@ export default function FieldOperationsConsole({ onBack, onOpenReportIssue }) {
         onChange={handlePhotoUpload}
       />
 
-      {/* Top Breadcrumb & Live Technician Context */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 font-bold text-blue-700 hover:text-blue-900 transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Back to Services Overview
-          </button>
-          <span>•</span>
-          <span className="text-slate-600 font-semibold">Campus Operations Command</span>
-          <span>•</span>
-          <span className="text-slate-900 font-bold">Field Maintenance Unit</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Field Dispatch Console Live
-          </span>
-          <div className="flex items-center gap-2 border-l border-slate-200 pl-3 text-xs">
-            <div className="text-right">
-              <span className="block font-bold text-slate-900">Gnana Prakash (GP)</span>
-              <span className="text-[10px] text-emerald-600 font-medium">● Senior Tech • On Duty</span>
-            </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-700 text-xs font-bold text-white shadow-xs">
-              GP
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

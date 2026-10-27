@@ -227,27 +227,7 @@ export default function ReportInfrastructureView({ onBack, onSubmitTicket, onVie
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-16 animate-fade-in">
-      {/* Breadcrumb Navigation & Session Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 text-xs font-bold text-blue-700 hover:text-blue-900 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </button>
-        <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-500">
-          <span className="font-mono text-slate-700">STUDENT ID: CS-2023-8841</span>
-          <span>•</span>
-          <span className="flex items-center gap-1.5 text-emerald-600 font-bold">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            NEXUS Facilities Dispatch Live
-          </span>
-        </div>
-      </div>
-
+    <div className="mx-auto max-w-5xl space-y-6 pb-16 animate-fade-in">
       {/* Page Title & Subtitle */}
       <div>
         <div className="flex flex-wrap items-center gap-3 mb-1.5">
