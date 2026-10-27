@@ -13,7 +13,7 @@ import {
   Smartphone, Zap, AlertTriangle, X, PackageSearch, MessageSquare,
   Wrench, Shield, ArrowRight, ArrowLeft, Building2, Flame,
   FileCode, CheckCheck, RefreshCw, Send, CheckCircle, ExternalLink,
-  Award, Sparkles, ChevronLeft, ChevronRight
+  Award, Sparkles, ChevronLeft, ChevronRight, Calendar
 } from 'lucide-react';
 
 const initialComplaints = [
@@ -278,8 +278,28 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   const [complaints, setComplaints] = useState(initialComplaints);
   const [claimStatus, setClaimStatus] = useState('Active Search');
   const [role, setRole] = useState(user?.role === 'STAFF' ? 'Faculty' : user?.role === 'ADMIN' ? 'Admin' : 'Student');
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
+
   const [openLostReport, setOpenLostReport] = useState(false);
   const [selectedMatchItem, setSelectedMatchItem] = useState(null);
+  const [quickLostModal, setQuickLostModal] = useState(null);
+  const [dashboardNotice, setDashboardNotice] = useState('');
+  const [quickImagePreview, setQuickImagePreview] = useState(null);
+  const [historyItems, setHistoryItems] = useState([
+    'CMP-104 • Projector complaint moved to In Progress (Today, 09:40 AM)',
+    'LNF-204 • 94% AI match detected for Casio calculator (Today, 09:15 AM)',
+    'CMP-098 • AC thermostat complaint resolved (Yesterday, 04:30 PM)',
+  ]);
+  const [quickForm, setQuickForm] = useState({
+    title: '',
+    category: 'Electronics',
+    zone: 'Central Library',
+    exactLocation: '',
+    brandModel: '',
+    description: '',
+    type: 'Lost',
+    reportDate: getTodayDate(),
+  });
   const navRef = useRef(null);
 
 
@@ -602,6 +622,58 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
           {/* TAB 3: OVERVIEW / DASHBOARD (DEFAULT) */}
           {activeNav === 'Overview / Dashboard' && (
             <>
+              {/* Hero Banner */}
+              <section className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm md:flex-row md:items-center">
+                <div>
+                  <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                    Welcome to Campus Services, {displayName}! <span>👋</span>
+                  </h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-200/60 bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
+                      CS-2023-8841
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Building2 size={13} className="text-slate-400" />
+                      Computer Science Block A
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="flex items-center gap-1.5">
+                      <MapPin size={13} className="text-blue-500" />
+                      Science Quad District
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                    <span className="h-2 w-2 rounded-full bg-blue-600" />
+                    {complaints.filter((c) => c.status === 'Active').length} Active Complaints
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                    {complaints.filter((c) => c.status === 'Resolved').length} Resolved
+                  </span>
+                  <button
+                    onClick={() => setActiveNav('Lost & Found Claims')}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                  >
+                    <Zap size={14} className="text-indigo-600" />1 High AI Match
+                  </button>
+                </div>
+              </section>
+
+              {/* Status Notice Banner if report submitted from Overview */}
+              {dashboardNotice && (
+                <div role="status" className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 shadow-xs animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                    <span>{dashboardNotice}</span>
+                  </div>
+                  <button onClick={() => setDashboardNotice('')} className="text-emerald-600 hover:text-emerald-800">
+                    <X size={15} />
+                  </button>
+                </div>
+              )}
               {/* 3 Quick Action Wizard Cards */}
               <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
                 {[
@@ -618,10 +690,20 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                     color: 'text-cyan-600 bg-cyan-50',
                     title: 'I Lost an Item',
                     desc: 'Search AI intake registry & broadcast lost asset visual signatures across campus in seconds.',
-                    button: 'Search & file claim',
+                    button: 'File lost item report',
                     action: () => {
-                      setOpenLostReport(true);
-                      setActiveNav('Lost & Found Claims');
+                      setQuickForm({
+                        title: '',
+                        category: 'Electronics',
+                        zone: 'Central Library',
+                        exactLocation: '',
+                        brandModel: '',
+                        description: '',
+                        type: 'Lost',
+                        reportDate: getTodayDate(),
+                      });
+                      setQuickImagePreview(null);
+                      setQuickLostModal('Lost');
                     },
                   },
                   {
@@ -631,8 +713,18 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                     desc: 'Log unattended property for quick custodial desk check-in & automated AI-assisted owner retrieval.',
                     button: 'Log discovered property',
                     action: () => {
-                      setOpenLostReport(true);
-                      setActiveNav('Lost & Found Claims');
+                      setQuickForm({
+                        title: '',
+                        category: 'Electronics',
+                        zone: 'Central Library',
+                        exactLocation: '',
+                        brandModel: '',
+                        description: '',
+                        type: 'Found',
+                        reportDate: getTodayDate(),
+                      });
+                      setQuickImagePreview(null);
+                      setQuickLostModal('Found');
                     },
                   },
                 ].map((card) => {
@@ -640,7 +732,8 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                   return (
                     <div
                       key={card.title}
-                      className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                      onClick={card.action}
+                      className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md cursor-pointer"
                     >
                       <div>
                         <div className="mb-3 flex items-center justify-between">
@@ -657,7 +750,11 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                         <p className="mt-2 text-xs leading-relaxed text-slate-500">{card.desc}</p>
                       </div>
                       <button
-                        onClick={card.action}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          card.action();
+                        }}
                         className="mt-5 flex items-center gap-1 text-left text-xs font-bold text-blue-600 hover:text-blue-700"
                       >
                         {card.button}
@@ -1023,6 +1120,289 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
           >
             Close
           </button>
+        </Modal>
+      )}
+
+      {/* Activity History Modal */}
+      {modal === 'history' && (
+        <Modal
+          title="Activity History"
+          maxWidth="max-w-lg"
+          onClose={() => setModal(null)}
+        >
+          <div className="space-y-2 text-sm">
+            {historyItems.map((x) => (
+              <div key={x} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-slate-700 text-xs font-medium">
+                {x}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setModal(null)}
+            className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"
+          >
+            Close
+          </button>
+        </Modal>
+      )}
+
+      {/* Help Desk Modal */}
+      {modal === 'help' && (
+        <Modal
+          title="Help Desk"
+          maxWidth="max-w-lg"
+          onClose={() => setModal(null)}
+        >
+          <div className="space-y-3 text-sm text-slate-600">
+            <p>
+              <strong className="text-slate-900">Campus Services Help Desk</strong>
+            </p>
+            <p>
+              For critical electrical or hazardous safety concerns, immediately clear the area and notify the security desk at extension 4001.
+            </p>
+            <p>For all standard classroom, lab, or hostel repairs, use "Report Infrastructure Issue".</p>
+          </div>
+          <button
+            onClick={() => setModal(null)}
+            className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"
+          >
+            Close
+          </button>
+        </Modal>
+      )}
+
+      {/* Quick Lost / Found In-Place Modal (Keeps user on Overview / Dashboard) */}
+      {quickLostModal && (
+        <Modal
+          title={quickLostModal === 'Lost' ? 'Report a Lost Item' : 'Log a Found Item (Property Discovery)'}
+          maxWidth="max-w-2xl"
+          onClose={() => setQuickLostModal(null)}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!quickForm.title.trim()) return;
+              const isLost = quickForm.type === 'Lost';
+              const formattedDate = new Date(quickForm.reportDate || new Date()).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              });
+              setDashboardNotice(
+                isLost
+                  ? `Success! Lost report for "${quickForm.title}" (Date: ${formattedDate}) broadcast to Info IT campus registry.`
+                  : `Success! Discovery of "${quickForm.title}" on ${formattedDate} recorded. Please deposit the item at Quad Security Desk #02.`
+              );
+              setHistoryItems((prev) => [
+                `${isLost ? 'LOST REPORT' : 'FOUND REPORT'}: "${quickForm.title}" • Date: ${formattedDate} (Reported at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+                ...prev,
+              ]);
+              setTimeout(() => setDashboardNotice(''), 6500);
+              setQuickLostModal(null);
+            }}
+            className="space-y-4"
+          >
+            {/* Header metadata pill with reporting timestamp */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <span className="text-xs font-semibold text-slate-500">
+                Campus Security & Custodial Registry
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                <Calendar size={12} className="text-blue-600" />
+                Reported: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+
+            {/* 1. Report Type Pill Toggle */}
+            <div>
+              <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">
+                1. REPORT TYPE
+              </span>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setQuickForm({ ...quickForm, type: 'Lost' })}
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition-all ${
+                    quickForm.type === 'Lost'
+                      ? 'border-2 border-cyan-600 bg-cyan-50/70 text-cyan-800 shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Search size={16} />
+                  Lost Item (I lost something)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickForm({ ...quickForm, type: 'Found' })}
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold transition-all ${
+                    quickForm.type === 'Found'
+                      ? 'border-2 border-indigo-600 bg-indigo-50/70 text-indigo-800 shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <PackageSearch size={16} />
+                  Found Item (I discovered property)
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Item Identification */}
+            <div className="space-y-3">
+              <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                2. ITEM DETAILS *
+              </span>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Item Title *</label>
+                <input
+                  required
+                  value={quickForm.title}
+                  onChange={(e) => setQuickForm({ ...quickForm, title: e.target.value })}
+                  placeholder={
+                    quickForm.type === 'Lost'
+                      ? 'e.g. Casio FX-991EX Calculator, Black Backpack'
+                      : 'e.g. Silver Water Bottle, Apple Earbuds in Blue Case'
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                  <select
+                    value={quickForm.category}
+                    onChange={(e) => setQuickForm({ ...quickForm, category: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-semibold text-slate-700 focus:bg-white focus:border-blue-500"
+                  >
+                    <option>Electronics</option>
+                    <option>Study Materials</option>
+                    <option>Wallets & Cards</option>
+                    <option>Accessories</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Brand / Model / Color</label>
+                  <input
+                    value={quickForm.brandModel || ''}
+                    onChange={(e) => setQuickForm({ ...quickForm, brandModel: e.target.value })}
+                    placeholder="e.g. Matte Black, Navy Blue, Sony"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Incident Date & Campus Location */}
+            <div className="space-y-3">
+              <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                3. INCIDENT DATE & CAMPUS LOCATION *
+              </span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                    <Calendar size={13} className="text-blue-600" />
+                    {quickForm.type === 'Lost' ? 'Date Lost *' : 'Date Found *'}
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={quickForm.reportDate}
+                    onChange={(e) => setQuickForm({ ...quickForm, reportDate: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Campus Zone *</label>
+                  <select
+                    value={quickForm.zone}
+                    onChange={(e) => setQuickForm({ ...quickForm, zone: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-semibold text-slate-700 focus:bg-white focus:border-blue-500"
+                  >
+                    <option>Central Library</option>
+                    <option>Main Canteen / Food Court</option>
+                    <option>Sports Complex</option>
+                    <option>Academic Block B</option>
+                    <option>Hostel Block</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Exact Area / Spot</label>
+                  <input
+                    value={quickForm.exactLocation || ''}
+                    onChange={(e) => setQuickForm({ ...quickForm, exactLocation: e.target.value })}
+                    placeholder="e.g. Table 14, 2nd floor cubicle, bench"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Description & Notes */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Additional Notes / Distinctive Marks</label>
+              <textarea
+                rows={2}
+                value={quickForm.description}
+                onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
+                placeholder="Mention distinctive marks, scratches, stickers, engravings, or circumstances..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+              />
+            </div>
+
+            {/* Visual Signature Upload */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Attach Photo (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setQuickImagePreview(ev.target.result);
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {quickImagePreview && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img src={quickImagePreview} alt="Preview" className="h-12 w-12 rounded-lg object-cover border border-slate-200" />
+                  <span className="text-[11px] text-emerald-600 font-semibold">Image attached</span>
+                </div>
+              )}
+            </div>
+
+            {quickForm.type === 'Found' && (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-900">
+                <span className="font-bold">Custodial Handover Notice:</span> Please bring the physical item to <strong>Quad Security Desk #02</strong> or Library Custodial Desk #01 for official intake verification.
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setQuickLostModal(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={`rounded-xl px-5 py-2 text-xs font-bold text-white shadow-xs ${
+                  quickForm.type === 'Lost'
+                    ? 'bg-cyan-600 hover:bg-cyan-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                {quickForm.type === 'Lost' ? 'Broadcast Lost Report' : 'Confirm & Log Found Item'}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>
