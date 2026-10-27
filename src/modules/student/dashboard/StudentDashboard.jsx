@@ -336,7 +336,6 @@ function ServiceHeader() {
   );
 }
 
-<<<<<<< HEAD
 function QFixCard({ onLaunch }) {
   return (
     <View style={styles.qfixCard}>
@@ -383,10 +382,7 @@ function QFixCard({ onLaunch }) {
   );
 }
 
-function ServiceCard({ title, description, icon, onPress }) {
-=======
 function ServiceCard({ title, description, icon, logo, onPress }) {
->>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   return (
     <TouchableOpacity
       style={styles.serviceCard}
@@ -1274,7 +1270,6 @@ const styles = StyleSheet.create({
     color: "#585f6c",
   },
 
-<<<<<<< HEAD
   /* ================= Q-FIX ================= */
 
   qfixCard: {
@@ -1361,9 +1356,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#003fb1",
   },
-
-=======
->>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   /* ================= SERVICE GRID ================= */
 
   servicesGrid: {
