@@ -333,54 +333,44 @@ function ServiceHeader() {
 function QFixCard({ onLaunch }) {
   return (
     <View style={styles.qfixCard}>
-      <View style={styles.qfixImageContainer}>
-        <Image
-          source={{ uri: QFIX_IMAGE }}
-          style={styles.qfixImage}
-        />
-
-        <View style={styles.imageOverlay} />
-
-        <View style={styles.qfixImageBottom}>
+      <View style={styles.qfixTitleRow}>
+        <View style={styles.qfixTitleLeft}>
+          <MaterialIcons
+            name="account-balance"
+            size={18}
+            color="#003fb1"
+          />
           <Text style={styles.qfixTitle}>
             Q-Fix Student Desk
           </Text>
+        </View>
 
-          <View style={styles.officialBadge}>
-            <Text style={styles.officialText}>
-              Official
-            </Text>
-          </View>
+        <View style={styles.officialBadge}>
+          <Text style={styles.officialText}>Official</Text>
         </View>
       </View>
 
-      <View style={styles.qfixContent}>
-        <Text style={styles.qfixDescription}>
-          Fee payments, online receipts, scholarship tracking,
-          and student grievance queries handled seamlessly.
+      <Text style={styles.qfixDescription}>
+        Fee payments, online receipts, scholarship tracking, and student grievance queries handled seamlessly.
+      </Text>
+
+      <View style={styles.qfixFooter}>
+        <Text style={styles.poweredText}>
+          Info IT Student Accounts & Online Desk
         </Text>
 
-        <View style={styles.qfixFooter}>
-          <Text style={styles.poweredText}>
-            Powered by Info Institute of Technology
-          </Text>
-
-          <TouchableOpacity
-            style={styles.launchButton}
-            activeOpacity={0.7}
-            onPress={onLaunch}
-          >
-            <Text style={styles.launchText}>
-              Launch Q-Fix
-            </Text>
-
-            <MaterialIcons
-              name="open-in-new"
-              size={16}
-              color="#003fb1"
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.launchButton}
+          activeOpacity={0.7}
+          onPress={onLaunch}
+        >
+          <Text style={styles.launchText}>Launch Q-Fix</Text>
+          <MaterialIcons
+            name="arrow-forward"
+            size={14}
+            color="#003fb1"
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -1271,99 +1261,75 @@ const styles = StyleSheet.create({
   /* ================= Q-FIX ================= */
 
   qfixCard: {
-    borderRadius: 12,
-    overflow: "hidden",
     backgroundColor: "#ffffff",
-    elevation: 2,
+    borderRadius: 12,
+    padding: 16,
+    elevation: 1,
     shadowColor: "#000000",
     shadowOpacity: 0.04,
-    shadowRadius: 5,
+    shadowRadius: 4,
     shadowOffset: {
       width: 0,
       height: 1,
     },
+    borderWidth: 1,
+    borderColor: "#e8edf5",
   },
 
-  qfixImageContainer: {
-    width: "100%",
-    height: 130,
-    backgroundColor: "#e7e7f3",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  qfixImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  imageOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 70,
-    backgroundColor: "rgba(46,48,57,0.55)",
-  },
-
-  qfixImageBottom: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 8,
+  qfixTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
 
+  qfixTitleLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+
   qfixTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: "700",
-    color: "#ffffff",
+    color: "#191b23",
   },
 
   officialBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
+    paddingVertical: 2,
+    borderRadius: 12,
     backgroundColor: "#1353d8",
   },
 
   officialText: {
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 13,
     fontWeight: "600",
     color: "#ffffff",
   },
 
-  qfixContent: {
-    padding: 14,
-    gap: 6,
-  },
-
   qfixDescription: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
     fontWeight: "400",
     color: "#434654",
+    marginTop: 8,
   },
 
   qfixFooter: {
-    paddingTop: 4,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    alignItems: "center",
+    marginTop: 12,
   },
 
   poweredText: {
-    flex: 1,
     fontSize: 11,
     lineHeight: 15,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#585f6c",
+    flex: 1,
   },
 
   launchButton: {
@@ -1373,8 +1339,8 @@ const styles = StyleSheet.create({
   },
 
   launchText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: "700",
     color: "#003fb1",
   },
