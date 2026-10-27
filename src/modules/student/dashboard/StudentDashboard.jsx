@@ -336,57 +336,7 @@ function ServiceHeader() {
   );
 }
 
-<<<<<<< HEAD
-function QFixCard({ onLaunch }) {
-  return (
-    <View style={styles.qfixCard}>
-      <View style={styles.qfixTitleRow}>
-        <View style={styles.qfixTitleLeft}>
-          <MaterialIcons
-            name="account-balance"
-            size={18}
-            color="#003fb1"
-          />
-          <Text style={styles.qfixTitle}>
-            Q-Fix Student Desk
-          </Text>
-        </View>
-
-        <View style={styles.officialBadge}>
-          <Text style={styles.officialText}>Official</Text>
-        </View>
-      </View>
-
-      <Text style={styles.qfixDescription}>
-        Fee payments, online receipts, scholarship tracking, and student grievance queries handled seamlessly.
-      </Text>
-
-      <View style={styles.qfixFooter}>
-        <Text style={styles.poweredText}>
-          Info IT Student Accounts & Online Desk
-        </Text>
-
-        <TouchableOpacity
-          style={styles.launchButton}
-          activeOpacity={0.7}
-          onPress={onLaunch}
-        >
-          <Text style={styles.launchText}>Launch Q-Fix</Text>
-          <MaterialIcons
-            name="arrow-forward"
-            size={14}
-            color="#003fb1"
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function ServiceCard({ title, description, icon, onPress }) {
-=======
 function ServiceCard({ title, description, icon, logo, onPress }) {
->>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   return (
     <TouchableOpacity
       style={styles.serviceCard}
@@ -1274,96 +1224,7 @@ const styles = StyleSheet.create({
     color: "#585f6c",
   },
 
-<<<<<<< HEAD
-  /* ================= Q-FIX ================= */
 
-  qfixCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    elevation: 1,
-    shadowColor: "#000000",
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    borderWidth: 1,
-    borderColor: "#e8edf5",
-  },
-
-  qfixTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  qfixTitleLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-
-  qfixTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "700",
-    color: "#191b23",
-  },
-
-  officialBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    backgroundColor: "#1353d8",
-  },
-
-  officialText: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-
-  qfixDescription: {
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: "400",
-    color: "#434654",
-    marginTop: 8,
-  },
-
-  qfixFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-  },
-
-  poweredText: {
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "500",
-    color: "#585f6c",
-    flex: 1,
-  },
-
-  launchButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-
-  launchText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "700",
-    color: "#003fb1",
-  },
-
-=======
->>>>>>> 48fe9425eee63feb3bca94316c7c13e9a6d285a6
   /* ================= SERVICE GRID ================= */
 
   servicesGrid: {
