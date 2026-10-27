@@ -380,7 +380,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                   </span>
                 </div>
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Suguna College of Engineering
+                  Info Institute of Technology
                 </div>
               </div>
             </a>
@@ -932,7 +932,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
           {/* Footer */}
           <footer className="border-t border-slate-200 pt-6 pb-4 text-center text-xs text-slate-500">
-            NEXUS Campus Services & Lost Property Custody Portal • Suguna College of Engineering
+            NEXUS Campus Services & Lost Property Custody Portal • Info Institute of Technology
           </footer>
         </main>
       </div>

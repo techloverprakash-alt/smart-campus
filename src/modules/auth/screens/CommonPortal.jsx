@@ -72,25 +72,21 @@ const COLORS = {
   secondaryContainer: "#dce2f3",
 };
 
-const LOGO_URL =
-  "https://lh3.googleusercontent.com/aida/AEtjO1Wvn-7DlspBmymBZsPXM5ofH-gwObYUZX7235q1CvfulTuqnJHFo7-dKK9FtRU_nF9bJmgVlSl3vIe_BLaa3RBjW9icQRFjWupeEupGTt0BOl5iIocHT6vlnlyxA4S2OwCvcTdTEwhoTDbAzsOpRo5PqdfOvY89KN0Ri2ZllbuoLjY-RwWFBXSYB1pBPQBVoQDDG3Q2XjZXSSNyxh92nncG92zKb44jRGkR1tHS9neOiyzZGqYdhtgy71qS3NQuFQJrzqFr3ErYDA";
+const LOGO_URL = "/info_logo.png";
 
-const ABOUT_HERO_LOGO =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCgT67buEwRaovK5cv4XMMMTdtewdIlXGvFLEidbAs21p7ce0xHT7BWHGo6niQtrdrLtRDXYcBcNpt7ssn9-lJDvyu8SucnLaL6oIbUqxFLWTB4CK5_KX93mCewSmPVF54mMom5BSc-lwHxIpUKVMMBx4OMZnVicevsVF9xgDv0qshe9fDincalpMTyRdeF_xFaCpp2mjUxVSNFvGlmQDp0pnxA__OrAeM44dEmu7cWQUqTw-KR9pRP0lvR650uwlbGhw";
+const ABOUT_HERO_LOGO = "/info_logo.png";
 
 const CAMPUS_BANNER =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB2w7F-xb43eaugvpQiI9wgTD_G0iNKVI60BRaM6CsvUWyEhADP7A-n43uappZPvz87jIEfCd-r8NRL5IB5OAJJ93UA_G5wDqLc_lx-26Obi7d0tnJOl8zyS_ZDm04PJURwPIjmLNAbZ2F1LkMEHV-uwQRsu66d4xmDHMoVtWE641-VccdTPVkIqOWBzrD0cQt--3y_8DgQ9jTx-IHSVjcMNGyNCbdUBhiAfxu4gNs35qmbZbGLfmB3";
 
-const COLLEGE_CREST =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuB_grLCr6GpbNbsJRJGkHWclkRBzTVPhqUXe6VTDn0hsePlBizDxjsLEX2So7paCDyvXEAtzr_kwfdUyj4xXnEnNuePIo6HvfbtQ68-p_W2rtdFYHFz_lE_00q4uac53AdBnz-4mKTsNBcSWG5ez5JqerPzimh2cv5N6nEN_Ig0vozgnmEMBlIUQXRgRC16X_qoYiReueUTk2t4YiDZQ0Yts2_mVrqzm15-Mnvh8K87VRvsjGHOkkfPk5x2MyW-cHpWeQ";
+const COLLEGE_CREST = "/info_logo.png";
 
 const QFIX_LOGO =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCx6E3-GQ8z-16S2X4wAfJG5rljnzMl1XATUZWc688SYv98QXGEGTsoaEAq16QM3QrOz0KFxVihkSwFcID1QG2pEJi1q7O9TWouexXI6uqLKptQF0rMyoRnJzk1fk2sTrx2AqYhIN3ar6ZVar92pc7F5iJKsmcaDbE7jICTfcvTt8MVWJ1CReuOOi784VBSBVVycX0nqpPe7AZNltojurAJHGoMii5kL-y1_nIKuDGJr4-ow2ZE4_RzahCzK7Ki4UIo5w";
 
 import TIMETABLE_IMAGE from '@/assets/timetable-3yr.jpeg';
 
-const COLLEGE_BADGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBYmMmJ-TkEDPlvFGKy6rdB5jFKyCcpaDrbIkGrlSP6KcDZsX4luKEPPFWT7e0nM3xHFVjyRuteDH6YxXO21B4briCplrmn_9XCx7NOGibdt8uk92QiTvYnYxtjdqEh7TDaRrB0Chso--IxjNyN77fsb3X0mmIbh5Es9rH9LRk_bR37Qdu_WQzaiSQCOeHej9ISMP-ir06gyjeQPYtqEaTxJjdVsK2kVkBUkdaDAWlDYci-ZSMvlyh4lgCVLOFtq2d3kw";
+const COLLEGE_BADGE = "/info_logo.png";
 
 const ACHIEVEMENT_IMAGES = {
   hackathon:
@@ -1867,6 +1863,8 @@ function AboutNexusView() {
     return INITIAL_CREATORS;
   });
 
+  const photoInputRef = React.useRef(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -1879,6 +1877,50 @@ function AboutNexusView() {
     image: "",
   });
 
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 360;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.88);
+          setFormData((prev) => ({ ...prev, image: compressedDataUrl }));
+        } catch (err) {
+          setFormData((prev) => ({ ...prev, image: event.target.result }));
+        }
+      };
+      img.onerror = () => {
+        setFormData((prev) => ({ ...prev, image: event.target.result }));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleEditMember = (member) => {
     setEditingMember(member);
     setFormData({
@@ -1890,6 +1932,7 @@ function AboutNexusView() {
       initials: member.initials || "",
       image: member.image || "",
     });
+    setShowUrlInput(Boolean(member.image && member.image.startsWith("http")));
     setIsModalOpen(true);
   };
 
@@ -1915,6 +1958,7 @@ function AboutNexusView() {
       initials: newMember.initials,
       image: "",
     });
+    setShowUrlInput(false);
     setIsModalOpen(true);
   };
 
@@ -2178,15 +2222,99 @@ function AboutNexusView() {
                 />
               </View>
 
-              <View style={styles.modalFieldGroup}>
-                <Text style={styles.modalFieldLabel}>Profile Image URL (optional)</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={formData.image}
-                  onChangeText={(val) => setFormData({ ...formData, image: val })}
-                  placeholder="https://..."
-                  placeholderTextColor="#94a3b8"
+              {/* PHOTO UPLOAD & PREVIEW SECTION */}
+              <View style={styles.modalPhotoSection}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={photoInputRef}
+                  style={{ display: "none" }}
+                  onChange={handlePhotoFileChange}
                 />
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => photoInputRef.current?.click()}
+                  style={styles.modalPhotoPreviewContainer}
+                  title="Click to choose photo"
+                >
+                  {formData.image ? (
+                    <Image
+                      source={{ uri: formData.image }}
+                      style={styles.modalPhotoPreview}
+                    />
+                  ) : (
+                    <View style={styles.modalPhotoPlaceholder}>
+                      <Text style={styles.modalPhotoInitials}>
+                        {formData.initials ||
+                          (formData.name
+                            ? formData.name.substring(0, 2).toUpperCase()
+                            : "ST")}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.modalPhotoOverlayIcon}>
+                    <MaterialIcons name="photo-camera" size={12} color="#ffffff" />
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.modalPhotoActions}>
+                  <Text style={styles.modalFieldLabel}>Profile Photo</Text>
+                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <TouchableOpacity
+                      style={styles.modalUploadBtn}
+                      onPress={() => photoInputRef.current?.click()}
+                      activeOpacity={0.8}
+                    >
+                      <MaterialIcons name="cloud-upload" size={14} color={COLORS.primary} />
+                      <Text style={styles.modalUploadBtnText}>
+                        {formData.image ? "Change Photo" : "Upload Photo"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {formData.image ? (
+                      <TouchableOpacity
+                        style={styles.modalRemovePhotoBtn}
+                        onPress={() => setFormData({ ...formData, image: "" })}
+                        activeOpacity={0.8}
+                      >
+                        <MaterialIcons name="delete-outline" size={14} color={COLORS.error} />
+                        <Text style={styles.modalRemovePhotoBtnText}>Remove</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                  <Text style={styles.modalPhotoHint}>
+                    JPG, PNG, or WEBP from device (auto-resized)
+                  </Text>
+                </View>
+              </View>
+
+              {/* OPTIONAL URL TOGGLE */}
+              <View style={[styles.modalFieldGroup, { marginBottom: 16 }]}>
+                <TouchableOpacity
+                  onPress={() => setShowUrlInput(!showUrlInput)}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 4 }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons
+                    name={showUrlInput ? "expand-less" : "expand-more"}
+                    size={16}
+                    color={COLORS.primary}
+                  />
+                  <Text style={[styles.modalFieldLabel, { color: COLORS.primary, marginBottom: 0 }]}>
+                    {showUrlInput ? "Hide image URL input" : "Or paste image URL instead"}
+                  </Text>
+                </TouchableOpacity>
+
+                {showUrlInput && (
+                  <TextInput
+                    style={styles.modalInput}
+                    value={formData.image}
+                    onChangeText={(val) => setFormData({ ...formData, image: val })}
+                    placeholder="https://example.com/photo.jpg"
+                    placeholderTextColor="#94a3b8"
+                  />
+                )}
               </View>
             </ScrollView>
 
@@ -2320,15 +2448,25 @@ function StudentCard({ image, initials, name, roll, department, description, tag
   return (
     <View style={styles.profileCard}>
       <View style={styles.profileTop}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.initialAvatar}>
-            <Text style={styles.initialText}>
-              {initials || (name ? name.substring(0, 2).toUpperCase() : "ST")}
-            </Text>
+        <TouchableOpacity
+          onPress={onEdit}
+          activeOpacity={0.75}
+          style={styles.profileAvatarWrapper}
+          title="Click to edit photo & profile"
+        >
+          {image ? (
+            <Image source={{ uri: image }} style={styles.profileImage} />
+          ) : (
+            <View style={styles.initialAvatar}>
+              <Text style={styles.initialText}>
+                {initials || (name ? name.substring(0, 2).toUpperCase() : "ST")}
+              </Text>
+            </View>
+          )}
+          <View style={styles.avatarEditOverlay}>
+            <MaterialIcons name="photo-camera" size={10} color="#ffffff" />
           </View>
-        )}
+        </TouchableOpacity>
 
         <View style={styles.profileInfo}>
           <View style={styles.profileHeaderRow}>
@@ -2461,8 +2599,6 @@ function LaurelsView() {
           <AchievementCard key={item.id} item={item} />
         ))}
       </View>
-
-      <SubmitAchievement />
 
       <View style={styles.bottomSpace} />
     </ScrollView>
@@ -3405,6 +3541,135 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#ffffff",
+  },
+
+  profileAvatarWrapper: {
+    position: "relative",
+    flexShrink: 0,
+    cursor: "pointer",
+  },
+
+  avatarEditOverlay: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    backgroundColor: COLORS.primary,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  modalPhotoSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 12,
+    backgroundColor: COLORS.surfaceContainer,
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.4)",
+  },
+
+  modalPhotoPreviewContainer: {
+    position: "relative",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: "hidden",
+    flexShrink: 0,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    cursor: "pointer",
+  },
+
+  modalPhotoPreview: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 27,
+  },
+
+  modalPhotoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 27,
+    backgroundColor: COLORS.primaryFixed,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalPhotoInitials: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+
+  modalPhotoOverlayIcon: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 18,
+    backgroundColor: "rgba(0, 63, 177, 0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalPhotoActions: {
+    flex: 1,
+  },
+
+  modalUploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: COLORS.surfaceContainerLowest,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 63, 177, 0.3)",
+    cursor: "pointer",
+  },
+
+  modalUploadBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.primary,
+  },
+
+  modalRemovePhotoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fff1f2",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(225, 29, 72, 0.2)",
+    cursor: "pointer",
+  },
+
+  modalRemovePhotoBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.error,
+  },
+
+  modalPhotoHint: {
+    fontSize: 11,
+    color: COLORS.onSurfaceVariant,
+    marginTop: 6,
   },
 
   profileName: {

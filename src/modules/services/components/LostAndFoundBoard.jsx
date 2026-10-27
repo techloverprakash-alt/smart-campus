@@ -328,7 +328,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
             Public Campus Lost & Found Board
           </h2>
           <p className="mt-1.5 max-w-3xl text-xs leading-relaxed text-slate-500 sm:text-sm">
-            Community asset registry for Suguna College of Engineering. Contact details remain redacted for privacy; item claims and physical releases are verified through certified campus security desks before collection.
+            Community asset registry for Info Institute of Technology. Contact details remain redacted for privacy; item claims and physical releases are verified through certified campus security desks before collection.
           </p>
         </div>
 
@@ -500,7 +500,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">
                   {modal.type === 'report'
-                    ? 'Share item details with the Suguna College campus custody registry and AI matching system.'
+                    ? 'Share item details with the Info Institute of Technology campus custody registry and AI matching system.'
                     : 'Let the campus custody desk know you may have located this item.'}
                 </p>
               </div>
