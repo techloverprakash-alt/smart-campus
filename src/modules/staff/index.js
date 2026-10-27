@@ -1,0 +1,16 @@
+export * from './dashboard/StaffDashboard';
+export { default as StaffDashboard } from './dashboard/StaffDashboard';
+export * from './attendance/MarkAttendance';
+export { default as MarkAttendance } from './attendance/MarkAttendance';
+export * from './attendance/AttendanceReview';
+export { default as AttendanceReview } from './attendance/AttendanceReview';
+export * from './timetable/StaffTimetable';
+export { default as StaffTimetable } from './timetable/StaffTimetable';
+export * from './materials/StaffNotes';
+export { default as StaffNotes } from './materials/StaffNotes';
+export * from './profile/StaffProfile';
+export { default as StaffProfile } from './profile/StaffProfile';
+export * from './profile/StaffEditProfile';
+export { default as StaffEditProfile } from './profile/StaffEditProfile';
+export * from './mentor-proctor/MentorProctorAllocationScreen';
+export { default as MentorProctorAllocationScreen } from './mentor-proctor/MentorProctorAllocationScreen';

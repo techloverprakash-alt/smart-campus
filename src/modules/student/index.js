@@ -1,0 +1,14 @@
+export * from './dashboard/StudentDashboard';
+export { default as StudentDashboard } from './dashboard/StudentDashboard';
+export * from './attendance/AttendanceHistory';
+export { default as AttendanceHistory } from './attendance/AttendanceHistory';
+export * from './attendance/StudentAttendanceDetail';
+export { default as StudentAttendanceDetail } from './attendance/StudentAttendanceDetail';
+export * from './timetable/StudentTimetable';
+export { default as StudentTimetable } from './timetable/StudentTimetable';
+export * from './materials/StudyMaterials';
+export { default as StudyMaterials } from './materials/StudyMaterials';
+export * from './profile/StudentProfile';
+export { default as StudentProfile } from './profile/StudentProfile';
+export * from './profile/StudentEditProfile';
+export { default as StudentEditProfile } from './profile/StudentEditProfile';
