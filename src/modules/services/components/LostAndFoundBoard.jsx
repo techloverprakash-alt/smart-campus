@@ -171,7 +171,7 @@ function ItemCard({ item, onFound, onMatch, listView }) {
   );
 }
 
-export default function LostAndFoundBoard({ openReportModal = false, onReportModalClosed }) {
+export default function LostAndFoundBoard({ openReportModal = false, onReportModalClosed, onOpenMatchSuggestions }) {
   const [items, setItems] = useState(initialItems);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All Categories');
@@ -266,8 +266,12 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
   }
 
   function actionMatch(item) {
-    setNotice(`AI match review opened for ${item.id}. Matching confidence score: 94% with Quad Security intake scan.`);
-    setTimeout(() => setNotice(''), 5000);
+    if (onOpenMatchSuggestions) {
+      onOpenMatchSuggestions(item);
+    } else {
+      setNotice(`AI match review opened for ${item.id}. Matching confidence score: 94% with Quad Security intake scan.`);
+      setTimeout(() => setNotice(''), 5000);
+    }
   }
 
   function submitReport(e) {
@@ -332,13 +336,25 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
           </p>
         </div>
 
-        <button
-          onClick={() => setModal({ type: 'report' })}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-700 sm:text-sm"
-        >
-          <Plus size={16} />
-          Report Lost or Found Item
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {onOpenMatchSuggestions && (
+            <button
+              type="button"
+              onClick={onOpenMatchSuggestions}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-xs font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-100 sm:text-sm"
+            >
+              <Zap size={15} className="text-blue-600" />
+              AI Match Suggestions (4)
+            </button>
+          )}
+          <button
+            onClick={() => setModal({ type: 'report' })}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-700 sm:text-sm"
+          >
+            <Plus size={16} />
+            Report Lost or Found Item
+          </button>
+        </div>
       </div>
 
       {/* Metrics Counters */}

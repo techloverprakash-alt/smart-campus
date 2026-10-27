@@ -3,13 +3,14 @@ import { useRouter } from '../../../router';
 import { useAuth } from '../../auth/context/AuthContext';
 import LostAndFoundBoard from '../components/LostAndFoundBoard';
 import ReportInfrastructureView from '../components/ReportInfrastructureView';
+import MatchSuggestionsView from '../components/MatchSuggestionsView';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
   HelpCircle, LayoutDashboard, MapPin, Plus, Search, ShieldCheck,
   Smartphone, Zap, AlertTriangle, X, PackageSearch, MessageSquare,
   Wrench, Shield, ArrowRight, ArrowLeft, Building2, Flame,
   FileCode, CheckCheck, RefreshCw, Send, CheckCircle, ExternalLink,
-  Award
+  Award, Sparkles
 } from 'lucide-react';
 
 const initialComplaints = [
@@ -70,6 +71,7 @@ const navGroups = [
       { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
       { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
+      { id: 'Match Suggestions & Verification', label: 'Match Suggestions & AI Triage', icon: Sparkles },
       { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
     ],
   },
@@ -539,8 +541,17 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
               <LostAndFoundBoard
                 openReportModal={openLostReport}
                 onReportModalClosed={() => setOpenLostReport(false)}
+                onOpenMatchSuggestions={() => setActiveNav('Match Suggestions & Verification')}
               />
             </div>
+          )}
+
+          {/* TAB 1.5: AUTOMATED MATCH SUGGESTIONS & CLAIM VERIFICATION */}
+          {activeNav === 'Match Suggestions & Verification' && (
+            <MatchSuggestionsView
+              onBack={() => setActiveNav('Lost & Found Claims')}
+              onViewBoard={() => setActiveNav('Lost & Found Claims')}
+            />
           )}
 
           {/* TAB 2: MY COMPLAINTS FULL LIST */}
