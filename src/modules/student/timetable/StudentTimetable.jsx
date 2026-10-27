@@ -406,11 +406,11 @@ export default function StudentTimetable({ navigation }) {
                 </Text>
               </View>
 
-              <View style={styles.scheduleList}>
+              <View style={[styles.scheduleList, isWide && styles.scheduleListDesktop]}>
                 {todaySchedule.map((item, i) => {
                   if (item.break) {
                     return (
-                      <View key={i} style={styles.breakRow}>
+                      <View key={i} style={[styles.breakRow, isWide && styles.breakRowDesktop]}>
                         <View style={styles.breakIconWrap}>
                           <MaterialIcons
                             name={item.icon}
@@ -435,6 +435,7 @@ export default function StudentTimetable({ navigation }) {
                       key={i}
                       style={[
                         styles.periodCard,
+                        isWide && styles.periodCardDesktop,
                         isLive && styles.periodCardLive,
                         isNext && styles.periodCardNext,
                         isDone && styles.periodCardDone,
@@ -670,62 +671,64 @@ export default function StudentTimetable({ navigation }) {
           <View style={styles.toolsSection}>
             <Text style={styles.toolsHeading}>Timetable Tools & Support</Text>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() => setFacultyOpen(true)}
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#dce2f3" }]}>
-                <MaterialIcons name="badge" size={20} color="#003fb1" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>View Faculty Contact Details</Text>
-                <Text style={styles.toolSubtitle}>
-                  Office hours, cabin numbers & email IDs
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={20} color="#737686" />
-            </TouchableOpacity>
+            <View style={isWide ? styles.toolsGridDesktop : styles.toolsGridMobile}>
+              <TouchableOpacity
+                style={[styles.toolCard, isWide && styles.toolCardDesktop]}
+                activeOpacity={0.7}
+                onPress={() => setFacultyOpen(true)}
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#dce2f3" }]}>
+                  <MaterialIcons name="badge" size={20} color="#003fb1" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>View Faculty Contact Details</Text>
+                  <Text style={styles.toolSubtitle}>
+                    Office hours, cabin numbers & email IDs
+                  </Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color="#737686" />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() => showToast("Downloading Sem 5 Timetable PDF...")}
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#dbe1ff" }]}>
-                <MaterialIcons name="file-download" size={20} color="#003fb1" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>
-                  Download Offline PDF Timetable
-                </Text>
-                <Text style={styles.toolSubtitle}>
-                  Official college seal signed copy (Sem 5)
-                </Text>
-              </View>
-              <MaterialIcons name="file-download" size={20} color="#737686" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCard, isWide && styles.toolCardDesktop]}
+                activeOpacity={0.7}
+                onPress={() => showToast("Downloading Sem 5 Timetable PDF...")}
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#dbe1ff" }]}>
+                  <MaterialIcons name="file-download" size={20} color="#003fb1" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>
+                    Download Offline PDF Timetable
+                  </Text>
+                  <Text style={styles.toolSubtitle}>
+                    Official college seal signed copy (Sem 5)
+                  </Text>
+                </View>
+                <MaterialIcons name="file-download" size={20} color="#737686" />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.toolCard}
-              activeOpacity={0.7}
-              onPress={() =>
-                showToast("Feedback form opened. Reporting to Advisor.")
-              }
-            >
-              <View style={[styles.toolIconWrap, { backgroundColor: "#e2e1ed" }]}>
-                <MaterialIcons name="flag" size={20} color="#585f6c" />
-              </View>
-              <View style={styles.toolTextWrap}>
-                <Text style={styles.toolTitle}>
-                  Report Timetable Issue / Clash
-                </Text>
-                <Text style={styles.toolSubtitle}>
-                  Direct ticket to Class Advisor & HOD office
-                </Text>
-              </View>
-              <MaterialIcons name="report" size={20} color="#737686" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCard, isWide && styles.toolCardDesktop]}
+                activeOpacity={0.7}
+                onPress={() =>
+                  showToast("Feedback form opened. Reporting to Advisor.")
+                }
+              >
+                <View style={[styles.toolIconWrap, { backgroundColor: "#e2e1ed" }]}>
+                  <MaterialIcons name="flag" size={20} color="#585f6c" />
+                </View>
+                <View style={styles.toolTextWrap}>
+                  <Text style={styles.toolTitle}>
+                    Report Timetable Issue / Clash
+                  </Text>
+                  <Text style={styles.toolSubtitle}>
+                    Direct ticket to Class Advisor & HOD office
+                  </Text>
+                </View>
+                <MaterialIcons name="report" size={20} color="#737686" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Bottom spacing for bottom nav */}
@@ -835,14 +838,21 @@ const styles = StyleSheet.create({
   /* ================= TOP BAR ================= */
   header: {
     height: 64,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    paddingHorizontal: 20,
     backgroundColor: "rgba(250,248,255,0.95)",
     borderBottomWidth: 1,
     borderBottomColor: "#e7e7f3",
     zIndex: 40,
+    justifyContent: "center",
+  },
+
+  headerInner: {
+    width: "100%",
+    maxWidth: 1200,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   headerLeft: {
@@ -948,16 +958,75 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
     width: "100%",
-    maxWidth: 540,
+    maxWidth: 1200,
     alignSelf: "center",
   },
 
   mainContainer: {
     gap: 16,
+  },
+
+  /* ================= RESPONSIVE HERO & LAYOUT ================= */
+  desktopHeroGrid: {
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "stretch",
+  },
+
+  desktopHeroLeft: {
+    flex: 1,
+    gap: 16,
+    justifyContent: "space-between",
+  },
+
+  desktopHeroRight: {
+    flex: 1.15,
+  },
+
+  mobileHeroCol: {
+    gap: 16,
+  },
+
+  fullWidth: {
+    width: "100%",
+  },
+
+  liveCardDesktop: {
+    flex: 1,
+    minHeight: 230,
+    justifyContent: "space-between",
+  },
+
+  scheduleListDesktop: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 12,
+  },
+
+  periodCardDesktop: {
+    width: "49%",
+  },
+
+  breakRowDesktop: {
+    width: "100%",
+  },
+
+  toolsGridDesktop: {
+    flexDirection: "row",
+    gap: 14,
+  },
+
+  toolsGridMobile: {
+    gap: 10,
+  },
+
+  toolCardDesktop: {
+    flex: 1,
   },
 
   /* ================= PROFILE CARD ================= */
