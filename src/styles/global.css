@@ -523,6 +523,10 @@ textarea.rn-input {
 .student-header-user-btn:hover {
   background: #f8fafc;
 }
+.student-header-user-btn.active {
+  background: #e4ecff;
+  border-color: #003fb1;
+}
 .student-header-avatar {
   width: 28px;
   height: 28px;
