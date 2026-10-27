@@ -71,10 +71,10 @@ const navGroups = [
     links: [
       { id: 'Overview / Dashboard', label: 'Overview / Dashboard', icon: LayoutDashboard },
       { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
-      { id: 'Field Operations & Work Orders', label: 'Field Operations & Work Orders', icon: Activity },
-      { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
       { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
       { id: 'Match Suggestions & Verification', label: 'Match Suggestions & AI Triage', icon: Sparkles },
+      { id: 'Field Operations & Work Orders', label: 'Field Operations & Work Orders', icon: Activity },
+      { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
       { id: 'Campus Admin Control Center', label: 'Admin Control Center', icon: Shield },
       { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
     ],
@@ -331,11 +331,20 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   };
 
   const navClick = (label) => {
+    if (label === 'Campus Map & Facilities') {
+      setModal('map');
+      return;
+    }
+    if (label === 'Help Desk') {
+      setModal('help');
+      return;
+    }
+    if (label === 'Activity History') {
+      setModal('history');
+      return;
+    }
     setActiveNav(label);
     if (label === 'My Complaints') setTicketTab('All');
-    if (label === 'Campus Map & Facilities') setModal('map');
-    if (label === 'Help Desk') setModal('help');
-    if (label === 'Activity History') setModal('history');
   };
 
   const handleReturnHome = () => {
@@ -354,167 +363,212 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800 antialiased">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleReturnHome}
-              title="Return to Main Portal"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-            >
-              <ArrowLeft size={14} />
-              <span className="hidden sm:inline">Back to Dashboard</span>
-            </button>
-
-            <a
-              href="#top"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveNav('Overview / Dashboard');
-              }}
-              className="group flex items-center gap-3"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-white shadow-sm">
-                <Building2 size={20} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-black tracking-tight text-blue-900">NEXUS</span>
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-800">
-                    Services
-                  </span>
-                </div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Info Institute of Technology
-                </div>
-              </div>
-            </a>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Quick Lost & Found Tab Button */}
-            <button
-              onClick={() => setActiveNav('Lost & Found Claims')}
-              className={`hidden md:inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                activeNav === 'Lost & Found Claims'
-                  ? 'border border-blue-200 bg-blue-50 text-blue-700'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <PackageSearch size={15} />
-              Lost & Found Board
-            </button>
-
-            {/* Notifications */}
-            <div className="relative">
+      {/* Top Header with Navigation Bar */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur shadow-xs">
+        {/* Row 1: Brand & Actions Bar */}
+        <div className="border-b border-slate-100">
+          <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setNotifications(!notifications)}
-                aria-label="Notifications"
-                className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600"
+                onClick={handleReturnHome}
+                title="Return to Main Portal"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs"
               >
-                <Bell size={19} />
-                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
-                  3
-                </span>
+                <ArrowLeft size={14} />
+                <span className="hidden sm:inline">Back to Dashboard</span>
               </button>
-              {notifications && (
-                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl animate-fade-in">
-                  <div className="mb-2 font-bold text-slate-900 flex items-center justify-between">
-                    <span>Notifications</span>
-                    <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">3 new</span>
-                  </div>
-                  <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                    <strong className="text-slate-800">CMP-104</strong>: Projector repair in Lab 302 is now in progress.
-                  </p>
-                  <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                    <strong className="text-indigo-700">LNF-204</strong>: 94% AI Match detected for your Casio calculator!
-                  </p>
-                  <p className="py-2 text-xs text-slate-600">All campus facility service desks are online.</p>
+
+              <a
+                href="#top"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveNav('Overview / Dashboard');
+                }}
+                className="group flex items-center gap-3"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-white shadow-sm transition-transform group-hover:scale-105">
+                  <Building2 size={20} />
                 </div>
-              )}
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg font-black tracking-tight text-blue-900">NEXUS</span>
+                    <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-800">
+                      Services & Lost Found
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Info Institute of Technology
+                  </div>
+                </div>
+              </a>
             </div>
 
-            {/* Role indicator */}
-            <label className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 sm:flex">
-              <span className="text-[11px] text-slate-400">View as:</span>
-              <select
-                aria-label="Select portal role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="border-0 bg-transparent py-1 pr-4 text-xs font-bold text-blue-700 focus:ring-0 cursor-pointer"
-              >
-                <option>Student</option>
-                <option>Faculty</option>
-                <option>Admin</option>
-              </select>
-            </label>
-
-            <div className="hidden h-6 w-px bg-slate-200 sm:block" />
-
-            {/* User Avatar */}
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white ring-2 ring-blue-100 shadow-sm">
-                {initials}
+              {/* Operations Live Status indicator */}
+              <div className="hidden lg:flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/90 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span>Campus Desks Online</span>
               </div>
-              <div className="hidden leading-tight lg:block">
-                <p className="text-sm font-bold text-slate-800">{displayName}</p>
-                <p className="text-[11px] font-medium text-slate-500">{role} Portal</p>
+
+              {/* Quick Report CTA Button */}
+              <button
+                onClick={() => setActiveNav('Report Infrastructure Issue')}
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
+              >
+                <Plus size={14} />
+                Report Issue
+              </button>
+
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setNotifications(!notifications)}
+                  aria-label="Notifications"
+                  className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600"
+                >
+                  <Bell size={19} />
+                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
+                    3
+                  </span>
+                </button>
+                {notifications && (
+                  <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl animate-fade-in">
+                    <div className="mb-2 font-bold text-slate-900 flex items-center justify-between">
+                      <span>Notifications</span>
+                      <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">3 new</span>
+                    </div>
+                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
+                      <strong className="text-slate-800">CMP-104</strong>: Projector repair in Lab 302 is now in progress.
+                    </p>
+                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
+                      <strong className="text-indigo-700">LNF-204</strong>: 94% AI Match detected for your Casio calculator!
+                    </p>
+                    <p className="py-2 text-xs text-slate-600">All campus facility service desks are online.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Role indicator */}
+              <label className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 sm:flex">
+                <span className="text-[11px] text-slate-400">View as:</span>
+                <select
+                  aria-label="Select portal role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="border-0 bg-transparent py-1 pr-4 text-xs font-bold text-blue-700 focus:ring-0 cursor-pointer"
+                >
+                  <option>Student</option>
+                  <option>Faculty</option>
+                  <option>Admin</option>
+                </select>
+              </label>
+
+              <div className="hidden h-6 w-px bg-slate-200 sm:block" />
+
+              {/* User Avatar */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white ring-2 ring-blue-100 shadow-sm">
+                  {initials}
+                </div>
+                <div className="hidden leading-tight lg:block">
+                  <p className="text-sm font-bold text-slate-800">{displayName}</p>
+                  <p className="text-[11px] font-medium text-slate-500">{role} Portal</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Row 2: Service & Lost Found Header Navigation Bar */}
+        <div className="bg-slate-50/90">
+          <div className="mx-auto flex max-w-[1720px] items-center px-4 sm:px-6 lg:px-8">
+            <nav
+              aria-label="Services and Lost & Found Navigation"
+              className="flex w-full items-center gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {/* Workspace Navigation Links */}
+              {navGroups[0].links.map((link) => {
+                const IconComp = link.icon;
+                const isActive = activeNav === link.id || (link.id === 'Campus Map & Facilities' && modal === 'map');
+                const isComplaints = link.id === 'My Complaints';
+                const isMatch = link.id === 'Match Suggestions & Verification';
+                return (
+                  <button
+                    key={link.id}
+                    onClick={() => navClick(link.id)}
+                    className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
+                        : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-xs'
+                    }`}
+                  >
+                    <IconComp
+                      size={15}
+                      className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
+                    />
+                    <span>{link.label}</span>
+                    {isComplaints && (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                          isActive
+                            ? 'bg-blue-700 text-white'
+                            : 'bg-slate-200 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                        }`}
+                      >
+                        {complaints.filter((c) => c.status === 'Active').length}
+                      </span>
+                    )}
+                    {isMatch && (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                          isActive
+                            ? 'bg-amber-400 text-slate-900'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        94% Match
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Support & Logs Divider */}
+              <div className="mx-1 h-5 w-px bg-slate-200 shrink-0" />
+
+              {/* Support & Logs Navigation Links */}
+              {navGroups[1].links.map((link) => {
+                const IconComp = link.icon;
+                const isActive = (link.id === 'Activity History' && modal === 'history') ||
+                  (link.id === 'Help Desk' && modal === 'help');
+                return (
+                  <button
+                    key={link.id}
+                    onClick={() => navClick(link.id)}
+                    className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
+                        : 'text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs'
+                    }`}
+                  >
+                    <IconComp
+                      size={14}
+                      className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
+                    />
+                    <span>{link.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
       </header>
 
-      {/* Main Workspace Frame */}
-      <div className="mx-auto flex w-full max-w-[1720px] flex-1 overflow-hidden">
-        {/* Desktop Sidebar Navigation */}
-        <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-slate-200 bg-white md:flex">
-          <div className="space-y-6 p-4">
-            {navGroups.map((group) => (
-              <div key={group.title}>
-                <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">{group.title}</p>
-                <ul className="space-y-1 text-sm font-medium">
-                  {group.links.map((link) => {
-                    const IconComp = link.icon;
-                    const isActive = activeNav === link.id;
-                    return (
-                      <li key={link.id}>
-                        <button
-                          onClick={() => navClick(link.id)}
-                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
-                            isActive
-                              ? 'bg-blue-600 font-bold text-white shadow-sm'
-                              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <IconComp size={17} className={isActive ? 'text-white' : 'text-slate-400'} />
-                          <span>{link.label}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="m-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="mb-1.5 flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              </span>
-              <h4 className="text-xs font-bold text-slate-800">Campus Operations</h4>
-            </div>
-            <p className="text-xs leading-relaxed text-slate-500">
-              All facility service desks online and reporting normal latency.
-            </p>
-          </div>
-        </aside>
-
-        {/* Dynamic Content Main Area */}
-        <main className="min-w-0 flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8" id="top">
+      {/* Dynamic Content Main Area (Side Navigation Removed, Full-Width Layout) */}
+      <main className="mx-auto w-full max-w-[1720px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8" id="top">
           {/* TAB 0: DETAILED REPORT INFRASTRUCTURE ISSUE (FULL PAGE FROM IMAGE 1) */}
           {activeNav === 'Report Infrastructure Issue' && (
             <ReportInfrastructureView
@@ -967,7 +1021,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
             NEXUS Campus Services & Lost Property Custody Portal • Info Institute of Technology
           </footer>
         </main>
-      </div>
 
       {/* ===================== MODALS ===================== */}
 
