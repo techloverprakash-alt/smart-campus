@@ -516,18 +516,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
           {/* TAB 1: EMBEDDED LOST & FOUND BOARD */}
           {activeNav === 'Lost & Found Claims' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <button
-                  onClick={() => setActiveNav('Overview / Dashboard')}
-                  className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-                >
-                  <ArrowLeft size={14} />
-                  Back to Services Overview
-                </button>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                  NEXUS Lost & Found Custody Engine
-                </span>
-              </div>
               <LostAndFoundBoard
                 openReportModal={openLostReport}
                 onReportModalClosed={() => setOpenLostReport(false)}
