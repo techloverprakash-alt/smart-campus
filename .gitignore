@@ -80,3 +80,26 @@ backend/venv/
 *.db
 *.sqlite
 *.sqlite3
+
+# ── ML Models & Large Checkpoints ───────────────────────────────────────────
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.ckpt
+checkpoints/
+backend/checkpoints/
+
+# ── User Media Uploads ──────────────────────────────────────────────────────
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep
+static/uploads/*
+!static/uploads/.gitkeep
+
+# ── General Server Logs ─────────────────────────────────────────────────────
+*.log
+
+# ── Vector DB Local Volumes ─────────────────────────────────────────────────
+qdrant_data/
+qdrant_storage/
