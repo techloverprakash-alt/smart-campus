@@ -749,22 +749,12 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         </div>
                       </div>
 
-                      {/* Photo Thumbnail */}
-                      <div className="mt-4 pt-3 border-t border-slate-200/60">
-                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          <span>{candidate.lost.imageLabel}</span>
-                          <span className="text-blue-600 font-semibold">Self-uploaded</span>
-                        </div>
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          <img
-                            src={candidate.lost.image}
-                            alt={candidate.lost.title}
-                            className="h-full w-full object-cover transition hover:scale-105 duration-300"
-                          />
-                          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                            Student Photo
-                          </span>
-                        </div>
+                      {/* Verification Status */}
+                      <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Record Verification</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600">
+                          <CheckCircle2 size={13} /> Self-reported item
+                        </span>
                       </div>
                     </div>
 
@@ -867,22 +857,10 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         </div>
                       </div>
 
-                      {/* Security Scan Photo */}
-                      <div className="mt-4 pt-3 border-t border-slate-200/60">
-                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                          <span>{candidate.found.imageLabel}</span>
-                          <span className="font-mono text-emerald-700 font-extrabold">{candidate.found.tag}</span>
-                        </div>
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                          <img
-                            src={candidate.found.image}
-                            alt={candidate.found.title}
-                            className="h-full w-full object-cover transition hover:scale-105 duration-300"
-                          />
-                          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                            {candidate.found.scansCount} Scan Verified
-                          </span>
-                        </div>
+                      {/* Security Scan Verification */}
+                      <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Security Vault Intake</span>
+                        <span className="font-mono text-emerald-700 font-extrabold text-xs">{candidate.found.tag} • Verified</span>
                       </div>
                     </div>
                   </div>
