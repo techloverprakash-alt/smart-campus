@@ -67,6 +67,7 @@ const navGroups = [
     title: 'Workspace',
     links: [
       { id: 'Overview / Dashboard', label: 'Overview / Dashboard', icon: LayoutDashboard },
+      { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
       { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
       { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
@@ -300,11 +301,11 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   };
 
   const handleTicketSubmitted = (ticketData) => {
-    const newId = `CMP-${113 + complaints.length}`;
+    const newId = ticketData.id || `CMP-${113 + complaints.length}`;
     const newTicket = {
       id: newId,
       category: ticketData.category,
-      icon: ticketData.category === 'Electrical' ? 'bolt' : ticketData.category === 'Plumbing' ? 'droplet' : 'wrench',
+      icon: ticketData.category?.includes('Electric') ? 'bolt' : ticketData.category?.includes('Plumb') ? 'droplet' : 'wrench',
       priority: ticketData.priority === 'Critical' ? 'Critical Hazard' : ticketData.priority === 'Medium' ? 'Medium Priority' : 'Low Priority',
       priorityTone: ticketData.priorityTone,
       date: 'Just now',
@@ -321,7 +322,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
     setComplaints((prev) => [newTicket, ...prev]);
     setTicketTab('All');
-    setActiveNav('My Complaints');
   };
 
   const navClick = (label) => {
@@ -514,6 +514,10 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
             <ReportInfrastructureView
               onBack={() => setActiveNav('Overview / Dashboard')}
               onSubmitTicket={handleTicketSubmitted}
+              onViewComplaints={() => {
+                setTicketTab('All');
+                setActiveNav('My Complaints');
+              }}
             />
           )}
 
