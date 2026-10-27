@@ -189,7 +189,8 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
   const [form, setForm] = useState({
     title: '',
     category: 'Electronics',
-    zone: 'Central Library',
+    zone: '',
+    personName: '',
     exactLocation: '',
     brandModel: '',
     description: '',
@@ -296,12 +297,16 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
       ? new Date(form.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : 'Just now';
 
+    const locationDisplay = form.exactLocation
+      ? (form.personName ? `${form.personName} • ${form.exactLocation}` : (form.zone ? `${form.zone} • ${form.exactLocation}` : form.exactLocation))
+      : (form.personName || form.zone || 'Campus');
+
     const newItem = {
       ...form,
       id: `LNF-${230 + items.length}`,
-      location: form.exactLocation ? `${form.zone} • ${form.exactLocation}` : form.zone,
+      location: locationDisplay,
       age: formattedAge,
-      owner: 'Kamesh S.',
+      owner: form.personName || 'Kamesh S.',
       status: form.type === 'Found' ? 'Intake Logged' : 'Open Search',
       tone: form.type === 'Found' ? 'blue' : 'slate',
       image: finalImage,
@@ -312,7 +317,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
 
     setItems([newItem, ...items]);
     closeModal();
-    setForm({ title: '', category: 'Electronics', zone: 'Central Library', exactLocation: '', brandModel: '', description: '', type: 'Lost' });
+    setForm({ title: '', category: 'Electronics', zone: '', personName: '', exactLocation: '', brandModel: '', description: '', type: 'Lost', date: new Date().toISOString().split('T')[0] });
     setImageFile(null);
     setImagePreview(null);
     if (form.type === 'Found' && onOpenMatchSuggestions) {
@@ -633,17 +638,16 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Campus Zone</label>
-                      <select
-                        value={form.zone}
-                        onChange={(e) => setForm({ ...form, zone: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-semibold text-slate-700 focus:bg-white focus:border-blue-500"
-                      >
-                        <option>Central Library</option>
-                        <option>Main Canteen / Food Court</option>
-                        <option>Sports Complex</option>
-                        <option>Academic Block B</option>
-                      </select>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
+                        Name of the Lost Person
+                      </label>
+                      <input
+                        type="text"
+                        value={form.personName || form.zone || ''}
+                        onChange={(e) => setForm({ ...form, personName: e.target.value, zone: e.target.value })}
+                        placeholder="Enter full name of the lost person"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+                      />
                     </div>
 
                     <div>

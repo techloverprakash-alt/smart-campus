@@ -326,7 +326,8 @@ export default function StudentFacultyDashboard(props) {
   const [quickForm, setQuickForm] = useState({
     title: '',
     category: 'Electronics',
-    zone: 'Central Library',
+    zone: '',
+    personName: '',
     exactLocation: '',
     brandModel: '',
     description: '',
@@ -732,7 +733,8 @@ export default function StudentFacultyDashboard(props) {
                       setQuickForm({
                         title: '',
                         category: 'Electronics',
-                        zone: 'Central Library',
+                        zone: '',
+                        personName: '',
                         exactLocation: '',
                         brandModel: '',
                         description: '',
@@ -753,7 +755,8 @@ export default function StudentFacultyDashboard(props) {
                       setQuickForm({
                         title: '',
                         category: 'Electronics',
-                        zone: 'Central Library',
+                        zone: '',
+                        personName: '',
                         exactLocation: '',
                         brandModel: '',
                         description: '',
@@ -1225,13 +1228,14 @@ export default function StudentFacultyDashboard(props) {
                 day: 'numeric',
                 year: 'numeric',
               });
+              const personInfo = quickForm.personName ? ` (Person: ${quickForm.personName})` : '';
               setDashboardNotice(
                 isLost
-                  ? `Success! Lost report for "${quickForm.title}" (Date: ${formattedDate}) broadcast to Info IT campus registry.`
-                  : `Success! Discovery of "${quickForm.title}" on ${formattedDate} recorded. Please deposit the item at Quad Security Desk #02.`
+                  ? `Success! Lost report for "${quickForm.title}"${personInfo} (Date: ${formattedDate}) broadcast to Info IT campus registry.`
+                  : `Success! Discovery of "${quickForm.title}"${personInfo} on ${formattedDate} recorded. Please deposit the item at Quad Security Desk #02.`
               );
               setHistoryItems((prev) => [
-                `${isLost ? 'LOST REPORT' : 'FOUND REPORT'}: "${quickForm.title}" • Date: ${formattedDate} (Reported at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+                `${isLost ? 'LOST REPORT' : 'FOUND REPORT'}: "${quickForm.title}"${personInfo} • Date: ${formattedDate} (Reported at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
                 ...prev,
               ]);
               setTimeout(() => setDashboardNotice(''), 6500);
@@ -1351,18 +1355,15 @@ export default function StudentFacultyDashboard(props) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Campus Zone *</label>
-                  <select
-                    value={quickForm.zone}
-                    onChange={(e) => setQuickForm({ ...quickForm, zone: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-semibold text-slate-700 focus:bg-white focus:border-blue-500"
-                  >
-                    <option>Central Library</option>
-                    <option>Main Canteen / Food Court</option>
-                    <option>Sports Complex</option>
-                    <option>Academic Block B</option>
-                    <option>Hostel Block</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Name of the Lost Person *</label>
+                  <input
+                    required
+                    type="text"
+                    value={quickForm.personName || ''}
+                    onChange={(e) => setQuickForm({ ...quickForm, personName: e.target.value, zone: e.target.value })}
+                    placeholder="Enter full name of the lost person"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500"
+                  />
                 </div>
 
                 <div>
