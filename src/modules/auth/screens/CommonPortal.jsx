@@ -3017,39 +3017,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  cardEditBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: COLORS.surfaceContainerHigh,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "rgba(195,197,215,0.45)",
-  },
 
-  cardEditText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.primary,
-  },
-
-  addMemberBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-
-  addMemberBtnText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#ffffff",
-  },
 
   modalOverlay: {
     flex: 1,
