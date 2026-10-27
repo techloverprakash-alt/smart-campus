@@ -19,6 +19,7 @@ const LoginPage = ({ navigation }) => {
     { key: 'student', label: 'Student', icon: 'school' },
     { key: 'staff', label: 'Staff', icon: 'badge' },
     { key: 'admin', label: 'Admin', icon: 'shield' },
+    { key: 'services', label: 'Services', icon: 'support-agent' },
   ];
 
   const handleRoleSelect = (role) => {
@@ -32,10 +33,17 @@ const LoginPage = ({ navigation }) => {
       navigation.navigate('StaffLogin');
     } else if (selectedRole === 'admin') {
       navigation.navigate('AdminLogin');
+    } else if (selectedRole === 'services') {
+      navigation.navigate('ServicesLogin');
     }
   };
 
   const handleQuickInspect = () => {
+    if (selectedRole === 'services') {
+      loginAs('STAFF');
+      navigation.navigate('StudentFacultyPortal');
+      return;
+    }
     const roleKey = selectedRole.toUpperCase();
     loginAs(roleKey);
     const target = roleKey === 'STUDENT' ? 'StudentDashboard' : roleKey === 'STAFF' ? 'StaffDashboard' : 'AdminDashboard';
@@ -220,7 +228,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 480,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     shadowColor: '#000',
@@ -279,9 +287,11 @@ const styles = StyleSheet.create({
   },
   roleCard: {
     flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
@@ -293,10 +303,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(219, 225, 255, 0.15)',
   },
   roleText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: Colors.onSurfaceVariant,
     marginTop: 6,
+    textAlign: 'center',
   },
   roleTextSelected: {
     color: Colors.primary,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, RouterProvider } from '../../router';
 import { Shell } from '../shell/Shell';
 
-import { LoginPage, StudentLogin, StaffLogin, AdminLogin, CommonPortal } from '../../modules/auth';
+import { LoginPage, StudentLogin, StaffLogin, AdminLogin, ServicesLogin, CommonPortal } from '../../modules/auth';
 import {
   StudentDashboard, AttendanceHistory, StudentAttendanceDetail,
   StudentTimetable, StudyMaterials, StudentProfile, StudentEditProfile,
@@ -29,6 +29,7 @@ export const ROUTES = [
   { name: 'StudentLogin', path: '/login/student', component: StudentLogin },
   { name: 'StaffLogin', path: '/login/staff', component: StaffLogin },
   { name: 'AdminLogin', path: '/login/admin', component: AdminLogin },
+  { name: 'ServicesLogin', path: '/login/services', component: ServicesLogin },
   { name: 'StudentFacultyPortal', path: '/services', component: StudentFacultyDashboard },
   {
     name: 'LostAndFound',
