@@ -383,7 +383,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur shadow-xs">
         {/* Row 1: Brand & Actions Bar */}
         <div className="border-b border-slate-100">
-          <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleReturnHome}
@@ -429,61 +429,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                 <span>Campus Desks Online</span>
               </div>
 
-              {/* Quick Report CTA Button */}
-              <button
-                onClick={() => setActiveNav('Report Infrastructure Issue')}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
-              >
-                <Plus size={14} />
-                Report Issue
-              </button>
-
-              {/* Notifications */}
-              <div className="relative">
-                <button
-                  onClick={() => setNotifications(!notifications)}
-                  aria-label="Notifications"
-                  className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-600"
-                >
-                  <Bell size={19} />
-                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
-                    3
-                  </span>
-                </button>
-                {notifications && (
-                  <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl animate-fade-in">
-                    <div className="mb-2 font-bold text-slate-900 flex items-center justify-between">
-                      <span>Notifications</span>
-                      <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">3 new</span>
-                    </div>
-                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                      <strong className="text-slate-800">CMP-104</strong>: Projector repair in Lab 302 is now in progress.
-                    </p>
-                    <p className="border-b border-slate-100 py-2 text-xs text-slate-600">
-                      <strong className="text-indigo-700">LNF-204</strong>: 94% AI Match detected for your Casio calculator!
-                    </p>
-                    <p className="py-2 text-xs text-slate-600">All campus facility service desks are online.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Role indicator */}
-              <label className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 sm:flex">
-                <span className="text-[11px] text-slate-400">View as:</span>
-                <select
-                  aria-label="Select portal role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="border-0 bg-transparent py-1 pr-4 text-xs font-bold text-blue-700 focus:ring-0 cursor-pointer"
-                >
-                  <option>Student</option>
-                  <option>Faculty</option>
-                  <option>Admin</option>
-                </select>
-              </label>
-
-              <div className="hidden h-6 w-px bg-slate-200 sm:block" />
-
               {/* User Avatar */}
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white ring-2 ring-blue-100 shadow-sm">
@@ -500,24 +445,13 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
         {/* Row 2: Service & Lost Found Header Navigation Bar */}
         <div className="border-t border-slate-100 bg-slate-50/90">
-          <div className="mx-auto flex max-w-[1720px] items-center px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
             <div className="relative flex w-full items-center gap-1.5 py-2">
-              {/* Left Scroll Chevron Arrow */}
-              <button
-                type="button"
-                onClick={() => scrollNav('left')}
-                title="Scroll Left"
-                aria-label="Scroll navigation left"
-                className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs hover:bg-slate-100 hover:text-blue-700 transition"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
               <nav
                 ref={navRef}
                 onWheel={handleNavWheel}
                 aria-label="Services and Lost & Found Navigation"
-                className="flex w-full items-center gap-1.5 overflow-x-auto py-1 scroll-smooth [scrollbar-width:thin] [-ms-overflow-style:none]"
+                className="flex w-full items-center gap-2 overflow-x-auto py-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {/* Workspace Navigation Links */}
                 {navGroups[0].links.map((link) => {
@@ -566,24 +500,13 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                   );
                 })}
               </nav>
-
-              {/* Right Scroll Chevron Arrow */}
-              <button
-                type="button"
-                onClick={() => scrollNav('right')}
-                title="Scroll Right"
-                aria-label="Scroll navigation right"
-                className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs hover:bg-slate-100 hover:text-blue-700 transition"
-              >
-                <ChevronRight size={16} />
-              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Dynamic Content Main Area (Side Navigation Removed, Full-Width Layout) */}
-      <main className="mx-auto w-full max-w-[1720px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8 pb-16" id="top">
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8 pb-16" id="top">
           {/* TAB 0: DETAILED REPORT INFRASTRUCTURE ISSUE (FULL PAGE FROM IMAGE 1) */}
           {activeNav === 'Report Infrastructure Issue' && (
             <ReportInfrastructureView
