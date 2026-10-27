@@ -80,13 +80,6 @@ const navGroups = [
       { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
     ],
   },
-  {
-    title: 'Support & Logs',
-    links: [
-      { id: 'Activity History', label: 'Activity History', icon: Clock3 },
-      { id: 'Help Desk', label: 'Help Desk', icon: HelpCircle },
-    ],
-  },
 ];
 
 function Modal({ title, onClose, maxWidth = 'max-w-lg', children }) {
@@ -569,33 +562,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                           94% Match
                         </span>
                       )}
-                    </button>
-                  );
-                })}
-
-                {/* Support & Logs Divider */}
-                <div className="mx-1 h-5 w-px bg-slate-200 shrink-0" />
-
-                {/* Support & Logs Navigation Links */}
-                {navGroups[1].links.map((link) => {
-                  const IconComp = link.icon;
-                  const isActive = (link.id === 'Activity History' && modal === 'history') ||
-                    (link.id === 'Help Desk' && modal === 'help');
-                  return (
-                    <button
-                      key={link.id}
-                      onClick={() => navClick(link.id)}
-                      className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
-                          : 'text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs'
-                      }`}
-                    >
-                      <IconComp
-                        size={14}
-                        className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
-                      />
-                      <span>{link.label}</span>
                     </button>
                   );
                 })}
@@ -1146,70 +1112,46 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
         </Modal>
       )}
 
-      {/* Support Modals: Map / Help / History */}
-      {['map', 'help', 'history'].includes(modal) && (
+      {/* Campus Map & Facilities Modal */}
+      {modal === 'map' && (
         <Modal
-          title={modal === 'map' ? 'Campus Map & Facilities' : modal === 'help' ? 'Help Desk' : 'Activity History'}
-          maxWidth={modal === 'map' ? 'max-w-4xl' : 'max-w-lg'}
+          title="Campus Map & Facilities"
+          maxWidth="max-w-4xl"
           onClose={() => setModal(null)}
         >
-          {modal === 'map' ? (
-            <div className="space-y-4">
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner">
-                <img
-                  src={CAMPUS_MAP_IMAGE}
-                  alt="Info College Campus Map & Facilities"
-                  className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-lg"
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner">
+              <img
+                src={CAMPUS_MAP_IMAGE}
+                alt="Info College Campus Map & Facilities"
+                className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded-lg"
+              />
+            </div>
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-blue-950">Campus Layout & Facilities Directory</p>
-                  <p className="text-blue-700 mt-0.5">
-                    1: Academic Block • 2: Library • 3: Hostel • 4: Cafeteria • 5: Sports Complex • 6: Science & Lab Block • 7: Auditorium • 8: Parking Area • 9: Green Area / Garden
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
-                <p>
-                  Nearest custodial intake desk: Science & Lab Block (6), central concourse.
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-blue-950">Campus Layout & Facilities Directory</p>
+                <p className="text-blue-700 mt-0.5">
+                  1: Academic Block • 2: Library • 3: Hostel • 4: Cafeteria • 5: Sports Complex • 6: Science & Lab Block • 7: Auditorium • 8: Parking Area • 9: Green Area / Garden
                 </p>
-                <a
-                  href={CAMPUS_MAP_IMAGE}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-800"
-                >
-                  <ExternalLink size={14} /> Open full size map
-                </a>
               </div>
             </div>
-          ) : modal === 'help' ? (
-            <div className="space-y-3 text-sm text-slate-600">
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
               <p>
-                <strong className="text-slate-900">Campus Services Help Desk</strong>
+                Nearest custodial intake desk: Science & Lab Block (6), central concourse.
               </p>
-              <p>
-                For critical electrical or hazardous safety concerns, immediately clear the area and notify the security desk at extension 4001.
-              </p>
-              <p>For all standard classroom, lab, or hostel repairs, use "Report Infrastructure Issue" above.</p>
+              <a
+                href={CAMPUS_MAP_IMAGE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:text-blue-800"
+              >
+                <ExternalLink size={14} /> Open full size map
+              </a>
             </div>
-          ) : (
-            <div className="space-y-2 text-sm">
-              {[
-                'CMP-104 • Projector complaint moved to In Progress',
-                'LNF-204 • 94% AI match detected for Casio calculator',
-                'CMP-098 • AC thermostat complaint resolved',
-              ].map((x) => (
-                <div key={x} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-slate-700">
-                  {x}
-                </div>
-              ))}
-            </div>
-          )}
+          </div>
           <button
             onClick={() => setModal(null)}
             className="mt-5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm"
