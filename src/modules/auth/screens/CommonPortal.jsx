@@ -14,6 +14,7 @@ import {
   Share,
   Modal,
   Dimensions,
+  useWindowDimensions,
   Alert,
 } from '@/ui';
 
@@ -338,7 +339,7 @@ const monthConfigs = {
   },
   feb: {
     name: "February 2025",
-    workDays: "21 Work Days",
+    workDays: "20 Work Days",
     days: [
       ["27", "outside"],
       ["28", "outside"],
@@ -370,7 +371,7 @@ const monthConfigs = {
       ["23", "sun"],
       ["24", "normal"],
       ["25", "normal"],
-      ["26", "normal"],
+      ["26", "exam"],
       ["27", "normal"],
       ["28", "normal"],
       ["1", "outside"],
@@ -427,7 +428,7 @@ const monthConfigs = {
   },
   apr: {
     name: "April 2025",
-    workDays: "21 Work Days",
+    workDays: "22 Work Days",
     days: [
       ["31", "outside"],
       ["1", "normal"],
@@ -1347,8 +1348,19 @@ function OfficialDocument() {
    CALENDAR SCREEN
 ========================================================= */
 
+const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may"];
+
 function CalendarScreen() {
   const [selectedMonth, setSelectedMonth] = useState("mar");
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 860;
+
+  const currentIndex = MONTH_KEYS.indexOf(selectedMonth);
+  const prevMonthKey = MONTH_KEYS[(currentIndex - 1 + MONTH_KEYS.length) % MONTH_KEYS.length];
+  const nextMonthKey = MONTH_KEYS[(currentIndex + 1) % MONTH_KEYS.length];
+
+  const handlePrev = () => setSelectedMonth(prevMonthKey);
+  const handleNext = () => setSelectedMonth(nextMonthKey);
 
   return (
     <ScrollView
@@ -1359,11 +1371,58 @@ function CalendarScreen() {
     >
       <View style={styles.calendarMainWrapper}>
         <PlannerHeader />
+
         <MonthTabs
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
         />
-        <CalendarCard selectedMonth={selectedMonth} />
+
+        {/* 3-CARD CAROUSEL VIEW */}
+        <View style={styles.carouselContainer}>
+          {isDesktop && (
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={handlePrev}
+              style={[styles.sideCardWrapper, styles.leftCardWrapper]}
+            >
+              <MiniMonthCard monthKey={prevMonthKey} />
+            </TouchableOpacity>
+          )}
+
+          {/* LEFT FLOATING ARROW BUTTON */}
+          <TouchableOpacity
+            style={styles.floatingNavButtonLeft}
+            onPress={handlePrev}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="chevron-left" size={26} color="#1d4ed8" />
+          </TouchableOpacity>
+
+          {/* ACTIVE CENTER CARD */}
+          <View style={styles.centerCardWrapper}>
+            <ActiveMonthCard monthKey={selectedMonth} />
+          </View>
+
+          {/* RIGHT FLOATING ARROW BUTTON */}
+          <TouchableOpacity
+            style={styles.floatingNavButtonRight}
+            onPress={handleNext}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="chevron-right" size={26} color="#1d4ed8" />
+          </TouchableOpacity>
+
+          {isDesktop && (
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={handleNext}
+              style={[styles.sideCardWrapper, styles.rightCardWrapper]}
+            >
+              <MiniMonthCard monthKey={nextMonthKey} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <ActionButtons />
       </View>
     </ScrollView>
@@ -1373,11 +1432,11 @@ function CalendarScreen() {
 function PlannerHeader() {
   return (
     <View style={styles.plannerHeader}>
-      <View style={{ flex: 1 }}>
+      <View style={styles.plannerHeaderLeft}>
         <Text style={styles.academicPlanner}>ACADEMIC PLANNER • EVEN SEMESTER 2024–25</Text>
         <View style={styles.paceQuickRow}>
           <Text style={styles.paceQuickText}>
-            Day <Text style={{ fontWeight: "700", color: COLORS.primary }}>68</Text> / 90 Working Days (75.5% Complete)
+            Day <Text style={styles.paceHighlightDay}>68</Text> / 90 Working Days (75.5% Complete)
           </Text>
           <View style={styles.quickProgressBar}>
             <View style={styles.quickProgressFill} />
@@ -1387,99 +1446,12 @@ function PlannerHeader() {
 
       <View style={styles.autonomousBadge}>
         <MaterialIcons
-          name="verified"
-          size={14}
-          color={COLORS.primary}
+          name="settings"
+          size={18}
+          color="#1d4ed8"
         />
         <Text style={styles.autonomousText}>Autonomous</Text>
       </View>
-    </View>
-  );
-}
-
-function SemesterPace() {
-  return (
-    <View style={styles.paceCard}>
-      <View style={styles.paceTop}>
-        <View>
-          <Text style={styles.paceLabel}>Semester Pace</Text>
-          <View style={styles.paceNumberRow}>
-            <Text style={styles.paceNumber}>68</Text>
-            <Text style={styles.workingDays}>/ 90 Working Days</Text>
-          </View>
-        </View>
-
-        <View style={styles.completeBadge}>
-          <Text style={styles.completeText}>75.5% Complete</Text>
-        </View>
-      </View>
-
-      <View style={styles.progressBackground}>
-        <View style={styles.progressFill} />
-      </View>
-
-      <View style={styles.milestones}>
-        <Milestone
-          icon="check-circle"
-          title="CIA-1"
-          date="Feb 10–15"
-          status="Completed"
-          type="normal"
-        />
-        <Milestone
-          icon="event-upcoming"
-          title="CIA-2"
-          date="Apr 07–12"
-          status="In 14 Days"
-          type="upcoming"
-        />
-        <Milestone
-          icon="hourglass-top"
-          title="End-Sem"
-          date="May 19"
-          status="Final Exams"
-          type="normal"
-        />
-      </View>
-    </View>
-  );
-}
-
-function Milestone({ icon, title, date, status, type }) {
-  const upcoming = type === "upcoming";
-
-  return (
-    <View
-      style={[
-        styles.milestone,
-        upcoming && styles.upcomingMilestone,
-      ]}
-    >
-      <View style={styles.milestoneTop}>
-        <MaterialIcons
-          name={icon}
-          size={15}
-          color={upcoming ? COLORS.tertiary : COLORS.primary}
-        />
-        <Text
-          style={[
-            styles.milestoneTitle,
-            upcoming && { color: COLORS.tertiary },
-          ]}
-        >
-          {title}
-        </Text>
-      </View>
-
-      <Text style={styles.milestoneDate}>{date}</Text>
-      <Text
-        style={[
-          styles.milestoneStatus,
-          upcoming && { color: COLORS.tertiary },
-        ]}
-      >
-        {status}
-      </Text>
     </View>
   );
 }
@@ -1494,7 +1466,7 @@ function MonthTabs({ selectedMonth, setSelectedMonth }) {
   ];
 
   return (
-    <View>
+    <View style={styles.monthTabsWrapper}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1529,33 +1501,93 @@ function MonthTabs({ selectedMonth, setSelectedMonth }) {
   );
 }
 
-function CalendarCard({ selectedMonth }) {
-  const data = monthConfigs[selectedMonth];
+function ActiveMonthCard({ monthKey }) {
+  const data = monthConfigs[monthKey] || monthConfigs.mar;
 
   return (
-    <View style={styles.calendarCard}>
-      <View style={styles.calendarHeader}>
-        <View style={styles.calendarTitleRow}>
+    <View style={styles.activeCard}>
+      {/* CARD DARK NAVY HEADER */}
+      <View style={styles.activeCardHeader}>
+        <View style={styles.activeCardTitleRow}>
           <MaterialIcons
             name="calendar-today"
-            size={20}
-            color={COLORS.primary}
+            size={24}
+            color="#ffffff"
           />
-          <Text style={styles.calendarTitle}>{data.name}</Text>
+          <Text style={styles.activeCardTitle}>{data.name}</Text>
         </View>
 
-        <View style={styles.workDaysBadge}>
-          <Text style={styles.workDaysText}>{data.workDays}</Text>
+        <View style={styles.activeWorkDaysBadge}>
+          <Text style={styles.activeWorkDaysText}>{data.workDays}</Text>
         </View>
       </View>
 
-      <View style={styles.weekHeader}>
+      {/* CARD BODY */}
+      <View style={styles.activeCardBody}>
+        {/* WEEKDAYS HEADER */}
+        <View style={styles.weekHeader}>
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
+            <Text
+              key={index}
+              style={[
+                styles.weekDay,
+                index >= 5 && styles.weekDayWeekend,
+              ]}
+            >
+              {day}
+            </Text>
+          ))}
+        </View>
+
+        {/* DAYS GRID */}
+        <View style={styles.calendarGrid}>
+          {data.days.map(([day, type], index) => (
+            <CalendarDay
+              key={`${day}-${index}`}
+              day={day}
+              type={type}
+              colIndex={index % 7}
+              isCenter={true}
+            />
+          ))}
+        </View>
+
+        {/* LEGEND */}
+        <CalendarLegend />
+      </View>
+    </View>
+  );
+}
+
+function MiniMonthCard({ monthKey }) {
+  const data = monthConfigs[monthKey] || monthConfigs.feb;
+
+  return (
+    <View style={styles.miniCard}>
+      {/* MINI HEADER */}
+      <View style={styles.miniCardHeader}>
+        <View style={styles.miniCardTitleRow}>
+          <MaterialIcons
+            name="calendar-today"
+            size={20}
+            color="#64748b"
+          />
+          <Text style={styles.miniCardTitle}>{data.name}</Text>
+        </View>
+
+        <View style={styles.miniWorkDaysBadge}>
+          <Text style={styles.miniWorkDaysText}>{data.workDays}</Text>
+        </View>
+      </View>
+
+      {/* MINI WEEKDAYS */}
+      <View style={styles.miniWeekHeader}>
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
           <Text
             key={index}
             style={[
-              styles.weekDay,
-              index >= 5 && styles.weekDayWeekend,
+              styles.miniWeekDay,
+              index >= 5 && styles.miniWeekDayWeekend,
             ]}
           >
             {day}
@@ -1563,93 +1595,70 @@ function CalendarCard({ selectedMonth }) {
         ))}
       </View>
 
+      {/* MINI DAYS GRID */}
       <View style={styles.calendarGrid}>
         {data.days.map(([day, type], index) => (
           <CalendarDay
             key={`${day}-${index}`}
             day={day}
             type={type}
+            colIndex={index % 7}
+            isCenter={false}
           />
         ))}
       </View>
-
-      <CalendarLegend />
     </View>
   );
 }
 
-function CalendarDay({ day, type }) {
-  let style = styles.dayNormal;
-  let textStyle = styles.dayText;
+function CalendarDay({ day, type, colIndex, isCenter }) {
+  const isWeekendCol = colIndex === 5 || colIndex === 6;
+
+  let cellBg = isWeekendCol ? (isCenter ? styles.dayWeekendCol : styles.miniDayWeekendCol) : null;
+  let textStyle = isCenter ? styles.dayTextNormal : styles.miniDayTextNormal;
+  let hasDot = false;
+  let dotColor = "#2563eb";
 
   if (type === "outside") {
-    style = styles.dayOutside;
-    textStyle = styles.dayOutsideText;
+    cellBg = isWeekendCol ? (isCenter ? styles.dayWeekendCol : styles.miniDayWeekendCol) : null;
+    textStyle = styles.dayTextOutside;
+  } else if (isWeekendCol) {
+    textStyle = styles.dayTextWeekend;
   }
 
-  if (type === "sat") {
-    style = styles.dayWeekend;
-    textStyle = styles.dayWeekendText;
-  }
-
-  if (type === "sun") {
-    style = styles.daySunday;
-    textStyle = styles.daySundayText;
-  }
-
-  if (type === "holiday") {
-    style = styles.dayHoliday;
-    textStyle = styles.dayHolidayText;
-  }
-
-  if (type === "exam") {
-    style = styles.dayExam;
-    textStyle = styles.dayExamText;
-  }
-
-  if (type === "event") {
-    style = styles.dayEvent;
-    textStyle = styles.dayEventText;
-  }
+  let customPillStyle = null;
 
   if (type === "today") {
-    style = styles.dayToday;
-    textStyle = styles.dayTodayText;
-  }
-
-  if (type === "special") {
-    style = styles.daySpecial;
-    textStyle = styles.daySpecialText;
-  }
-
-  if (type === "finalExam") {
-    style = styles.dayFinalExam;
-    textStyle = styles.dayFinalExamText;
+    customPillStyle = styles.pillToday;
+    textStyle = styles.dayTextToday;
+    hasDot = true;
+    dotColor = "#2563eb";
+  } else if (type === "exam") {
+    customPillStyle = styles.pillExam;
+    textStyle = styles.dayTextExam;
+    hasDot = true;
+    dotColor = "#ea580c";
+  } else if (type === "event") {
+    customPillStyle = styles.pillEvent;
+    textStyle = styles.dayTextEvent;
+    hasDot = true;
+    dotColor = "#7c3aed";
+  } else if (type === "holiday") {
+    customPillStyle = styles.pillHoliday;
+    textStyle = styles.dayTextHoliday;
+    hasDot = true;
+    dotColor = "#dc2626";
+  } else if (type === "special") {
+    textStyle = styles.dayTextSpecial;
   }
 
   return (
-    <View style={[styles.calendarDay, style]}>
-      <Text style={[styles.dayTextBase, textStyle]}>{day}</Text>
-
-      {(type === "today" ||
-        type === "exam" ||
-        type === "event" ||
-        type === "holiday") && (
-        <View
-          style={[
-            styles.dayDot,
-            {
-              backgroundColor:
-                type === "today"
-                  ? "#ffffff"
-                  : type === "exam"
-                  ? "#ea580c"
-                  : type === "holiday"
-                  ? "#dc2626"
-                  : "#7c3aed",
-            },
-          ]}
-        />
+    <View style={[styles.calendarDayCell, cellBg]}>
+      <View style={[styles.dayContentBox, customPillStyle]}>
+        <Text style={[styles.dayNumberText, textStyle, !isCenter && styles.miniDayNumberText]}>{day}</Text>
+      </View>
+      {hasDot && isCenter && (
+        <View style={[styles.dayBottomDot, { backgroundColor: dotColor }]} />
       )}
     </View>
   );
@@ -1657,23 +1666,11 @@ function CalendarDay({ day, type }) {
 
 function CalendarLegend() {
   return (
-    <View style={styles.legend}>
-      <LegendItem
-        color="#2563eb"
-        label="Working Days (Mon–Fri)"
-      />
-      <LegendItem
-        color="#dc2626"
-        label="Weekends & Holidays"
-      />
-      <LegendItem
-        color="#ea580c"
-        label="Exams / CIA"
-      />
-      <LegendItem
-        color="#7c3aed"
-        label="College Events"
-      />
+    <View style={styles.legendContainer}>
+      <LegendItem color="#2563eb" label="Working Days (Mon–Fri)" />
+      <LegendItem color="#dc2626" label="Weekends & Holidays" />
+      <LegendItem color="#ea580c" label="Exams/ CIA" />
+      <LegendItem color="#7c3aed" label="College Events" />
     </View>
   );
 }
@@ -1681,12 +1678,7 @@ function CalendarLegend() {
 function LegendItem({ color, label }) {
   return (
     <View style={styles.legendItem}>
-      <View
-        style={[
-          styles.legendCircle,
-          { backgroundColor: color },
-        ]}
-      />
+      <View style={[styles.legendCircle, { backgroundColor: color }]} />
       <Text style={styles.legendText}>{label}</Text>
     </View>
   );
@@ -1736,17 +1728,10 @@ function ActionButtons() {
         activeOpacity={0.85}
       >
         <MaterialIcons
-          name={
-            syncing
-              ? "sync"
-              : synced
-              ? "done"
-              : "sync"
-          }
-          size={16}
-          color={COLORS.onPrimary}
+          name={syncing ? "sync" : synced ? "done" : "sync"}
+          size={20}
+          color="#ffffff"
         />
-
         <Text style={styles.primaryButtonText}>
           {syncing
             ? "Syncing..."
@@ -1769,10 +1754,9 @@ function ActionButtons() {
               ? "check-circle"
               : "download"
           }
-          size={16}
-          color={COLORS.primary}
+          size={20}
+          color="#1d4ed8"
         />
-
         <Text style={styles.secondaryButtonText}>
           {downloading
             ? "Preparing PDF..."
@@ -1923,167 +1907,6 @@ function AboutNexusView() {
     return INITIAL_CREATORS;
   });
 
-  const photoInputRef = React.useRef(null);
-  const [showUrlInput, setShowUrlInput] = useState(false);
-  const [editingMember, setEditingMember] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    roll: "",
-    department: "",
-    description: "",
-    tags: "",
-    initials: "",
-    image: "",
-  });
-
-  const handlePhotoFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    e.target.value = "";
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new window.Image();
-      img.onload = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          const MAX_SIZE = 360;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height = Math.round((height * MAX_SIZE) / width);
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width = Math.round((width * MAX_SIZE) / height);
-              height = MAX_SIZE;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.88);
-          setFormData((prev) => ({ ...prev, image: compressedDataUrl }));
-        } catch (err) {
-          setFormData((prev) => ({ ...prev, image: event.target.result }));
-        }
-      };
-      img.onerror = () => {
-        setFormData((prev) => ({ ...prev, image: event.target.result }));
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleEditMember = (member) => {
-    setEditingMember(member);
-    setFormData({
-      name: member.name || "",
-      roll: member.roll || "",
-      department: member.department || "B.Tech AI & Data Science (2024–2029)",
-      description: member.description || "",
-      tags: Array.isArray(member.tags) ? member.tags.join(", ") : (member.tags || ""),
-      initials: member.initials || "",
-      image: member.image || "",
-    });
-    setShowUrlInput(Boolean(member.image && member.image.startsWith("http")));
-    setIsModalOpen(true);
-  };
-
-  const handleAddNewMember = () => {
-    const newMember = {
-      id: `member_${Date.now()}`,
-      name: "NEW MEMBER",
-      roll: "715024243000",
-      department: "B.Tech AI & Data Science (2024–2029)",
-      description: "Core contributor assisting in portal features and user experience optimization.",
-      tags: ["Development", "Testing"],
-      initials: "NM",
-      image: null,
-      isNew: true,
-    };
-    setEditingMember(newMember);
-    setFormData({
-      name: newMember.name,
-      roll: newMember.roll,
-      department: newMember.department,
-      description: newMember.description,
-      tags: newMember.tags.join(", "),
-      initials: newMember.initials,
-      image: "",
-    });
-    setShowUrlInput(false);
-    setIsModalOpen(true);
-  };
-
-  const handleSaveMember = () => {
-    if (!formData.name.trim()) {
-      Alert.alert("Name Required", "Please enter the member name.");
-      return;
-    }
-
-    const tagsArray = formData.tags
-      ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-      : [];
-
-    const updated = {
-      ...editingMember,
-      name: formData.name.trim(),
-      roll: formData.roll.trim(),
-      department: formData.department.trim(),
-      description: formData.description.trim(),
-      tags: tagsArray,
-      initials:
-        formData.initials.trim() ||
-        formData.name.trim().substring(0, 2).toUpperCase(),
-      image: formData.image.trim() ? formData.image.trim() : null,
-    };
-
-    let updatedList;
-    if (editingMember.isNew) {
-      delete updated.isNew;
-      updatedList = [...creators, updated];
-    } else {
-      updatedList = creators.map((m) =>
-        m.id === editingMember.id ? updated : m
-      );
-    }
-
-    setCreators(updatedList);
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem(
-          "nexus_creators_list",
-          JSON.stringify(updatedList)
-        );
-      }
-    } catch (e) {}
-
-    setIsModalOpen(false);
-    setEditingMember(null);
-  };
-
-  const handleDeleteMember = (memberId) => {
-    const updatedList = creators.filter((m) => m.id !== memberId);
-    setCreators(updatedList);
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem(
-          "nexus_creators_list",
-          JSON.stringify(updatedList)
-        );
-      }
-    } catch (e) {}
-    setIsModalOpen(false);
-    setEditingMember(null);
-  };
-
   const openEmail = () => {
     Linking.openURL("mailto:nexus.aids@infotech.edu.in");
   };
@@ -2155,18 +1978,8 @@ function AboutNexusView() {
             </Text>
           </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <View style={styles.studentLeadsTag}>
-              <Text style={styles.studentLeadsText}>Student Leads</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.addMemberBtn}
-              onPress={handleAddNewMember}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="person-add" size={14} color="#ffffff" />
-              <Text style={styles.addMemberBtnText}>Add</Text>
-            </TouchableOpacity>
+          <View style={styles.studentLeadsTag}>
+            <Text style={styles.studentLeadsText}>Student Leads</Text>
           </View>
         </View>
 
@@ -2180,230 +1993,9 @@ function AboutNexusView() {
             department={creator.department}
             description={creator.description}
             tags={creator.tags}
-            onEdit={() => handleEditMember(creator)}
           />
         ))}
       </View>
-
-      {/* EDIT / ADD CREATOR MODAL */}
-      <Modal
-        visible={isModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsModalOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.creatorModalCard}>
-            <View style={styles.creatorModalHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <View style={styles.creatorModalIconBg}>
-                  <MaterialIcons name="badge" size={20} color={COLORS.primary} />
-                </View>
-                <Text style={styles.creatorModalTitle}>
-                  {editingMember?.isNew ? "Add Team Member" : "Edit Creator Position"}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setIsModalOpen(false)}
-                style={styles.creatorModalCloseBtn}
-              >
-                <MaterialIcons name="close" size={20} color={COLORS.onSurfaceVariant} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
-              <View style={styles.modalFieldGroup}>
-                <Text style={styles.modalFieldLabel}>Full Name</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={formData.name}
-                  onChangeText={(val) => setFormData({ ...formData, name: val })}
-                  placeholder="e.g. ESAKKI MUTHU M"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-
-              <View style={styles.modalFieldRow}>
-                <View style={[styles.modalFieldGroup, { flex: 1 }]}>
-                  <Text style={styles.modalFieldLabel}>Roll Number</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={formData.roll}
-                    onChangeText={(val) => setFormData({ ...formData, roll: val })}
-                    placeholder="e.g. 715024243026"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-                <View style={[styles.modalFieldGroup, { width: 90 }]}>
-                  <Text style={styles.modalFieldLabel}>Initials</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={formData.initials}
-                    onChangeText={(val) => setFormData({ ...formData, initials: val })}
-                    placeholder="e.g. EM"
-                    maxLength={3}
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.modalFieldGroup}>
-                <Text style={styles.modalFieldLabel}>Department / Batch</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={formData.department}
-                  onChangeText={(val) => setFormData({ ...formData, department: val })}
-                  placeholder="B.Tech AI & Data Science (2024–2029)"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-
-              <View style={styles.modalFieldGroup}>
-                <Text style={styles.modalFieldLabel}>Role / Description</Text>
-                <TextInput
-                  style={[styles.modalInput, { height: 72, textAlignVertical: "top" }]}
-                  multiline
-                  numberOfLines={3}
-                  value={formData.description}
-                  onChangeText={(val) => setFormData({ ...formData, description: val })}
-                  placeholder="Describe key responsibilities and contributions..."
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-
-              <View style={styles.modalFieldGroup}>
-                <Text style={styles.modalFieldLabel}>Tags (comma separated)</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={formData.tags}
-                  onChangeText={(val) => setFormData({ ...formData, tags: val })}
-                  placeholder="Frontend UI, API Integration, Testing"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-
-              {/* PHOTO UPLOAD & PREVIEW SECTION */}
-              <View style={styles.modalPhotoSection}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={photoInputRef}
-                  style={{ display: "none" }}
-                  onChange={handlePhotoFileChange}
-                />
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => photoInputRef.current?.click()}
-                  style={styles.modalPhotoPreviewContainer}
-                  title="Click to choose photo"
-                >
-                  {formData.image ? (
-                    <Image
-                      source={{ uri: formData.image }}
-                      style={styles.modalPhotoPreview}
-                    />
-                  ) : (
-                    <View style={styles.modalPhotoPlaceholder}>
-                      <Text style={styles.modalPhotoInitials}>
-                        {formData.initials ||
-                          (formData.name
-                            ? formData.name.substring(0, 2).toUpperCase()
-                            : "ST")}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.modalPhotoOverlayIcon}>
-                    <MaterialIcons name="photo-camera" size={12} color="#ffffff" />
-                  </View>
-                </TouchableOpacity>
-
-                <View style={styles.modalPhotoActions}>
-                  <Text style={styles.modalFieldLabel}>Profile Photo</Text>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <TouchableOpacity
-                      style={styles.modalUploadBtn}
-                      onPress={() => photoInputRef.current?.click()}
-                      activeOpacity={0.8}
-                    >
-                      <MaterialIcons name="cloud-upload" size={14} color={COLORS.primary} />
-                      <Text style={styles.modalUploadBtnText}>
-                        {formData.image ? "Change Photo" : "Upload Photo"}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {formData.image ? (
-                      <TouchableOpacity
-                        style={styles.modalRemovePhotoBtn}
-                        onPress={() => setFormData({ ...formData, image: "" })}
-                        activeOpacity={0.8}
-                      >
-                        <MaterialIcons name="delete-outline" size={14} color={COLORS.error} />
-                        <Text style={styles.modalRemovePhotoBtnText}>Remove</Text>
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
-                  <Text style={styles.modalPhotoHint}>
-                    JPG, PNG, or WEBP from device (auto-resized)
-                  </Text>
-                </View>
-              </View>
-
-              {/* OPTIONAL URL TOGGLE */}
-              <View style={[styles.modalFieldGroup, { marginBottom: 16 }]}>
-                <TouchableOpacity
-                  onPress={() => setShowUrlInput(!showUrlInput)}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 4 }}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons
-                    name={showUrlInput ? "expand-less" : "expand-more"}
-                    size={16}
-                    color={COLORS.primary}
-                  />
-                  <Text style={[styles.modalFieldLabel, { color: COLORS.primary, marginBottom: 0 }]}>
-                    {showUrlInput ? "Hide image URL input" : "Or paste image URL instead"}
-                  </Text>
-                </TouchableOpacity>
-
-                {showUrlInput && (
-                  <TextInput
-                    style={styles.modalInput}
-                    value={formData.image}
-                    onChangeText={(val) => setFormData({ ...formData, image: val })}
-                    placeholder="https://example.com/photo.jpg"
-                    placeholderTextColor="#94a3b8"
-                  />
-                )}
-              </View>
-            </ScrollView>
-
-            <View style={styles.creatorModalActions}>
-              {!editingMember?.isNew && creators.length > 1 && (
-                <TouchableOpacity
-                  style={styles.creatorDeleteBtn}
-                  onPress={() => handleDeleteMember(editingMember.id)}
-                >
-                  <MaterialIcons name="delete-outline" size={16} color={COLORS.error} />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.creatorCancelBtn}
-                onPress={() => setIsModalOpen(false)}
-              >
-                <Text style={styles.creatorCancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.creatorSaveBtn}
-                onPress={handleSaveMember}
-              >
-                <MaterialIcons name="check" size={16} color="#ffffff" />
-                <Text style={styles.creatorSaveBtnText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* SYSTEM HIGHLIGHTS */}
       <View style={styles.aboutSection}>
@@ -2504,16 +2096,11 @@ function AboutNexusView() {
   );
 }
 
-function StudentCard({ image, initials, name, roll, department, description, tags, onEdit }) {
+function StudentCard({ image, initials, name, roll, department, description, tags }) {
   return (
     <View style={styles.profileCard}>
       <View style={styles.profileTop}>
-        <TouchableOpacity
-          onPress={onEdit}
-          activeOpacity={0.75}
-          style={styles.profileAvatarWrapper}
-          title="Click to edit photo & profile"
-        >
+        <View style={styles.profileAvatarWrapper}>
           {image ? (
             <Image source={{ uri: image }} style={styles.profileImage} />
           ) : (
@@ -2523,26 +2110,13 @@ function StudentCard({ image, initials, name, roll, department, description, tag
               </Text>
             </View>
           )}
-          <View style={styles.avatarEditOverlay}>
-            <MaterialIcons name="photo-camera" size={10} color="#ffffff" />
-          </View>
-        </TouchableOpacity>
+        </View>
 
         <View style={styles.profileInfo}>
           <View style={styles.profileHeaderRow}>
             <Text style={styles.profileName} numberOfLines={1}>
               {name}
             </Text>
-            {onEdit && (
-              <TouchableOpacity
-                style={styles.cardEditBtn}
-                onPress={onEdit}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="edit" size={12} color={COLORS.primary} />
-                <Text style={styles.cardEditText}>Edit</Text>
-              </TouchableOpacity>
-            )}
           </View>
           <Text style={styles.profileSub}>
             {department
@@ -3985,16 +3559,17 @@ const styles = StyleSheet.create({
   },
 
   calendarContentContainer: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 66,
-    paddingBottom: 76,
+    paddingBottom: 90,
     alignItems: "center",
   },
 
   calendarMainWrapper: {
-    maxWidth: 580,
+    maxWidth: 1360,
     width: "100%",
-    gap: 6,
+    gap: 18,
+    alignItems: "center",
   },
 
   scrollView: {
@@ -4605,496 +4180,508 @@ const styles = StyleSheet.create({
 
   /* ================= PLANNER HEADER ================= */
   plannerHeader: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.surfaceContainerLowest,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 28,
+    paddingVertical: 18,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(195,197,215,0.25)",
+    borderColor: "rgba(226, 232, 240, 0.85)",
+    shadowColor: "#0256d0",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+
+  plannerHeaderLeft: {
+    flex: 1,
   },
 
   academicPlanner: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 15.5,
+    fontWeight: "800",
     letterSpacing: 0.5,
-    color: COLORS.primary,
+    color: "#1d4ed8",
   },
 
   paceQuickRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 2,
+    gap: 16,
+    marginTop: 6,
   },
 
   paceQuickText: {
-    fontSize: 11,
-    color: COLORS.onSurfaceVariant,
+    fontSize: 13.5,
+    color: "#475569",
     fontWeight: "500",
   },
 
+  paceHighlightDay: {
+    fontWeight: "800",
+    color: "#1d4ed8",
+  },
+
   quickProgressBar: {
-    width: 60,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.surfaceContainerHigh,
+    width: 170,
+    height: 9,
+    borderRadius: 999,
+    backgroundColor: "#e2e8f0",
     overflow: "hidden",
   },
 
   quickProgressFill: {
     width: "75.5%",
     height: "100%",
-    backgroundColor: COLORS.primary,
-    borderRadius: 2,
-  },
-
-  semesterTitle: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: "600",
-    color: COLORS.onSurface,
+    backgroundColor: "#1d4ed8",
+    borderRadius: 999,
   },
 
   autonomousBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: COLORS.primaryFixed,
-    marginLeft: 8,
+    backgroundColor: "#dbeafe",
   },
 
   autonomousText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.primary,
-  },
-
-  /* ================= PACE CARD ================= */
-  paceCard: {
-    backgroundColor: COLORS.surfaceContainerLowest,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-
-  paceTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-
-  paceLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: COLORS.onSurfaceVariant,
-    fontWeight: "500",
-  },
-
-  paceNumberRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginTop: 1,
-  },
-
-  paceNumber: {
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 13.5,
     fontWeight: "700",
-    color: COLORS.primary,
-  },
-
-  workingDays: {
-    fontSize: 14,
-    color: COLORS.onSurfaceVariant,
-    marginLeft: 5,
-  },
-
-  completeBadge: {
-    backgroundColor: COLORS.primaryFixed,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-
-  completeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.primary,
-  },
-
-  progressBackground: {
-    width: "100%",
-    height: 12,
-    backgroundColor: COLORS.surfaceContainer,
-    borderRadius: 10,
-    overflow: "hidden",
-    marginTop: 10,
-  },
-
-  progressFill: {
-    width: "75.5%",
-    height: "100%",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-
-  milestones: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 12,
-  },
-
-  milestone: {
-    flex: 1,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.surfaceContainerLow,
-  },
-
-  upcomingMilestone: {
-    backgroundColor: "rgba(255,219,207,0.30)",
-    borderWidth: 1,
-    borderColor: "rgba(133,43,0,0.20)",
-  },
-
-  milestoneTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 3,
-  },
-
-  milestoneTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.onSurfaceVariant,
-  },
-
-  milestoneDate: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.onSurface,
-  },
-
-  milestoneStatus: {
-    fontSize: 10,
-    textTransform: "uppercase",
-    color: COLORS.onSurfaceVariant,
-    marginTop: 2,
+    color: "#1d4ed8",
   },
 
   /* ================= MONTH TABS ================= */
-  timelineHeader: {
-    flexDirection: "row",
+  monthTabsWrapper: {
+    width: "100%",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  timelineTitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "600",
-    color: COLORS.onSurface,
-  },
-
-  year: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.onSurfaceVariant,
+    justifyContent: "center",
+    marginVertical: 6,
   },
 
   monthScroll: {
-    gap: 6,
-    paddingVertical: 2,
+    gap: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   monthTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: COLORS.surfaceContainer,
+    backgroundColor: "#edf2f7",
   },
 
   monthTabActive: {
-    backgroundColor: COLORS.primary,
-    elevation: 2,
+    backgroundColor: "#0b57d0",
+    elevation: 3,
+    shadowColor: "#0b57d0",
+    shadowOpacity: 0.32,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
 
   monthTabText: {
-    fontSize: 12,
+    fontSize: 14.5,
     fontWeight: "600",
-    color: COLORS.onSurfaceVariant,
+    color: "#475569",
   },
 
   monthTabTextActive: {
     fontWeight: "700",
-    color: "#b5c4ff",
+    color: "#ffffff",
   },
 
-  /* ================= CALENDAR CARD ================= */
-  calendarCard: {
-    backgroundColor: COLORS.surfaceContainerLowest,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+  /* ================= 3-CARD CAROUSEL ================= */
+  carouselContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    marginVertical: 6,
+  },
+
+  sideCardWrapper: {
+    width: 360,
+    opacity: 0.72,
+    transform: [{ scale: 0.94 }],
+    zIndex: 1,
+  },
+
+  leftCardWrapper: {
+    marginRight: -40,
+  },
+
+  rightCardWrapper: {
+    marginLeft: -40,
+  },
+
+  centerCardWrapper: {
+    width: 560,
+    maxWidth: "100%",
+    zIndex: 10,
+  },
+
+  floatingNavButtonLeft: {
+    position: "absolute",
+    left: 20,
+    top: "50%",
+    marginTop: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 30,
     borderWidth: 1,
-    borderColor: "rgba(195,197,215,0.25)",
+    borderColor: "rgba(226, 232, 240, 0.95)",
+    shadowColor: "#000",
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 7,
   },
 
-  calendarHeader: {
+  floatingNavButtonRight: {
+    position: "absolute",
+    right: 20,
+    top: "50%",
+    marginTop: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 30,
+    borderWidth: 1,
+    borderColor: "rgba(226, 232, 240, 0.95)",
+    shadowColor: "#000",
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 7,
+  },
+
+  /* ================= ACTIVE CENTER CARD ================= */
+  activeCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.35)",
+    shadowColor: "#0f172a",
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+
+  activeCardHeader: {
+    backgroundColor: "#182d56",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 6,
+    paddingHorizontal: 26,
+    paddingVertical: 18,
   },
 
-  calendarTitleRow: {
+  activeCardTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 12,
   },
 
-  calendarTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+  activeCardTitle: {
+    fontSize: 20,
     fontWeight: "700",
-    color: COLORS.onSurface,
+    color: "#ffffff",
   },
 
-  workDaysBadge: {
-    backgroundColor: COLORS.surfaceContainer,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  activeWorkDaysBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 999,
   },
 
-  workDaysText: {
-    fontSize: 11,
-    color: COLORS.onSurfaceVariant,
+  activeWorkDaysText: {
+    fontSize: 13,
+    color: "#ffffff",
     fontWeight: "600",
   },
 
+  activeCardBody: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 22,
+  },
+
+  /* ================= MINI SIDE CARDS ================= */
+  miniCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(226, 232, 240, 0.9)",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+
+  miniCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 10,
+  },
+
+  miniCardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  miniCardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#334155",
+  },
+
+  miniWorkDaysBadge: {
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+
+  miniWorkDaysText: {
+    fontSize: 11.5,
+    color: "#1d4ed8",
+    fontWeight: "600",
+  },
+
+  /* ================= CALENDAR HEADERS & GRID ================= */
   weekHeader: {
     flexDirection: "row",
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    paddingBottom: 10,
     marginBottom: 4,
   },
 
   weekDay: {
     flex: 1,
     textAlign: "center",
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: "700",
-    color: "#475569",
+    color: "#1e293b",
   },
 
   weekDayWeekend: {
     color: "#dc2626",
   },
 
+  miniWeekHeader: {
+    flexDirection: "row",
+    paddingBottom: 6,
+    marginBottom: 3,
+  },
+
+  miniWeekDay: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748b",
+  },
+
+  miniWeekDayWeekend: {
+    color: "#dc2626",
+  },
+
   calendarGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -1,
   },
 
-  calendarDay: {
+  calendarDayCell: {
     width: "14.2857%",
-    height: 32,
-    padding: 2,
-    marginBottom: 2,
-    borderRadius: 6,
+    height: 48,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 2,
     position: "relative",
   },
 
-  dayTextBase: {
-    fontSize: 12,
-    fontWeight: "700",
+  dayWeekendCol: {
+    backgroundColor: "#fff1f2",
   },
 
-  dayNormal: {
-    backgroundColor: "#f8fafc",
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
+  miniDayWeekendCol: {
+    backgroundColor: "#fff1f2",
   },
 
-  dayText: {
+  dayContentBox: {
+    width: 42,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  dayNumberText: {
+    fontSize: 15.5,
+    fontWeight: "600",
+  },
+
+  miniDayNumberText: {
+    fontSize: 12.5,
+  },
+
+  dayTextNormal: {
     color: "#2563eb",
   },
 
-  dayOutside: {
-    backgroundColor: "transparent",
+  miniDayTextNormal: {
+    color: "#2563eb",
   },
 
-  dayOutsideText: {
+  dayTextOutside: {
     color: "#cbd5e1",
     fontWeight: "400",
   },
 
-  dayWeekend: {
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fee2e2",
-  },
-
-  dayWeekendText: {
+  dayTextWeekend: {
     color: "#dc2626",
-  },
-
-  daySunday: {
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fee2e2",
-  },
-
-  daySundayText: {
-    color: "#dc2626",
-  },
-
-  dayHoliday: {
-    backgroundColor: "#fee2e2",
-    borderWidth: 1,
-    borderColor: "#fca5a5",
-  },
-
-  dayHolidayText: {
-    color: "#dc2626",
-    fontWeight: "800",
-  },
-
-  dayExam: {
-    backgroundColor: "#ffedd5",
-    borderWidth: 1,
-    borderColor: "#fed7aa",
-  },
-
-  dayExamText: {
-    color: "#ea580c",
     fontWeight: "700",
   },
 
-  dayToday: {
-    backgroundColor: "#2563eb",
-    shadowColor: "#2563eb",
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  dayTodayText: {
-    color: "#ffffff",
-    fontWeight: "800",
-  },
-
-  dayEvent: {
-    backgroundColor: "#ede9fe",
-    borderWidth: 1,
-    borderColor: "#ddd6fe",
-  },
-
-  dayEventText: {
-    color: "#7c3aed",
-    fontWeight: "700",
-  },
-
-  daySpecial: {
-    backgroundColor: "#f1f5f9",
-  },
-
-  daySpecialText: {
+  dayTextSpecial: {
     color: "#0f172a",
     fontWeight: "700",
   },
 
-  dayFinalExam: {
-    backgroundColor: "#fef3c7",
-    borderWidth: 1,
-    borderColor: "#fde68a",
+  pillToday: {
+    backgroundColor: "#2563eb",
+    borderRadius: 10,
+    shadowColor: "#2563eb",
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 3,
   },
 
-  dayFinalExamText: {
-    color: "#b45309",
+  dayTextToday: {
+    color: "#ffffff",
     fontWeight: "800",
   },
 
-  dayDot: {
+  pillExam: {
+    backgroundColor: "#ffedd5",
+    borderRadius: 10,
+  },
+
+  dayTextExam: {
+    color: "#c2410c",
+    fontWeight: "700",
+  },
+
+  pillEvent: {
+    backgroundColor: "#ede9fe",
+    borderRadius: 10,
+  },
+
+  dayTextEvent: {
+    color: "#6d28d9",
+    fontWeight: "700",
+  },
+
+  pillHoliday: {
+    backgroundColor: "#fee2e2",
+    borderRadius: 10,
+  },
+
+  dayTextHoliday: {
+    color: "#dc2626",
+    fontWeight: "800",
+  },
+
+  dayBottomDot: {
     position: "absolute",
     bottom: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
 
   /* ================= CALENDAR LEGEND ================= */
-  legend: {
-    marginTop: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: "#f8fafc",
+  legendContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-around",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
+    paddingHorizontal: 8,
   },
 
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 8,
   },
 
   legendCircle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
   },
 
   legendText: {
-    fontSize: 11,
-    color: COLORS.onSurfaceVariant,
+    fontSize: 12.5,
+    color: "#475569",
     fontWeight: "500",
   },
 
   /* ================= ACTION BUTTONS ================= */
   actionContainer: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 2,
+    gap: 16,
+    marginTop: 16,
+    width: "100%",
+    maxWidth: 860,
+    justifyContent: "center",
   },
 
   primaryButton: {
     flex: 1,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: COLORS.primary,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#0256d0",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 10,
+    gap: 10,
+    elevation: 3,
+    shadowColor: "#0256d0",
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
 
   syncedButton: {
@@ -5102,30 +4689,29 @@ const styles = StyleSheet.create({
   },
 
   primaryButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: "#ffffff",
   },
 
   secondaryButton: {
     flex: 1,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: COLORS.surfaceContainerLowest,
-    borderWidth: 1,
-    borderColor: "rgba(195,197,215,0.40)",
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(195,197,215,0.5)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 10,
+    gap: 10,
     elevation: 1,
   },
 
   secondaryButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.onSurface,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0256d0",
   },
 
   /* ================= CAMPUS BANNER ================= */
