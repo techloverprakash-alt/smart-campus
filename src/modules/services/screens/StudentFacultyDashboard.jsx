@@ -830,236 +830,45 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                 })}
               </section>
 
-              {/* Two Column Grid: Infrastructure Tickets vs Lost-Found Claims */}
-              <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-                {/* Left Column: Complaints */}
-                <section className="space-y-4 lg:col-span-7">
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <Wrench size={16} />
-                      </div>
-                      <h2 className="text-base font-bold text-slate-900">My Infrastructure Complaints</h2>
+              {/* Complaints Section */}
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Wrench size={16} />
                     </div>
-
-                    <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-xs font-semibold">
-                      {['All', 'Active', 'Resolved'].map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setTicketTab(tab)}
-                          className={`rounded-md px-3 py-1 ${
-                            ticketTab === tab
-                              ? 'border border-slate-200/60 bg-white font-bold text-blue-700 shadow-sm'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          {tab} ({tab === 'All' ? complaints.length : complaints.filter((c) => c.status === tab).length})
-                        </button>
-                      ))}
-                    </div>
+                    <h2 className="text-base font-bold text-slate-900">My Infrastructure Complaints</h2>
                   </div>
 
+                  <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-xs font-semibold">
+                    {['All', 'Active', 'Resolved'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setTicketTab(tab)}
+                        className={`rounded-md px-3 py-1 ${
+                          ticketTab === tab
+                            ? 'border border-slate-200/60 bg-white font-bold text-blue-700 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {tab} ({tab === 'All' ? complaints.length : complaints.filter((c) => c.status === tab).length})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   {shownComplaints.length ? (
                     shownComplaints.map((ticket) => (
                       <Ticket key={ticket.id} ticket={ticket} onMessage={(t) => setModal({ type: 'message', ticket: t })} />
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+                    <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
                       No complaints in this category.
                     </div>
                   )}
-                </section>
-
-                {/* Right Column: Personal Lost & Found Claims + Desk Locator */}
-                <section className="space-y-4 lg:col-span-5">
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                        <PackageSearch size={16} />
-                      </div>
-                      <h2 className="text-base font-bold text-slate-900">Lost & Found Claims</h2>
-                    </div>
-                    <button
-                      onClick={() => setActiveNav('Lost & Found Claims')}
-                      className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-100"
-                    >
-                      <ExternalLink size={13} />
-                      Full Board
-                    </button>
-                  </div>
-
-                  {/* High AI Match Card */}
-                  <article className="relative space-y-4 overflow-hidden rounded-2xl border-2 border-indigo-200 bg-white p-5 shadow-sm">
-                    <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-gradient-to-br from-indigo-500/10 to-transparent" />
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 font-mono text-xs font-bold text-indigo-700">
-                          #LNF-204
-                        </span>
-                        <span className="text-xs text-slate-500">Reported Lost Asset</span>
-                      </div>
-                      <span className="text-xs text-slate-400">Oct 23</span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900">
-                        Lost Black Casio FX-991EX Calculator
-                      </h3>
-                      <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                        <MapPin size={13} className="text-slate-400" />
-                        Main Canteen Quad 2 • Seating Table 14
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/80 p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-indigo-800">
-                          <Zap size={14} className="text-indigo-600" />
-                          AI Match Found!
-                        </span>
-                        <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                          90% Confidence
-                        </span>
-                      </div>
-
-                      <p className="text-xs leading-relaxed text-slate-700">
-                        A Black Casio FX-991EX scientific calculator with matching matte housing was deposited at{' '}
-                        <strong className="text-slate-900">Quad Security Desk</strong> by custodial staff (Abishek) today at 11:20 AM.
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-3 pt-2">
-                        {[
-                          {
-                            label: 'Your Uploaded Reference',
-                            img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAmPQKsrjwsczCeL2s85vH6SGXaHARRh5iDWSO_qn2QbFDvYV3RLZAJOez2Js8509J4YWOixBMQsM5fAvOOZZqf5jyYCMWIKSpgLF0UJGIQoOHdHl8GkyM9n-75GVm_FDqGG0knM58L9YMYx-w96hml7XqwVuy0W130610yDCx6vjRmy1bCKe6haWwJbL_pfcxnmq30059CJzyfQzDLJG40nUQ-ARaNyHEnWY7QK4m47hcZ-n8NalpZ',
-                            badge: 'Reference',
-                          },
-                          {
-                            label: 'Security Intake Scan',
-                            img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAz_JEmMnBJWboUwqpEoXNf5bVicZatL7U1yMBDWLZczoknq-fOxV72k64uWCSzRnQXzhhIEqvADS3r3LZE6lFY0iwlL1eEYaEQSWnhi49qxX-tjuq-TK6zQwKAgrEqwDrKVSCr5yQACUqOMhptjsEOQagFrW2Kgd-gG_dKVZvvkUeVAm_tkBiwldh9dByROvcFySGDPA_IqdpHjfWtqe6j7d63bSfYSAsVO-uubHIisQcyMmsEKMaR',
-                            badge: 'Match Found',
-                          },
-                        ].map((x, i) => (
-                          <div key={x.label} className="text-center">
-                            <span className={`mb-1 block text-[10px] font-bold uppercase ${i ? 'text-indigo-600' : 'text-slate-400'}`}>
-                              {x.label}
-                            </span>
-                            <div
-                              className={`relative h-24 overflow-hidden rounded-lg border ${
-                                i ? 'border-2 border-indigo-400 bg-indigo-100 shadow-inner' : 'border-slate-300 bg-slate-200'
-                              }`}
-                            >
-                              <img alt={x.label} src={x.img} className="h-full w-full object-cover" />
-                              <span
-                                className={`absolute bottom-1 ${
-                                  i ? 'right-1 bg-indigo-700' : 'left-1 bg-black/60'
-                                } rounded px-1.5 py-0.5 font-mono text-[9px] text-white`}
-                              >
-                                {x.badge}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={() => setModal('claim')}
-                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
-                      >
-                        <Award size={15} />
-                        View & Claim Match
-                      </button>
-                    </div>
-                  </article>
-
-                  {/* Active Search Claim Card */}
-                  <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-slate-100 px-2.5 py-0.5 font-mono text-xs font-bold text-slate-700">
-                          #LNF-189
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
-                          <span className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
-                          {claimStatus}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-400">Oct 21</span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900">Blue Hydro Flask Water Bottle</h3>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-                        <MapPin size={13} className="text-slate-400" />
-                        Library 2nd Floor Reading Room • Desk 42
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 p-3">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-600">
-                        <RefreshCw size={13} className="animate-spin" />
-                      </div>
-                      <div className="text-xs">
-                        <p className="font-semibold text-slate-800">Scanning AI Intake Scans</p>
-                        <p className="text-[11px] text-slate-500">Unique identifier: “GitHub Octocat sticker on lid”</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <button
-                        onClick={() => setModal('update')}
-                        className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
-                      >
-                        Update Details
-                      </button>
-                      <button
-                        onClick={() => {
-                          setClaimStatus('Found');
-                          setModal('found-confirm');
-                        }}
-                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
-                      >
-                        Mark as Found
-                      </button>
-                    </div>
-                  </article>
-
-                  {/* Nearest Custodial Desks */}
-                  <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Shield size={16} className="text-blue-600" />
-                        <h4 className="text-xs font-bold uppercase tracking-wide text-slate-900">
-                          Nearest Custodial Desks
-                        </h4>
-                      </div>
-                      <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
-                        Science Quad • Open
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => setModal('map')}
-                      className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200 text-left transition-transform hover:scale-[1.01]"
-                      style={{
-                        background:
-                          'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%), radial-gradient(circle at 70% 30%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)',
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                      <div className="absolute inset-x-3 bottom-3 flex items-end justify-between">
-                        <div className="text-white">
-                          <p className="text-xs font-bold">Quad Security Desk #02</p>
-                          <p className="text-[10px] text-slate-200">Central Science Concourse</p>
-                        </div>
-                        <span className="rounded-lg bg-blue-600/90 px-2 py-1 text-[11px] font-bold text-white shadow">
-                          120m away
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-                </section>
-              </div>
+                </div>
+              </section>
             </>
           )}
 
