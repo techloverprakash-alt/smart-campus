@@ -376,7 +376,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur shadow-xs">
         {/* Row 1: Brand & Actions Bar */}
         <div className="border-b border-slate-100">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-10">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -439,7 +439,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
         {/* Row 2: Service & Lost Found Header Navigation Bar */}
         <div className="border-t border-slate-100 bg-slate-50/90">
-          <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full max-w-[1600px] items-center px-4 sm:px-6 lg:px-10">
             <div className="relative flex w-full items-center gap-1.5 py-2">
               <nav
                 ref={navRef}
@@ -500,7 +500,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
       </header>
 
       {/* Dynamic Content Main Area (Side Navigation Removed, Full-Width Layout) */}
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8 pb-16" id="top">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-10 pb-16" id="top">
           {/* TAB 0: DETAILED REPORT INFRASTRUCTURE ISSUE (FULL PAGE FROM IMAGE 1) */}
           {activeNav === 'Report Infrastructure Issue' && (
             <ReportInfrastructureView
