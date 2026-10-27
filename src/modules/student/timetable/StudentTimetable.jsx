@@ -13,6 +13,7 @@ import {
   Pressable,
   Animated,
   Dimensions,
+  useBreakpoint,
 } from '@/ui';
 import { LinearGradient } from '@/ui';
 import { MaterialIcons } from '@/ui';
@@ -130,6 +131,7 @@ const facultyList = [
 
 export default function StudentTimetable({ navigation }) {
   const { user, profile } = useAuth();
+  const { isWide } = useBreakpoint();
   const [tab, setTab] = useState("today");
   const [facultyOpen, setFacultyOpen] = useState(false);
   const [toastText, setToastText] = useState("");
@@ -165,30 +167,32 @@ export default function StudentTimetable({ navigation }) {
 
       {/* ================= TOP BAR ================= */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            style={styles.backButton}
-            activeOpacity={0.7}
-            onPress={() => {
-              if (navigation && navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation?.navigate("StudentDashboard");
-              }
-            }}
-          >
-            <MaterialIcons name="arrow-back" size={24} color="#191b23" />
-          </TouchableOpacity>
+        <View style={styles.headerInner}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.backButton}
+              activeOpacity={0.7}
+              onPress={() => {
+                if (navigation && navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation?.navigate("StudentDashboard");
+                }
+              }}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#191b23" />
+            </TouchableOpacity>
 
-          <View style={styles.headerTitleWrap}>
-            <Text style={styles.headerMainTitle}>Class Timetable</Text>
-            <Text style={{ fontSize: 12, color: '#64748b' }}>Semester 5 • Info IT Academic Schedule</Text>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.headerMainTitle}>Class Timetable</Text>
+              <Text style={{ fontSize: 12, color: '#64748b' }}>Semester 5 • Info IT Academic Schedule</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.headerRight}>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleBadgeText}>AY 2024–2025</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleBadgeText}>AY 2024–2025</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -200,138 +204,146 @@ export default function StudentTimetable({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mainContainer}>
-          {/* 1. Student Identity Header Card */}
-          <View style={styles.profileCard}>
-            <View style={styles.profileCardTop}>
-              <View style={styles.avatarWrap}>
-                <View style={styles.initialsAvatar}>
-                  <Text style={styles.initialsText}>{initials}</Text>
-                </View>
-                <View style={styles.profileTextWrap}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.studentName}>{studentName}</Text>
-                    <View style={styles.regBadge}>
-                      <Text style={styles.regBadgeText}>{registerNo}</Text>
+          {/* Top Hero Section: Responsive Desktop 2-Column / Mobile Stack */}
+          <View style={isWide ? styles.desktopHeroGrid : styles.mobileHeroCol}>
+            {/* Left Column: Student Identity + Notice */}
+            <View style={isWide ? styles.desktopHeroLeft : styles.fullWidth}>
+              {/* 1. Student Identity Header Card */}
+              <View style={styles.profileCard}>
+                <View style={styles.profileCardTop}>
+                  <View style={styles.avatarWrap}>
+                    <View style={styles.initialsAvatar}>
+                      <Text style={styles.initialsText}>{initials}</Text>
+                    </View>
+                    <View style={styles.profileTextWrap}>
+                      <View style={styles.nameRow}>
+                        <Text style={styles.studentName}>{studentName}</Text>
+                        <View style={styles.regBadge}>
+                          <Text style={styles.regBadgeText}>{registerNo}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.studentDept}>
+                        {deptText}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={styles.studentDept}>
-                    {deptText}
-                  </Text>
+
+                  <View style={styles.enrolledBadge}>
+                    <View style={styles.livePulseDot} />
+                    <Text style={styles.enrolledText}>{enrolledText}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.dateBar}>
+                  <View style={styles.dateLeft}>
+                    <MaterialIcons name="calendar-today" size={16} color="#003fb1" />
+                    <Text style={styles.dateText}>Wednesday, 23 September 2026</Text>
+                  </View>
+                  <Text style={styles.dayOrderText}>Day Order: Day 3</Text>
                 </View>
               </View>
 
-              <View style={styles.enrolledBadge}>
-                <View style={styles.livePulseDot} />
-                <Text style={styles.enrolledText}>{enrolledText}</Text>
-              </View>
-            </View>
-
-            <View style={styles.dateBar}>
-              <View style={styles.dateLeft}>
-                <MaterialIcons name="calendar-today" size={16} color="#003fb1" />
-                <Text style={styles.dateText}>Wednesday, 23 September 2026</Text>
-              </View>
-              <Text style={styles.dayOrderText}>Day Order: Day 3</Text>
-            </View>
-          </View>
-
-          {/* 2. Live Class Banner Card */}
-          <LinearGradient
-            colors={["#003fb1", "#1a56db", "#003fb1"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.liveCard}
-          >
-            <View style={styles.liveDecorCircle} />
-
-            <View style={styles.liveCardTop}>
-              <View style={styles.liveTagRow}>
-                <View style={styles.pulsingIndicatorWrap}>
-                  <View style={styles.pulsingIndicatorDot} />
+              {/* 3. Timetable Notice */}
+              <View style={styles.noticeCard}>
+                <View style={styles.noticeHeader}>
+                  <View style={styles.noticeIconWrap}>
+                    <MaterialIcons
+                      name="notifications-active"
+                      size={18}
+                      color="#852b00"
+                    />
+                  </View>
+                  <View style={styles.noticeTitleWrap}>
+                    <Text style={styles.noticeHeading}>Timetable Notice</Text>
+                    <Text style={styles.noticeApprovedBy}>
+                      Approved by Dr. Arulprakash P (HOD)
+                    </Text>
+                  </View>
+                  <View style={styles.substitutedBadge}>
+                    <Text style={styles.substitutedBadgeText}>Substituted</Text>
+                  </View>
                 </View>
-                <Text style={styles.liveTagText}>
-                  NOW LIVE • 10:40 AM – 11:30 AM
+
+                <Text style={styles.noticeContent}>
+                  Tomorrow Thursday Period 3:{" "}
+                  <Text style={styles.boldText}>Deep Learning</Text> relocated to{" "}
+                  <Text style={styles.boldText}>AI Lab 1</Text> due to scheduled
+                  Projector Maintenance in Room 302.
                 </Text>
-              </View>
-              <View style={styles.periodBadge}>
-                <Text style={styles.periodBadgeText}>Period 3</Text>
-              </View>
-            </View>
 
-            <Text style={styles.liveSubjectTitle}>Deep Learning</Text>
-            <Text style={styles.liveSubjectSubtitle}>AD3501 • Core Theory</Text>
-
-            <View style={styles.liveMetaGrid}>
-              <View style={styles.liveMetaItem}>
-                <MaterialIcons name="person" size={16} color="#d4dcff" />
-                <Text style={styles.liveMetaValue}>Dr. Kumar</Text>
-                <Text style={styles.liveMetaSub}>(Assoc. Prof)</Text>
-              </View>
-
-              <View style={styles.liveMetaItem}>
-                <MaterialIcons name="meeting-room" size={16} color="#d4dcff" />
-                <Text style={styles.liveMetaValue}>Turing Hall (Room 302)</Text>
+                <View style={styles.noticeTransferRow}>
+                  <View style={styles.roomOld}>
+                    <Text style={styles.roomOldText}>Room 302</Text>
+                  </View>
+                  <MaterialIcons name="arrow-forward" size={16} color="#852b00" />
+                  <View style={styles.roomNew}>
+                    <Text style={styles.roomNewText}>AI Lab 1</Text>
+                  </View>
+                  <Text style={styles.effText}>Eff: 24 Sep</Text>
+                </View>
               </View>
             </View>
 
-            <View style={styles.liveActionRow}>
-              <TouchableOpacity
-                style={styles.liveBtnLight}
-                activeOpacity={0.8}
-                onPress={() => navigation?.navigate("StudyMaterials")}
+            {/* Right Column: Live Class Banner Card */}
+            <View style={isWide ? styles.desktopHeroRight : styles.fullWidth}>
+              <LinearGradient
+                colors={["#003fb1", "#1a56db", "#003fb1"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.liveCard, isWide && styles.liveCardDesktop]}
               >
-                <MaterialIcons name="menu-book" size={16} color="#003fb1" />
-                <Text style={styles.liveBtnLightText}>View Syllabus</Text>
-              </TouchableOpacity>
+                <View style={styles.liveDecorCircle} />
 
-              <TouchableOpacity
-                style={styles.liveBtnGlass}
-                activeOpacity={0.8}
-                onPress={() => navigation?.navigate("StudyMaterials")}
-              >
-                <MaterialIcons name="description" size={16} color="#ffffff" />
-                <Text style={styles.liveBtnGlassText}>Lecture Notes</Text>
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
+                <View style={styles.liveCardTop}>
+                  <View style={styles.liveTagRow}>
+                    <View style={styles.pulsingIndicatorWrap}>
+                      <View style={styles.pulsingIndicatorDot} />
+                    </View>
+                    <Text style={styles.liveTagText}>
+                      NOW LIVE • 10:40 AM – 11:30 AM
+                    </Text>
+                  </View>
+                  <View style={styles.periodBadge}>
+                    <Text style={styles.periodBadgeText}>Period 3</Text>
+                  </View>
+                </View>
 
-          {/* 3. Timetable Notice */}
-          <View style={styles.noticeCard}>
-            <View style={styles.noticeHeader}>
-              <View style={styles.noticeIconWrap}>
-                <MaterialIcons
-                  name="notifications-active"
-                  size={18}
-                  color="#852b00"
-                />
-              </View>
-              <View style={styles.noticeTitleWrap}>
-                <Text style={styles.noticeHeading}>Timetable Notice</Text>
-                <Text style={styles.noticeApprovedBy}>
-                  Approved by Dr. Arulprakash P (HOD)
-                </Text>
-              </View>
-              <View style={styles.substitutedBadge}>
-                <Text style={styles.substitutedBadgeText}>Substituted</Text>
-              </View>
-            </View>
+                <Text style={styles.liveSubjectTitle}>Deep Learning</Text>
+                <Text style={styles.liveSubjectSubtitle}>AD3501 • Core Theory</Text>
 
-            <Text style={styles.noticeContent}>
-              Tomorrow Thursday Period 3:{" "}
-              <Text style={styles.boldText}>Deep Learning</Text> relocated to{" "}
-              <Text style={styles.boldText}>AI Lab 1</Text> due to scheduled
-              Projector Maintenance in Room 302.
-            </Text>
+                <View style={styles.liveMetaGrid}>
+                  <View style={styles.liveMetaItem}>
+                    <MaterialIcons name="person" size={16} color="#d4dcff" />
+                    <Text style={styles.liveMetaValue}>Dr. Kumar</Text>
+                    <Text style={styles.liveMetaSub}>(Assoc. Prof)</Text>
+                  </View>
 
-            <View style={styles.noticeTransferRow}>
-              <View style={styles.roomOld}>
-                <Text style={styles.roomOldText}>Room 302</Text>
-              </View>
-              <MaterialIcons name="arrow-forward" size={16} color="#852b00" />
-              <View style={styles.roomNew}>
-                <Text style={styles.roomNewText}>AI Lab 1</Text>
-              </View>
-              <Text style={styles.effText}>Eff: 24 Sep</Text>
+                  <View style={styles.liveMetaItem}>
+                    <MaterialIcons name="meeting-room" size={16} color="#d4dcff" />
+                    <Text style={styles.liveMetaValue}>Turing Hall (Room 302)</Text>
+                  </View>
+                </View>
+
+                <View style={styles.liveActionRow}>
+                  <TouchableOpacity
+                    style={styles.liveBtnLight}
+                    activeOpacity={0.8}
+                    onPress={() => navigation?.navigate("StudyMaterials")}
+                  >
+                    <MaterialIcons name="menu-book" size={16} color="#003fb1" />
+                    <Text style={styles.liveBtnLightText}>View Syllabus</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.liveBtnGlass}
+                    activeOpacity={0.8}
+                    onPress={() => navigation?.navigate("StudyMaterials")}
+                  >
+                    <MaterialIcons name="description" size={16} color="#ffffff" />
+                    <Text style={styles.liveBtnGlassText}>Lecture Notes</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
             </View>
           </View>
 
