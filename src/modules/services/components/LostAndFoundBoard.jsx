@@ -3,7 +3,7 @@ import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3, Grid2X2,
   HelpCircle, LayoutDashboard, List, LockKeyhole, Map, MapPin, Plus,
   Search, ShieldCheck, Smartphone, Hand, Zap, AlertTriangle, X, PackageSearch,
-  Camera, Trash2, RefreshCw, UploadCloud
+  Camera, Trash2, RefreshCw, UploadCloud, Calendar
 } from 'lucide-react';
 
 const initialItems = [
@@ -194,6 +194,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
     brandModel: '',
     description: '',
     type: 'Lost',
+    date: new Date().toISOString().split('T')[0],
   });
 
   React.useEffect(() => {
@@ -291,11 +292,15 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
 
     const finalImage = imagePreview || defaultImages[form.category] || defaultImages.Electronics;
 
+    const formattedAge = form.date
+      ? new Date(form.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : 'Just now';
+
     const newItem = {
       ...form,
       id: `LNF-${230 + items.length}`,
       location: form.exactLocation ? `${form.zone} • ${form.exactLocation}` : form.zone,
-      age: 'Just now',
+      age: formattedAge,
       owner: 'Kamesh S.',
       status: form.type === 'Found' ? 'Intake Logged' : 'Open Search',
       tone: form.type === 'Found' ? 'blue' : 'slate',
@@ -612,7 +617,21 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                   <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
                     3. INCIDENT LOCATION & TIMING *
                   </span>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                        <Calendar size={13} className="text-blue-600" />
+                        {form.type === 'Lost' ? 'Date Lost *' : 'Date Found *'}
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={form.date || new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setForm({ ...form, date: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-500"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">Campus Zone</label>
                       <select
