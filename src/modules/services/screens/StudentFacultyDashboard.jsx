@@ -602,46 +602,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
           {/* TAB 3: OVERVIEW / DASHBOARD (DEFAULT) */}
           {activeNav === 'Overview / Dashboard' && (
             <>
-              {/* Hero Banner */}
-              <section className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm md:flex-row md:items-center">
-                <div>
-                  <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                    Welcome to Campus Services, {displayName}! <span>👋</span>
-                  </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-200/60 bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
-                      CS-2023-8841
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Building2 size={13} className="text-slate-400" />
-                      Computer Science Block A
-                    </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin size={13} className="text-blue-500" />
-                      Science Quad District
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" />
-                    {complaints.filter((c) => c.status === 'Active').length} Active Complaints
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                    {complaints.filter((c) => c.status === 'Resolved').length} Resolved
-                  </span>
-                  <button
-                    onClick={() => setActiveNav('Lost & Found Claims')}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
-                  >
-                    <Zap size={14} className="text-indigo-600" />1 High AI Match
-                  </button>
-                </div>
-              </section>
-
               {/* 3 Quick Action Wizard Cards */}
               <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
                 {[
