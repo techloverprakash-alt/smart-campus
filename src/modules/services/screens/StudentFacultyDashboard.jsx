@@ -1,10 +1,11 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useRouter } from '../../../router';
 import { useAuth } from '../../auth/context/AuthContext';
 import LostAndFoundBoard from '../components/LostAndFoundBoard';
 import ReportInfrastructureView from '../components/ReportInfrastructureView';
 import MatchSuggestionsView from '../components/MatchSuggestionsView';
 import FieldOperationsConsole from '../components/FieldOperationsConsole';
+import CampusAdminControlCenter from '../../admin/screens/CampusAdminControlCenter';
 import CAMPUS_MAP_IMAGE from '@/assets/campus-map.jpg';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
@@ -75,6 +76,7 @@ const navGroups = [
       { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
       { id: 'Field Operations & Work Orders', label: 'Field Operations', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
+      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
       { id: 'Campus Map & Facilities', label: 'Campus Map', icon: MapPin },
     ],
   },
@@ -265,17 +267,50 @@ function Ticket({ ticket, onMessage }) {
   );
 }
 
-export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashboard' }) {
-  const { navigation } = useRouter();
-  const { user, profile } = useAuth();
+export default function StudentFacultyDashboard(props) {
+  const { initialTab = 'Overview / Dashboard', route } = props;
+  const { navigation, loc } = useRouter();
+  const { user, profile, role: authRole } = useAuth();
 
-  const [activeNav, setActiveNav] = useState(initialTab);
+  // Resolve role from navigation params, props, or authenticated session
+  const rawFrom = props.from || route?.params?.from || loc?.params?.from;
+  const rawRole = props.role || route?.params?.role || loc?.params?.role || authRole || user?.role || profile?.role || 'STUDENT';
+  const currentRole = String(rawRole).toUpperCase();
+
+  const isFromAdmin = rawFrom === 'admin' || currentRole === 'ADMIN';
+  const isFromStudentOrStaff = rawFrom === 'student' || rawFrom === 'staff';
+
+  // Admin access is granted ONLY if explicitly coming from admin or having ADMIN role, and not explicitly navigating as student/staff
+  const isAdmin = isFromAdmin && !isFromStudentOrStaff;
+  const roleDisplay = isAdmin ? 'Admin' : (currentRole === 'STAFF' || rawFrom === 'staff') ? 'Faculty' : 'Student';
+  const role = roleDisplay;
+
+  const [activeNav, setActiveNav] = useState(
+    initialTab === 'Campus Admin Control Center' && !isAdmin ? 'Overview / Dashboard' : initialTab
+  );
+
+  // Automatically switch away from Admin Center if not authorized
+  useEffect(() => {
+    if (!isAdmin && activeNav === 'Campus Admin Control Center') {
+      setActiveNav('Overview / Dashboard');
+    }
+  }, [isAdmin, activeNav]);
+
+  // Filter out Admin Center navigation link for students and staff
+  const filteredNavLinks = useMemo(() => {
+    return navGroups[0].links.filter((link) => {
+      if (link.id === 'Campus Admin Control Center' && !isAdmin) {
+        return false;
+      }
+      return true;
+    });
+  }, [isAdmin]);
+
   const [ticketTab, setTicketTab] = useState('All');
   const [modal, setModal] = useState(null);
   const [notifications, setNotifications] = useState(false);
   const [complaints, setComplaints] = useState(initialComplaints);
   const [claimStatus, setClaimStatus] = useState('Active Search');
-  const [role, setRole] = useState(user?.role === 'STAFF' ? 'Faculty' : user?.role === 'ADMIN' ? 'Admin' : 'Student');
   const getTodayDate = () => new Date().toISOString().split('T')[0];
 
   const [openLostReport, setOpenLostReport] = useState(false);
@@ -355,6 +390,10 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   };
 
   const navClick = (label) => {
+    if (label === 'Campus Admin Control Center' && !isAdmin) {
+      setActiveNav('Overview / Dashboard');
+      return;
+    }
     if (label === 'Campus Map & Facilities') {
       setModal('map');
       return;
@@ -372,8 +411,8 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   };
 
   const handleReturnHome = () => {
-    if (user?.role === 'STAFF') navigation.navigate('StaffDashboard');
-    else if (user?.role === 'ADMIN') navigation.navigate('AdminDashboard');
+    if (isAdmin) navigation.navigate('AdminDashboard');
+    else if (currentRole === 'STAFF' || rawFrom === 'staff') navigation.navigate('StaffDashboard');
     else navigation.navigate('StudentDashboard');
   };
 
@@ -466,7 +505,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                 className="flex w-full items-center gap-2 overflow-x-auto py-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {/* Workspace Navigation Links */}
-                {navGroups[0].links.map((link) => {
+                {filteredNavLinks.map((link) => {
                   const IconComp = link.icon;
                   const isActive = activeNav === link.id || (link.id === 'Campus Map & Facilities' && modal === 'map');
                   const isComplaints = link.id === 'My Complaints';
@@ -561,6 +600,11 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
               onBack={() => setActiveNav('Overview / Dashboard')}
               onOpenReportIssue={() => setActiveNav('Report Infrastructure Issue')}
             />
+          )}
+
+          {/* TAB 1.8: CAMPUS ADMIN CONTROL CENTER */}
+          {activeNav === 'Campus Admin Control Center' && isAdmin && (
+            <CampusAdminControlCenter />
           )}
 
           {/* TAB 2: MY COMPLAINTS FULL LIST */}

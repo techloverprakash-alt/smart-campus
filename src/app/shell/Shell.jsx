@@ -236,7 +236,10 @@ export function Shell({ children }) {
         <InspectorBar
           activeRole={role}
           onSelectRole={handleSelectRole}
-          onCampusServices={() => navigation.navigate('StudentFacultyPortal')}
+          onCampusServices={() => navigation.navigate('StudentFacultyPortal', {
+            role: role || user?.role || 'STUDENT',
+            from: (role || user?.role || 'student').toLowerCase(),
+          })}
           onCampusHub={() => navigation.navigate('CommonPortal')}
           onLogin={() => navigation.navigate('Login')}
         />

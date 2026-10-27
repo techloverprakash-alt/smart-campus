@@ -124,7 +124,7 @@ const StaffDashboard = ({ navigation }) => {
               justifyContent: 'space-between',
             }}
             activeOpacity={0.85}
-            onPress={() => navigation?.navigate('StudentFacultyPortal')}
+            onPress={() => navigation?.navigate('StudentFacultyPortal', { role: 'STAFF', from: 'staff' })}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
               <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' }}>

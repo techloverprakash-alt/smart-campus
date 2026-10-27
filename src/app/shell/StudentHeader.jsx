@@ -31,7 +31,11 @@ export function StudentHeader({ active }) {
 
   const handleNav = (screen) => {
     setMobileMenuOpen(false);
-    navigation.navigate(screen);
+    if (screen === 'StudentFacultyPortal') {
+      navigation.navigate(screen, { role: 'STUDENT', from: 'student' });
+    } else {
+      navigation.navigate(screen);
+    }
   };
 
   return (

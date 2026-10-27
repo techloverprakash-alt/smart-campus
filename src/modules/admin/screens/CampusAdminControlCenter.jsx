@@ -234,7 +234,7 @@ export default function CampusAdminControlCenter() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigation?.navigate('StudentFacultyPortal')}
+                  onClick={() => navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' })}
                   className="w-full text-left rounded-lg p-2 font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-between"
                 >
                   <span>Services Portal</span>
@@ -562,7 +562,7 @@ export default function CampusAdminControlCenter() {
               </div>
               <button
                 type="button"
-                onClick={() => navigation?.navigate('StudentFacultyPortal')}
+                onClick={() => navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' })}
                 className="rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition whitespace-nowrap"
               >
                 View Full Portal →

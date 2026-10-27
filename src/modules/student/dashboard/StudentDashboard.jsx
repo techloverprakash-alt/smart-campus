@@ -506,7 +506,7 @@ export default function StudentDashboard({ navigation }) {
     } else if (key === "pay-fees") {
       openQFix();
     } else if (key === "services-portal") {
-      navigation?.navigate("StudentFacultyPortal");
+      navigation?.navigate("StudentFacultyPortal", { role: 'STUDENT', from: 'student' });
     } else if (key === "timetable") {
       navigation?.navigate("StudentTimetable");
     } else {

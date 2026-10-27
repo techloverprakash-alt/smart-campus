@@ -265,7 +265,7 @@ const AdminDashboard = ({ navigation }) => {
                   style={styles.quickActionItem}
                   activeOpacity={0.7}
                   onPress={() => {
-                    if (action.label === 'Campus Services') navigation?.navigate('StudentFacultyPortal');
+                    if (action.label === 'Campus Services') navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' });
                     else if (action.label === 'Add Student') navigation?.navigate('EnrollStudent');
                     else if (action.label === 'Add Staff') navigation?.navigate('AdminStaffOnboarding');
                     else if (action.label === 'Assign Subjects') navigation?.navigate('MentorProctorAllocation');
