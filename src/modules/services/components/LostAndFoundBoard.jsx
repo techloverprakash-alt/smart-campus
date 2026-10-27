@@ -1,73 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3, Grid2X2,
   HelpCircle, LayoutDashboard, List, LockKeyhole, Map, MapPin, Plus,
   Search, ShieldCheck, Smartphone, Hand, Zap, AlertTriangle, X, PackageSearch,
   Camera, Trash2, RefreshCw, UploadCloud, Calendar
 } from 'lucide-react';
+import {
+  getLostReports,
+  getFoundReports,
+  createLostReport,
+  createFoundReport
+} from '../../../services/api/lostAndFound';
 
-const initialItems = [
-  {
-    id: 'LNF-204',
-    title: 'Black Casio FX-991EX Scientific Calculator',
-    category: 'Electronics',
-    zone: 'Main Canteen / Food Court',
-    location: 'Main Canteen Quad 2',
-    age: '3 hrs ago',
-    description: 'Lost during afternoon calculus lecture. Has clear protective slide cover with slight scuff on corner.',
-    owner: 'Kamesh S.',
-    status: 'High AI Match (94%)',
-    tone: 'blue',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMhKzMBnY70PvwVXOnp0IRt6siQjnzjCUJO2Ew5bMx7yVAdcKm5QsMJo0gMZhizP9xTFUZIT-LDp1xlp4ukk01QB2inRLxgmY7NY9nAcLdFxwrsEWxoDwXG9SY4KatrvdGg3LZ4UCmXU0Gvj-5YfVGMeDZ-62GXWJ6tEQPLwOjUfZfpJsYnQ79mS490eDr1XibrYXw2_Qt8K9_URessUwF4IWmcJMLbLJud66YIYW4QRmUxC0DwoA',
-    meta: 'Auto-ping active',
-    found: true,
-  },
-  {
-    id: 'LNF-211',
-    title: 'Blue Hydro Flask 32oz (Octocat Sticker)',
-    category: 'Accessories',
-    zone: 'Central Library',
-    location: 'Central Library 2nd Fl',
-    age: 'Yesterday',
-    description: 'Cobalt blue with a wide flex cap. Distinct GitHub Octocat and React sticker on front.',
-    owner: 'Ananya R. (ECE)',
-    status: 'Open Search',
-    tone: 'slate',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjMLDFmDJ_pEgknJSLl_nX1TW7ctugA08YLnyth0KyNq-QnqjyW5RZY2qkz40PHUaVc82v5z2HONxqaxkticlCKEr7h0UBhJQ7jkPAr9IYv1f-tYURwGVmk-l-7cl_FrleiW6cXu5yGE2JxI95b_X4NvtCFUSeaTa0j_HKzzydg21xlm2bWCZkUPBQMZdHF3yFFN-BlsEh2LV1wvyrMd9mMmiY7uFOyDGcUR0a3QqcqosEOuAXG_-z',
-    meta: 'Reward: Free Cafe Voucher',
-    found: false,
-  },
-  {
-    id: 'LNF-218',
-    title: 'Brown Leather RFID Wallet with Student ID',
-    category: 'Wallets & Cards',
-    zone: 'Sports Complex',
-    location: 'Sports Complex Gym',
-    age: '2 days ago',
-    description: 'Contains campus smartcard, driving license, and hostel mess pass card. Highly urgent.',
-    owner: 'Vikram M.',
-    status: 'Sensitive / IDs',
-    tone: 'rose',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR8wiotPeLc5bm7jLTFhUx0EvywmccNYJADk9Dtt7H82Z_UvLJttkDfnvSisBVHMvKeIIHyXxOlbn1OeRvXFkrc3qTKe-jkPS7eOC9AcRdYoHlNSZ7tfNBGHEqIRze5QwggG51DB-gZKjL6H6fpO2_Rw8fn87lqhl2FNpOp-sgygwH-kAJnZpIyNVCOUM6yJ9-etUVAW_xOG8pOqm9SeUDwmZZn9VyFOJ_T3OkR9xaXnTO7tHFJ40q',
-    meta: 'Priority Handover',
-    found: false,
-  },
-  {
-    id: 'LNF-225',
-    title: 'AirPods Pro (2nd Gen) in Matte Navy Case',
-    category: 'Electronics',
-    zone: 'Academic Block B',
-    location: 'Academic Block B - 302',
-    age: 'Oct 22',
-    description: 'Left behind in seminar row 4. Engraved with a small lightning bolt on bottom lid.',
-    owner: 'Rahul K.',
-    status: 'Verified Serial',
-    tone: 'purple',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDxlZUuXLyQ6NL4vgeTmiZ6HOzM5z3qKOHxpyhhRdZRd52ayl2A9cl9a0cIwmvzycFlJ-tlXShMr_rDf58BEm7woD-eLQG9OiikUzdkEczXDwWo1-yCysxyK2_dqT3VSjTOWlNWQ1H6TjZIym4uZjW6fECIPrHB93UqfyBRiVDLVvhG5hBAx-pnDThuKQ_-ESG8BqpVOfuTv_jn7xaqwdnYGsWIhasKJGYJBmdJwTJbezAhFQYwDomy',
-    meta: 'FindMy Tracked',
-    found: true,
-  },
-];
+const initialItems = [];
+
 
 const cx = (...classes) => classes.filter(Boolean).join(' ');
 
@@ -203,6 +149,59 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
       setModal({ type: 'report' });
     }
   }, [openReportModal]);
+
+  // Load live database reports (zero mock data)
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLiveItems() {
+      try {
+        const [lostRes, foundRes] = await Promise.all([
+          getLostReports().catch(() => []),
+          getFoundReports().catch(() => [])
+        ]);
+
+        const lostList = (Array.isArray(lostRes) ? lostRes : lostRes?.data || []).map((l) => ({
+          id: l.id,
+          title: l.title,
+          category: l.category_name || 'Electronics',
+          zone: l.location_name || 'Main Canteen Quad 2',
+          location: l.location_name || 'Campus Grounds',
+          age: l.lost_at ? new Date(l.lost_at).toLocaleDateString() : 'Recent',
+          description: l.description,
+          owner: l.reporter_name || 'Student',
+          status: l.status || 'Open Search',
+          tone: 'blue',
+          image: l.primary_image_url || '',
+          found: false,
+        }));
+
+        const foundList = (Array.isArray(foundRes) ? foundRes : foundRes?.data || []).map((f) => ({
+          id: f.id,
+          title: f.title,
+          category: f.category_name || 'Electronics',
+          zone: f.custody_desk || 'Central Security Desk',
+          location: f.location_name || f.custody_desk || 'Security Desk',
+          age: f.found_at ? new Date(f.found_at).toLocaleDateString() : 'Recent',
+          description: f.description,
+          owner: f.finder_name || 'Staff Member',
+          status: f.storage_status || 'In Custody',
+          tone: 'purple',
+          image: f.primary_image_url || '',
+          found: true,
+        }));
+
+        if (isMounted) {
+          setItems([...lostList, ...foundList]);
+        }
+      } catch (err) {
+        console.error('Failed to load items:', err);
+      }
+    }
+    fetchLiveItems();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const closeModal = () => {
     setModal(null);

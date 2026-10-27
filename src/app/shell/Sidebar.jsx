@@ -6,6 +6,7 @@ import { MaterialIcons } from '@/ui';
 const NAV = {
   STUDENT: [
     { label: 'Home', icon: 'grid-view', screen: 'StudentDashboard' },
+    { label: 'Lost & Found', icon: 'search', screen: 'StudentLostFound' },
     { label: 'Attendance', icon: 'how-to-reg', screen: 'StudentAttendanceDetail', also: ['AttendanceHistory'] },
     { label: 'Timetable', icon: 'schedule', screen: 'StudentTimetable' },
     { label: 'Materials', icon: 'menu-book', screen: 'StudyMaterials' },
@@ -13,6 +14,7 @@ const NAV = {
   ],
   STAFF: [
     { label: 'Home', icon: 'dashboard', screen: 'StaffDashboard' },
+    { label: 'Lost & Found', icon: 'search', screen: 'StaffLostFound' },
     { label: 'Mark attendance', icon: 'how-to-reg', screen: 'MarkAttendance' },
     { label: 'Attendance review', icon: 'fact-check', screen: 'AttendanceReview' },
     { label: 'Timetable', icon: 'push-pin', screen: 'StaffTimetable' },
@@ -21,6 +23,7 @@ const NAV = {
   ],
   ADMIN: [
     { label: 'Dashboard', icon: 'dashboard', screen: 'AdminDashboard' },
+    { label: 'Lost & Found Verification', icon: 'verified-user', screen: 'AdminLostFoundManagement' },
     { label: 'Control Center', icon: 'admin-panel-settings', screen: 'CampusAdminControlCenter' },
     { label: 'Reports', icon: 'assessment', screen: 'ReportManagement' },
     { label: 'Timetable', icon: 'schedule', screen: 'AdminTimetable' },

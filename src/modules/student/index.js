@@ -12,3 +12,5 @@ export * from './profile/StudentProfile';
 export { default as StudentProfile } from './profile/StudentProfile';
 export * from './profile/StudentEditProfile';
 export { default as StudentEditProfile } from './profile/StudentEditProfile';
+export * from './services/StudentLostFound';
+export { default as StudentLostFound } from './services/StudentLostFound';

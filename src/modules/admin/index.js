@@ -23,3 +23,5 @@ export * from './subjects';
 export * from './marks';
 export * from './assignments';
 export * from './reports';
+export * from './services/AdminLostFoundManagement';
+export { default as AdminLostFoundManagement } from './services/AdminLostFoundManagement';

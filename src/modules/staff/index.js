@@ -14,3 +14,5 @@ export * from './profile/StaffEditProfile';
 export { default as StaffEditProfile } from './profile/StaffEditProfile';
 export * from './mentor-proctor/MentorProctorAllocationScreen';
 export { default as MentorProctorAllocationScreen } from './mentor-proctor/MentorProctorAllocationScreen';
+export * from './services/StaffLostFound';
+export { default as StaffLostFound } from './services/StaffLostFound';

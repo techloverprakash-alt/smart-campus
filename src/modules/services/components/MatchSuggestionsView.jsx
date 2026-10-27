@@ -1,207 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles, ShieldCheck, Check, CheckCircle2, AlertTriangle, ArrowLeft,
   Search, SlidersHorizontal, MapPin, Clock, Eye, Trash2, Send,
   FileCheck, Shield, ChevronDown, User, QrCode, X, Phone, Lock,
   Camera, Zap, RefreshCw, ExternalLink, ThumbsUp, Bell, AlertCircle
 } from 'lucide-react';
+import { getMatches, verifyMatchChallenge } from '../../../services/api/lostAndFound';
 
-const INITIAL_CANDIDATES = [
-  {
-    id: 'CAND-01',
-    confidence: 92,
-    confidenceTier: 'high',
-    confidenceColor: 'emerald',
-    strokeDash: '92, 100',
-    criteria: [
-      { label: 'Category Match', passed: true },
-      { label: 'Radius < 15m', passed: true },
-      { label: 'Delta: 45 Mins', passed: true },
-      { label: 'OCR FX-991EX', passed: true },
-    ],
-    lost: {
-      reportId: 'L-42',
-      date: 'Oct 23 • 01:15 PM',
-      reporter: 'Kamesh S.',
-      studentId: 'CS-2023-8841',
-      dept: 'Computer Science',
-      category: 'Electronics',
-      title: 'Casio Scientific Calculator FX-991EX',
-      description: 'Black solar dual-power calculator left behind after discrete math lunch discussion. Has clear protective hard slide cover with slight scuff on corner.',
-      location: 'Main Canteen Quad 2 • Seating Table 14',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA-zDJleIRsPUmBdEuotmkBJH_tCxf9ZRsvzcPdLo9H-oPuS4zfYLehLuXtC-zuTHGf5fxtBMmR3X4FbFKwvLW71zf4aQyBJH9impUalfAhQhcMeuhm1YRi10A3hZkic-_6b2UtxTX-QOj6k8O-4Y7NnsaoadYIjWNDvmP89B56HlDgZCqH4J_eugD6TnpOYe7OCTJ23LJQiA-Uw29dpb-4i0365_icpfY4g0F4hRrmd616aXyGkEDi',
-      imageLabel: 'Owner Reference Photo',
-    },
-    found: {
-      reportId: 'F-19',
-      date: 'Oct 23 • 02:00 PM',
-      finder: 'Esakki Muthu',
-      finderRole: 'Custodial Team • Facility Shift B',
-      intakeType: 'Intake Scan',
-      title: 'Black Scientific Calculator',
-      description: 'Retrieved during canteen table sanitation routine. Turned in promptly to Security Desk 02 with protective cover intact.',
-      storage: 'Desk 02 (Vault A-14)',
-      storageStatus: 'SECURED',
-      tag: '#SEC-990',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAFm40maZZN6bUH6xUzuC7r46JfPZFhPfwJRqrTnT9fKmcx7gGg2tsFgs0aq7u3SeSi5RN7xH7s_nB1samyARLSBNd5Npvx_KujzBU0gGT2ITVK7vz8VaXWVzuvf3JkUzcibSl_R-YcKrOJbLF_NqPcQc9FViQEPu2xJXcALrjzOsEqbGgj2KsR23dEDFrcxVD5gVV7bZwmICEhJi5gn_LttpgXqg5QYvwqMVZh1Ce5Xj2tYp2wEd0D',
-      imageLabel: 'Campus Security Intake Scan',
-      scansCount: 2,
-    },
-    doubleBlind: {
-      question: 'Protective Cover Marking / Scuff Check',
-      ownerClaim: 'Clear protective hard slide cover with slight scuff on corner.',
-      officerVerification: 'Inspection of Vault A-14 item confirms scuff on lower-right edge of slide cover.',
-      concordanceScore: 100,
-      status: 'Verified Concordance',
-    },
-    status: 'Ready for Handover',
-  },
-  {
-    id: 'CAND-02',
-    confidence: 88,
-    confidenceTier: 'medium',
-    confidenceColor: 'amber',
-    strokeDash: '88, 100',
-    criteria: [
-      { label: 'Earbuds / Apple', passed: true },
-      { label: 'Central Library', passed: true },
-      { label: 'Time delta 2.5 hrs', passed: true },
-    ],
-    lost: {
-      reportId: 'L-39',
-      date: 'Oct 23 • 09:30 AM',
-      reporter: 'Priya M.',
-      studentId: 'ME-2022-4102',
-      dept: 'Mechanical Engg',
-      category: 'Audio & Accessories',
-      title: 'Apple AirPods Pro Gen 2',
-      description: 'Left on study cubicle desk near window. Navy blue silicone protective case. Case may have slight dust.',
-      location: 'Central Library 2nd Floor Quiet Zone',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDxlZUuXLyQ6NL4vgeTmiZ6HOzM5z3qKOHxpyhhRdZRd52ayl2A9cl9a0cIwmvzycFlJ-tlXShMr_rDf58BEm7woD-eLQG9OiikUzdkEczXDwWo1-yCysxyK2_dqT3VSjTOWlNWQ1H6TjZIym4uZjW6fECIPrHB93UqfyBRiVDLVvhG5hBAx-pnDThuKQ_-ESG8BqpVOfuTv_jn7xaqwdnYGsWIhasKJGYJBmdJwTJbezAhFQYwDomy',
-      imageLabel: 'Owner Reference Photo',
-    },
-    found: {
-      reportId: 'F-14',
-      date: 'Oct 23 • 12:00 PM',
-      finder: 'Library Proctor',
-      finderRole: 'Circulation Desk Lead',
-      intakeType: 'Logged Deposit',
-      title: 'Wireless Earbuds in Blue Case',
-      description: 'Handed in from 2nd floor library stacks. Fully operational battery indicator, case clean.',
-      storage: 'Library Custodial Desk #1 (Locker B-03)',
-      storageStatus: 'LOCKED',
-      tag: '#LIB-412',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuChRoGIW0TkgxXblMVAUCijuAlDjGmuPR9nW0gknztS8A6qRslieMLna7WNkLm2Rem7MTRhI6Lm6gt8kJ0wJtJokcJ3zoG73CXo5IHnBY3RfFmpCwPka4GTnzNvFXZwe74lzhIkQfzF5ArnojzortG9Gc1YZ666CwYBrMFDLgwN5IeSUUyg_Pd6S7IqI22MTX6Wm33Pa00Ef42ylrGTtkhZIzhr5YWXGHq8KPRBtCylxP_3EYi4vYb4',
-      imageLabel: 'Intake Verification Photo',
-      scansCount: 1,
-    },
-    doubleBlind: {
-      question: 'Key Loop / Silicone Texture Verification',
-      ownerClaim: 'Notification dispatched to student asking to describe lanyard loop.',
-      officerVerification: 'Awaiting student response in portal inbox.',
-      concordanceScore: 85,
-      status: 'Awaiting Student Confirmation',
-    },
-    status: 'Pending Verification Question',
-  },
-  {
-    id: 'CAND-03',
-    confidence: 95,
-    confidenceTier: 'high',
-    confidenceColor: 'emerald',
-    strokeDash: '95, 100',
-    criteria: [
-      { label: 'Flask / Hydro', passed: true },
-      { label: 'Octocat Decal Match', passed: true },
-      { label: 'Delta: 1.2 Hours', passed: true },
-      { label: 'Color Cobalt Blue', passed: true },
-    ],
-    lost: {
-      reportId: 'L-51',
-      date: 'Oct 24 • 08:30 AM',
-      reporter: 'Ananya R.',
-      studentId: 'EC-2024-3019',
-      dept: 'ECE Dept',
-      category: 'Accessories',
-      title: 'Blue Hydro Flask 32oz (Octocat Sticker)',
-      description: 'Cobalt blue with a wide flex cap. Distinct GitHub Octocat and React sticker on front.',
-      location: 'Central Library 2nd Fl',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjMLDFmDJ_pEgknJSLl_nX1TW7ctugA08YLnyth0KyNq-QnqjyW5RZY2qkz40PHUaVc82v5z2HONxqaxkticlCKEr7h0UBhJQ7jkPAr9IYv1f-tYURwGVmk-l-7cl_FrleiW6cXu5yGE2JxI95b_X4NvtCFUSeaTa0j_HKzzydg21xlm2bWCZkUPBQMZdHF3yFFN-BlsEh2LV1wvyrMd9mMmiY7uFOyDGcUR0a3QqcqosEOuAXG_-z',
-      imageLabel: 'Owner Description Photo',
-    },
-    found: {
-      reportId: 'F-22',
-      date: 'Oct 24 • 09:45 AM',
-      finder: 'Mani K.',
-      finderRole: 'Facilities Staff Shift A',
-      intakeType: 'Intake Scan',
-      title: 'Cobalt Blue Insulated Water Flask',
-      description: 'Turned in from reading table near stacks. White Octocat graphic prominently visible on flask exterior.',
-      storage: 'Desk 01 (Locker C-09)',
-      storageStatus: 'SECURED',
-      tag: '#SEC-998',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjMLDFmDJ_pEgknJSLl_nX1TW7ctugA08YLnyth0KyNq-QnqjyW5RZY2qkz40PHUaVc82v5z2HONxqaxkticlCKEr7h0UBhJQ7jkPAr9IYv1f-tYURwGVmk-l-7cl_FrleiW6cXu5yGE2JxI95b_X4NvtCFUSeaTa0j_HKzzydg21xlm2bWCZkUPBQMZdHF3yFFN-BlsEh2LV1wvyrMd9mMmiY7uFOyDGcUR0a3QqcqosEOuAXG_-z',
-      imageLabel: 'Custodial Intake Scan',
-      scansCount: 1,
-    },
-    doubleBlind: {
-      question: 'Decal Inspection & Dent Check',
-      ownerClaim: 'GitHub Octocat and React sticker on front body.',
-      officerVerification: 'Physical scan verifies authentic Octocat + React stickers intact without tampering.',
-      concordanceScore: 100,
-      status: 'Verified Concordance',
-    },
-    status: 'Ready for Handover',
-  },
-  {
-    id: 'CAND-04',
-    confidence: 76,
-    confidenceTier: 'medium',
-    confidenceColor: 'indigo',
-    strokeDash: '76, 100',
-    criteria: [
-      { label: 'Wallet / Leather', passed: true },
-      { label: 'Sports Complex', passed: true },
-      { label: 'Campus Smartcard inside', passed: true },
-    ],
-    lost: {
-      reportId: 'L-47',
-      date: 'Oct 22 • 05:00 PM',
-      reporter: 'Vikram M.',
-      studentId: 'EE-2023-1120',
-      dept: 'Electrical & Electronics',
-      category: 'Wallets & IDs',
-      title: 'Brown Leather RFID Wallet with Student ID',
-      description: 'Contains campus smartcard, driving license, and hostel mess pass card. Highly urgent.',
-      location: 'Sports Complex Gym Locker Area',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR8wiotPeLc5bm7jLTFhUx0EvywmccNYJADk9Dtt7H82Z_UvLJttkDfnvSisBVHMvKeIIHyXxOlbn1OeRvXFkrc3qTKe-jkPS7eOC9AcRdYoHlNSZ7tfNBGHEqIRze5QwggG51DB-gZKjL6H6fpO2_Rw8fn87lqhl2FNpOp-sgygwH-kAJnZpIyNVCOUM6yJ9-etUVAW_xOG8pOqm9SeUDwmZZn9VyFOJ_T3OkR9xaXnTO7tHFJ40q',
-      imageLabel: 'Reference Photo',
-    },
-    found: {
-      reportId: 'F-08',
-      date: 'Oct 22 • 07:15 PM',
-      finder: 'Gym Supervisor',
-      finderRole: 'Sports Centre Staff',
-      intakeType: 'Custodial Handover',
-      title: 'Brown Trifold Leather Wallet',
-      description: 'Found inside cubicle bench locker 12. Smartcard verified with campus roll prefix EE-2023.',
-      storage: 'Desk 03 (Vault Safe B-02)',
-      storageStatus: 'SECURED',
-      tag: '#SEC-972',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR8wiotPeLc5bm7jLTFhUx0EvywmccNYJADk9Dtt7H82Z_UvLJttkDfnvSisBVHMvKeIIHyXxOlbn1OeRvXFkrc3qTKe-jkPS7eOC9AcRdYoHlNSZ7tfNBGHEqIRze5QwggG51DB-gZKjL6H6fpO2_Rw8fn87lqhl2FNpOp-sgygwH-kAJnZpIyNVCOUM6yJ9-etUVAW_xOG8pOqm9SeUDwmZZn9VyFOJ_T3OkR9xaXnTO7tHFJ40q',
-      imageLabel: 'Security Intake Scan',
-      scansCount: 2,
-    },
-    doubleBlind: {
-      question: 'Sensitive ID & Card Concordance',
-      ownerClaim: 'Driving license and hostel mess pass card present inside.',
-      officerVerification: 'Physical safe inspection verified matching driving license bearing claimant name.',
-      concordanceScore: 98,
-      status: 'Verified Concordance',
-    },
-    status: 'Ready for Handover',
-  },
-];
+const INITIAL_CANDIDATES = [];
 
 export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatchItem, onClearSelectedItem }) {
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
@@ -224,6 +30,69 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 4500);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLiveMatches() {
+      try {
+        const res = await getMatches().catch(() => []);
+        const rawList = Array.isArray(res) ? res : res?.data || [];
+        const formatted = rawList.map((m) => {
+          const conf = Math.round(m.combined_score * 100);
+          return {
+            id: m.id,
+            confidence: conf,
+            confidenceTier: conf >= 85 ? 'high' : conf >= 65 ? 'medium' : 'low',
+            confidenceColor: conf >= 85 ? 'emerald' : conf >= 65 ? 'amber' : 'slate',
+            strokeDash: `${conf}, 100`,
+            criteria: Array.isArray(m.criteria)
+              ? m.criteria.map((c) => ({ label: c.signal || 'Criteria', passed: c.passed !== false }))
+              : [{ label: 'Cross-Modal Match', passed: true }],
+            lost: {
+              reportId: m.lost_report_id,
+              date: 'Recently reported',
+              reporter: m.reporter_name || 'Reporter',
+              category: 'Item',
+              title: m.lost_title || 'Reported Lost Item',
+              description: m.lost_description || '',
+              location: 'Campus Grounds',
+              image: '',
+              imageLabel: 'Reference Photo',
+            },
+            found: {
+              reportId: m.found_report_id,
+              date: 'In Custody',
+              finder: 'Campus Officer',
+              intakeType: 'Logged Deposit',
+              title: m.found_title || 'Found Deposit',
+              description: m.found_description || '',
+              storage: m.custody_desk || 'Security Custody',
+              storageStatus: 'SECURED',
+              tag: '#INV',
+              image: '',
+              imageLabel: 'Intake Scan',
+              scansCount: 1,
+            },
+            doubleBlind: {
+              question: 'Unique marking / serial verification',
+              ownerClaim: m.lost_description || 'Student description',
+              officerVerification: 'Desk custody verified',
+              concordanceScore: conf,
+              status: m.status === 'VERIFIED' ? 'Verified Concordance' : 'Concordance Pending',
+            },
+            status: m.status === 'VERIFIED' ? 'Ready for Handover' : 'Pending Verification',
+          };
+        });
+        if (isMounted) setCandidates(formatted);
+      } catch (err) {
+        console.error('Failed to load candidate matches:', err);
+      }
+    }
+    fetchLiveMatches();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     if (selectedMatchItem) {
