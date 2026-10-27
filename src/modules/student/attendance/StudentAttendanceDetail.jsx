@@ -72,27 +72,11 @@ function StudentIdentity({ profile, user }) {
     : 'Sem 5 · Sec A';
   const academicYear = profile?.batch ? `Batch ${profile.batch}` : 'AY 2024–2025';
   const departmentName = profile?.department?.name || 'B.Tech AI & DS';
-  const avatarUri = profile?.avatar_url || user?.profile?.avatar_url || STUDENT_IMAGE;
 
   return (
     <View style={styles.identityCard}>
       <View style={styles.identityTop}>
         <View style={styles.studentInfo}>
-          <View style={styles.studentImageContainer}>
-            <Image
-              source={{ uri: avatarUri }}
-              style={styles.studentImage}
-            />
-
-            <View style={styles.verifiedDot}>
-              <MaterialIcons
-                name="verified"
-                size={10}
-                color="#fff"
-              />
-            </View>
-          </View>
-
           <View style={styles.studentText}>
             <Text style={styles.studentName}>
               {studentName}
@@ -828,7 +812,6 @@ const styles = StyleSheet.create({
   },
 
   studentText: {
-    marginLeft: 12,
     flex: 1,
   },
 
