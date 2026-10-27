@@ -1727,6 +1727,7 @@ const styles = StyleSheet.create({
 
   tableInner: {
     minWidth: 580,
+    width: "100%",
     gap: 8,
   },
 
@@ -1738,10 +1739,11 @@ const styles = StyleSheet.create({
   },
 
   tableHeaderCell: {
-    width: 96,
+    flex: 1,
+    minWidth: 96,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
 
   tableHeaderCellActive: {
@@ -1760,14 +1762,14 @@ const styles = StyleSheet.create({
   },
 
   tableIntervalRow: {
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 6,
     backgroundColor: "#f3f3fe",
     alignItems: "center",
   },
 
   tableIntervalText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "600",
     color: "#585f6c",
   },
@@ -1778,7 +1780,7 @@ const styles = StyleSheet.create({
   },
 
   tableTimeCell: {
-    width: 96,
+    width: 100,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1796,8 +1798,9 @@ const styles = StyleSheet.create({
   },
 
   tableSubjectCell: {
-    width: 92,
-    marginHorizontal: 2,
+    flex: 1,
+    minWidth: 92,
+    marginHorizontal: 3,
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderRadius: 8,
