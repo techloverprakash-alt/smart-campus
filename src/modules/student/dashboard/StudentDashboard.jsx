@@ -25,12 +25,18 @@ const PROFILE_IMAGE =
 const STUDENT_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCVXP3laCjvBlZEVugtzpX20kCifG87-9yGGVWnUCmaIhNtCcDdG9HmCKcyaSa4oTc-QPnHNb5RR_pO0Xd8oVLNtxyVdxbttBW5KjbrzMiMJD0HcqApHxFuVbC5_KEUHnW0qOr98kurfIJ2NAVvw464MLzvDAN8LdJTSZXSqkbDkysN8V9Lzled9wZvQVwVorYcKfLMT1do8whwEUyopOcVpVMNt3wTCpl8mQ00dAziqalPOmZQTqcZ";
 
-const QFIX_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBjVGZU-O3RWVwEN8AtBMnFwZXpsJcWo5krqtoRUqCI4sGUG2i9qP_iXMCZzNBh0De5pB8ecCaxZnblyuUjIuv1zFudR-yxR-PwfMNYbgOyLEhSH24OCCpfrezClp9nutwOp7nE5lVZ9KxpaW_5QiBp9wjHxvJmV6BNIzKcEE4f2kTMaQlv5hwbVMxWROvAyeLYVaWL2RTJBMv2gAuM0Iwb7g9RgO5kcVp94LBDKW82YYKioYc50XA4smckFXkC67LVXw";
+const QFIX_LOGO =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCx6E3-GQ8z-16S2X4wAfJG5rljnzMl1XATUZWc688SYv98QXGEGTsoaEAq16QM3QrOz0KFxVihkSwFcID1QG2pEJi1q7O9TWouexXI6uqLKptQF0rMyoRnJzk1fk2sTrx2AqYhIN3ar6ZVar92pc7F5iJKsmcaDbE7jICTfcvTt8MVWJ1CReuOOi784VBSBVVycX0nqpPe7AZNltojurAJHGoMii5kL-y1_nIKuDGJr4-ow2ZE4_RzahCzK7Ki4UIo5w";
 
 import TIMETABLE_IMAGE from '@/assets/timetable-3yr.jpeg';
 
 const services = [
+  {
+    key: "pay-fees",
+    title: "Pay Fees",
+    description: "Fee payments, online receipts, and scholarship tracking",
+    logo: QFIX_LOGO,
+  },
   {
     key: "services-portal",
     title: "Campus Services",
@@ -330,63 +336,7 @@ function ServiceHeader() {
   );
 }
 
-function QFixCard({ onLaunch }) {
-  return (
-    <View style={styles.qfixCard}>
-      <View style={styles.qfixImageContainer}>
-        <Image
-          source={{ uri: QFIX_IMAGE }}
-          style={styles.qfixImage}
-        />
-
-        <View style={styles.imageOverlay} />
-
-        <View style={styles.qfixImageBottom}>
-          <Text style={styles.qfixTitle}>
-            Q-Fix Student Desk
-          </Text>
-
-          <View style={styles.officialBadge}>
-            <Text style={styles.officialText}>
-              Official
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.qfixContent}>
-        <Text style={styles.qfixDescription}>
-          Fee payments, online receipts, scholarship tracking,
-          and student grievance queries handled seamlessly.
-        </Text>
-
-        <View style={styles.qfixFooter}>
-          <Text style={styles.poweredText}>
-            Powered by Info Institute of Technology
-          </Text>
-
-          <TouchableOpacity
-            style={styles.launchButton}
-            activeOpacity={0.7}
-            onPress={onLaunch}
-          >
-            <Text style={styles.launchText}>
-              Launch Q-Fix
-            </Text>
-
-            <MaterialIcons
-              name="open-in-new"
-              size={16}
-              color="#003fb1"
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function ServiceCard({ title, description, icon, onPress }) {
+function ServiceCard({ title, description, icon, logo, onPress }) {
   return (
     <TouchableOpacity
       style={styles.serviceCard}
@@ -394,11 +344,15 @@ function ServiceCard({ title, description, icon, onPress }) {
       onPress={onPress}
     >
       <View style={styles.serviceIcon}>
-        <MaterialIcons
-          name={icon}
-          size={22}
-          color="#003fb1"
-        />
+        {logo ? (
+          <Image source={{ uri: logo }} style={styles.serviceIconImage} resizeMode="contain" />
+        ) : (
+          <MaterialIcons
+            name={icon}
+            size={22}
+            color="#003fb1"
+          />
+        )}
       </View>
 
       <View style={styles.serviceCardText}>
@@ -426,6 +380,7 @@ function ServicesGrid({ onServicePress }) {
           title={service.title}
           description={service.description}
           icon={service.icon}
+          logo={service.logo}
           onPress={() => onServicePress(service.key)}
         />
       ))}
@@ -548,6 +503,8 @@ export default function StudentDashboard({ navigation }) {
   const handleServicePress = (key) => {
     if (key === "website") {
       openSCE();
+    } else if (key === "pay-fees") {
+      openQFix();
     } else if (key === "services-portal") {
       navigation?.navigate("StudentFacultyPortal");
     } else if (key === "timetable") {
@@ -587,7 +544,6 @@ export default function StudentDashboard({ navigation }) {
           {/* Campus Services */}
           <View style={styles.servicesSection}>
             <ServiceHeader />
-            <QFixCard onLaunch={openQFix} />
             <ServicesGrid onServicePress={handleServicePress} />
           </View>
 
@@ -1268,117 +1224,6 @@ const styles = StyleSheet.create({
     color: "#585f6c",
   },
 
-  /* ================= Q-FIX ================= */
-
-  qfixCard: {
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    elevation: 2,
-    shadowColor: "#000000",
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-  },
-
-  qfixImageContainer: {
-    width: "100%",
-    height: 130,
-    backgroundColor: "#e7e7f3",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  qfixImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  imageOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 70,
-    backgroundColor: "rgba(46,48,57,0.55)",
-  },
-
-  qfixImageBottom: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  qfixTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: "700",
-    color: "#ffffff",
-  },
-
-  officialBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-    backgroundColor: "#1353d8",
-  },
-
-  officialText: {
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-
-  qfixContent: {
-    padding: 14,
-    gap: 6,
-  },
-
-  qfixDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: "400",
-    color: "#434654",
-  },
-
-  qfixFooter: {
-    paddingTop: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-
-  poweredText: {
-    flex: 1,
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "600",
-    color: "#585f6c",
-  },
-
-  launchButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-
-  launchText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: "700",
-    color: "#003fb1",
-  },
-
   /* ================= SERVICE GRID ================= */
 
   servicesGrid: {
@@ -1414,6 +1259,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f3fe",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  serviceIconImage: {
+    width: 30,
+    height: 30,
   },
 
   serviceCardText: {
