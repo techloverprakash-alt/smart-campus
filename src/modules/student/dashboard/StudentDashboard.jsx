@@ -578,42 +578,6 @@ export default function StudentDashboard({ navigation }) {
             <StudentProfileCard user={user} profile={profile} />
           </View>
 
-          {/* Student & Faculty Services Banner */}
-          <TouchableOpacity
-            style={{
-              marginHorizontal: 16,
-              marginBottom: 16,
-              backgroundColor: '#eff6ff',
-              borderRadius: 16,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: '#bfdbfe',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-            activeOpacity={0.85}
-            onPress={() => navigation?.navigate('StudentFacultyPortal')}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' }}>
-                <MaterialIcons name="support-agent" size={24} color="#ffffff" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1e3a8a' }}>Student & Faculty Portal</Text>
-                  <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#1d4ed8' }}>NEW</Text>
-                  </View>
-                </View>
-                <Text style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
-                  Infrastructure complaints & Campus Lost and Found board
-                </Text>
-              </View>
-            </View>
-            <MaterialIcons name="arrow-forward" size={20} color="#2563eb" />
-          </TouchableOpacity>
-
           {/* Attendance Gateway */}
           <AttendanceOverview
             onPress={() => navigation?.navigate("StudentAttendanceDetail")}
