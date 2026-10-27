@@ -407,7 +407,8 @@ textarea.rn-input {
   overflow: hidden;
 }
 
-.student-layout {
+.student-layout,
+.staff-layout {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -765,12 +766,14 @@ textarea.rn-input {
 /* Desktop with sidebar or student/hub header: bottom-nav handling */
 .with-sidebar .bottom-nav,
 .student-layout .bottom-nav,
+.staff-layout .bottom-nav,
 .bottom-nav-wrapper-hub {
   display: none !important;
 }
 
 @media (max-width: 767px) {
   .student-layout .bottom-nav,
+  .staff-layout .bottom-nav,
   .bottom-nav-wrapper-hub {
     display: flex !important;
   }

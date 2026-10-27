@@ -4,6 +4,7 @@ import { useAuth } from '../../modules/auth/context/AuthContext';
 import { useBreakpoint, MaterialIcons, ActivityIndicator } from '@/ui';
 import { Sidebar } from './Sidebar';
 import { StudentHeader } from './StudentHeader';
+import { StaffHeader } from './StaffHeader';
 
 const ShellContext = createContext({ sidebar: false });
 export const useShell = () => useContext(ShellContext);
@@ -229,10 +230,12 @@ export function Shell({ children }) {
 
   const isCustomLayout = loc.path === '/' || loc.path.startsWith('/login') || loc.path === '/portal' || loc.path === '/services' || loc.path === '/lost-found';
   const isStudentSection = (route?.role === 'STUDENT' || loc.path.startsWith('/student')) && !isCustomLayout;
-  const sidebar = !isStudentSection && !!(required || role) && isDesktop && !isCustomLayout;
+  const isStaffSection = (route?.role === 'STAFF' || loc.path.startsWith('/staff')) && !isCustomLayout;
+  const isHeaderNav = isStudentSection || isStaffSection;
+  const sidebar = !isHeaderNav && !!(required || role) && isDesktop && !isCustomLayout;
   return (
-    <ShellContext.Provider value={{ sidebar, isStudentSection }}>
-      <div className={`app-shell${sidebar ? ' with-sidebar' : ''}${isStudentSection ? ' student-layout' : ''}`}>
+    <ShellContext.Provider value={{ sidebar, isStudentSection, isStaffSection }}>
+      <div className={`app-shell${sidebar ? ' with-sidebar' : ''}${isHeaderNav ? ' student-layout staff-layout' : ''}`}>
         <InspectorBar
           activeRole={role}
           onSelectRole={handleSelectRole}
@@ -243,9 +246,10 @@ export function Shell({ children }) {
           onCampusHub={() => navigation.navigate('CommonPortal')}
           onLogin={() => navigation.navigate('Login')}
         />
-        {sidebar ? <Sidebar role={required || role || 'STAFF'} active={route?.name} /> : null}
+        {sidebar ? <Sidebar role={required || role || 'ADMIN'} active={route?.name} /> : null}
         <div className="app-shell-body">
           {isStudentSection ? <StudentHeader active={route?.name} /> : null}
+          {isStaffSection ? <StaffHeader active={route?.name} /> : null}
           <main className="app-main">{children}</main>
         </div>
       </div>

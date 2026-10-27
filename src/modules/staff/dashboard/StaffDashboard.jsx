@@ -79,13 +79,7 @@ const StaffDashboard = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopAppBar
-        title={profile?.full_name || user?.profile?.full_name || "Staff Dashboard"}
-        showBack
-        onBackPress={() => navigation?.navigate('Login')}
-        profileImage={profile?.avatar_url || user?.profile?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuBs_nuDOZI8b0LXnGPwlVMAVvPv3x7Wwy3GRF14ZCT3QycxHWwSYQml_IqpVh65vsu37hppsz3ERw9tfu6VbVPZebxushWkfgRx4hqCIRt3gulDmO8Ijm8_vybY_AtMzAcA7FHaH964F7nb7xXOOtvkylYcLFkKCKvc5tKwELHDOO-a8DxwkjkdN0KiI8Irb5sH52aXRTSKJDO0qB1QGvUKxwxxNhftj8DZ8aKoy1LhOopLEGncHwIM"}
-        onProfilePress={() => navigation?.navigate('StaffProfile')}
-      />
+      {/* Staff header navigation is rendered in top app header */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.contentInner}>
           {/* Stat Cards Grid */}
