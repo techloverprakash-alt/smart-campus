@@ -203,7 +203,7 @@ const INITIAL_CANDIDATES = [
   },
 ];
 
-export default function MatchSuggestionsView({ onBack, onViewBoard }) {
+export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatchItem, onClearSelectedItem }) {
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
   const [filterTab, setFilterTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -224,6 +224,71 @@ export default function MatchSuggestionsView({ onBack, onViewBoard }) {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 4500);
   };
+
+  React.useEffect(() => {
+    if (selectedMatchItem) {
+      const titleLower = selectedMatchItem.title?.toLowerCase() || '';
+      const matchExists = candidates.some(
+        (c) =>
+          c.lost.title.toLowerCase().includes(titleLower) ||
+          titleLower.includes(c.lost.title.toLowerCase().split(' ')[0])
+      );
+
+      if (!matchExists && selectedMatchItem.title) {
+        const dynamicCandidate = {
+          id: `CAND-${candidates.length + 1}`,
+          confidence: 94,
+          confidenceTier: 'high',
+          confidenceColor: 'emerald',
+          strokeDash: '94, 100',
+          criteria: [
+            { label: 'Category Match', passed: true },
+            { label: 'Zone Proximity', passed: true },
+            { label: 'Intake Confirmed', passed: true },
+          ],
+          lost: {
+            reportId: selectedMatchItem.id || `LNF-${Date.now().toString().slice(-3)}`,
+            date: selectedMatchItem.age || 'Just now',
+            reporter: selectedMatchItem.owner || 'Campus Community Student',
+            studentId: 'ST-2024-LIVE',
+            dept: 'Campus Community',
+            category: selectedMatchItem.category || 'General',
+            title: selectedMatchItem.title,
+            description: selectedMatchItem.description || 'Reported lost item on campus board.',
+            location: selectedMatchItem.location || selectedMatchItem.zone || 'Campus Zone',
+            image: selectedMatchItem.image || 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=900&q=80',
+            imageLabel: 'Reference Photo',
+          },
+          found: {
+            reportId: `F-${Date.now().toString().slice(-3)}`,
+            date: 'Just now',
+            finder: 'Verified Student Finder',
+            finderRole: 'Student Discovery Confirmation',
+            intakeType: 'Discovery Handover Confirmation',
+            title: selectedMatchItem.title,
+            description: 'Item discovery confirmed by finder. Transferred to custodial custody for owner verification.',
+            storage: 'Desk 02 (Quad Intake Bay)',
+            storageStatus: 'INTAKE PENDING',
+            tag: `#DISC-${Date.now().toString().slice(-4)}`,
+            image: selectedMatchItem.image || 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=900&q=80',
+            imageLabel: 'Discovery Intake Photo',
+            scansCount: 1,
+          },
+          doubleBlind: {
+            question: 'Custody Handover Verification',
+            ownerClaim: 'Awaiting student arrival at security desk.',
+            officerVerification: 'Physical custody token pending desk scan.',
+            concordanceScore: 94,
+            status: 'Verified Concordance',
+          },
+          status: 'Ready for Handover',
+        };
+        setCandidates((prev) => [dynamicCandidate, ...prev]);
+      }
+
+      showToast(`Discovery confirmed for "${selectedMatchItem.title}"! AI Triage matching active.`);
+    }
+  }, [selectedMatchItem]);
 
   const handleDismiss = (id) => {
     setCandidates((prev) => prev.filter((c) => c.id !== id));
@@ -413,6 +478,48 @@ export default function MatchSuggestionsView({ onBack, onViewBoard }) {
           </button>
         </div>
       </div>
+
+      {/* Active Discovery Banner if triggered from I Found This */}
+      {selectedMatchItem && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border-2 border-blue-500/30 bg-blue-50/80 p-4 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700">
+                  Item Discovery Confirmed
+                </span>
+                <span className="rounded-full bg-blue-200/90 px-2 py-0.5 text-[10px] font-bold text-blue-900">
+                  {selectedMatchItem.id}
+                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  AI Triage Active
+                </span>
+              </div>
+              <p className="text-sm font-bold text-slate-900 mt-0.5">{selectedMatchItem.title}</p>
+              <p className="text-xs text-slate-600">
+                Zone: <strong className="text-slate-800">{selectedMatchItem.location || selectedMatchItem.zone}</strong> · Please deposit the physical item at Quad Security Desk #02.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {onClearSelectedItem && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClearSelectedItem();
+                  setSearchQuery('');
+                }}
+                className="rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50 transition shadow-2xs"
+              >
+                Clear Filter
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* KPI METRIC SUMMARY SECTION */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">

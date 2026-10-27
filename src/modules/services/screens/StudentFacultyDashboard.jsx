@@ -285,6 +285,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
   const [claimStatus, setClaimStatus] = useState('Active Search');
   const [role, setRole] = useState(user?.role === 'STAFF' ? 'Faculty' : user?.role === 'ADMIN' ? 'Admin' : 'Student');
   const [openLostReport, setOpenLostReport] = useState(false);
+  const [selectedMatchItem, setSelectedMatchItem] = useState(null);
   const navRef = useRef(null);
 
   const scrollNav = (direction) => {
@@ -646,7 +647,10 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
               <LostAndFoundBoard
                 openReportModal={openLostReport}
                 onReportModalClosed={() => setOpenLostReport(false)}
-                onOpenMatchSuggestions={() => setActiveNav('Match Suggestions & Verification')}
+                onOpenMatchSuggestions={(item) => {
+                  setSelectedMatchItem(item || null);
+                  setActiveNav('Match Suggestions & Verification');
+                }}
               />
             </div>
           )}
@@ -656,6 +660,8 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
             <MatchSuggestionsView
               onBack={() => setActiveNav('Lost & Found Claims')}
               onViewBoard={() => setActiveNav('Lost & Found Claims')}
+              selectedMatchItem={selectedMatchItem}
+              onClearSelectedItem={() => setSelectedMatchItem(null)}
             />
           )}
 

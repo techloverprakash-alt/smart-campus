@@ -310,8 +310,12 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
     setForm({ title: '', category: 'Electronics', zone: 'Central Library', exactLocation: '', brandModel: '', description: '', type: 'Lost' });
     setImageFile(null);
     setImagePreview(null);
-    setNotice(`Success! Report for "${newItem.title}" has been broadcast to the campus custody board.`);
-    setTimeout(() => setNotice(''), 4500);
+    if (form.type === 'Found' && onOpenMatchSuggestions) {
+      onOpenMatchSuggestions(newItem);
+    } else {
+      setNotice(`Success! Report for "${newItem.title}" has been broadcast to the campus custody board.`);
+      setTimeout(() => setNotice(''), 4500);
+    }
   }
 
   return (
@@ -828,7 +832,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                     Cancel
                   </button>
                   <button className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm">
-                    Broadcast Report to Board
+                    {form.type === 'Found' ? 'Confirm Discovery & Match with AI' : 'Broadcast Report to Board'}
                   </button>
                 </div>
               </form>
@@ -852,11 +856,16 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                   </button>
                   <button
                     onClick={() => {
+                      const item = modal.item;
                       closeModal();
-                      setNotice(
-                        `Discovery interest for ${modal.item?.id} recorded! Please deposit the item at Quad Security Desk #02.`
-                      );
-                      setTimeout(() => setNotice(''), 5500);
+                      if (onOpenMatchSuggestions) {
+                        onOpenMatchSuggestions(item);
+                      } else {
+                        setNotice(
+                          `Discovery interest for ${item?.id} recorded! Please deposit the item at Quad Security Desk #02.`
+                        );
+                        setTimeout(() => setNotice(''), 5500);
+                      }
                     }}
                     className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-sm"
                   >
