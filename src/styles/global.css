@@ -396,11 +396,380 @@ textarea.rn-input {
   white-space: nowrap;
 }
 
+/* ───────────────────────── Student Header Navigation ───────────────────────── */
+.app-shell-body {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.student-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.student-header {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex-shrink: 0;
+}
+.student-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.student-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+.student-header-logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #003fb1;
+}
+.student-header-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #003fb1;
+  background: #dbe6ff;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.student-header-role {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-left: 2px;
+  padding-left: 8px;
+  border-left: 1px solid #e2e8f0;
+}
+.student-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+.student-header-nav::-webkit-scrollbar {
+  display: none;
+}
+.student-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.student-nav-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.student-nav-btn.active {
+  background: #e4ecff;
+  color: #003fb1;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(0, 63, 177, 0.15);
+}
+.student-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.student-header-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.student-header-user-btn:hover {
+  background: #f8fafc;
+}
+.student-header-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.student-header-user-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  line-height: 1.2;
+}
+.student-header-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.student-header-user-role {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 500;
+}
+.student-header-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #fee2e2;
+  background: #fff5f5;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.student-header-logout-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+.student-mobile-menu-toggle {
+  display: none;
+  background: transparent;
+  border: 0;
+  color: #334155;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.student-mobile-menu-toggle:hover {
+  background: #f1f5f9;
+}
+
+/* Mobile dropdown */
+.student-mobile-nav-dropdown {
+  display: none;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 8px 16px 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
+  gap: 4px;
+}
+.student-mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+}
+.student-mobile-nav-item:hover {
+  background: #f1f5f9;
+}
+.student-mobile-nav-item.active {
+  background: #e4ecff;
+  color: #003fb1;
+  font-weight: 700;
+}
+.student-mobile-nav-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 6px 0;
+}
+.student-mobile-logout {
+  color: #dc2626;
+}
+
+@media (max-width: 1024px) {
+  .student-header-role {
+    display: none;
+  }
+  .student-header-user-text {
+    display: none;
+  }
+  .student-logout-text {
+    display: none;
+  }
+  .student-header-logout-btn {
+    padding: 7px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-header-inner {
+    padding: 0 16px;
+    height: 56px;
+  }
+  .student-header-nav {
+    display: none;
+  }
+  .student-header-logout-btn {
+    display: none;
+  }
+  .student-mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .student-mobile-nav-dropdown {
+    display: flex;
+  }
+}
+
+/* ───────────────────────── Campus Hub Header Navigation ───────────────────────── */
+.hub-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 0;
+  margin-left: 12px;
+}
+.hub-header-nav::-webkit-scrollbar {
+  display: none;
+}
+.hub-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.hub-nav-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.hub-nav-btn.active {
+  background: #e4ecff;
+  color: #003fb1;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(0, 63, 177, 0.15);
+}
+
+/* Dark mode (on active 'portal' screen with dark hero) */
+.hub-nav-btn.dark-mode {
+  color: rgba(255, 255, 255, 0.85);
+}
+.hub-nav-btn.dark-mode:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.hub-nav-btn.dark-mode.active {
+  background: #1a56db;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.4);
+}
+
+.hub-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.hub-header-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c7d7fe;
+  background: #eff4ff;
+  color: #003fb1;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.hub-header-login-btn:hover {
+  background: #dbe6ff;
+  color: #002d80;
+}
+.hub-header-login-btn.dark-mode {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+.hub-header-login-btn.dark-mode:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+@media (max-width: 1024px) {
+  .hub-login-text {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .hub-header-nav {
+    display: none;
+  }
+}
+
 /* ───────────────────────── Responsive layout ───────────────────────── */
 
-/* Desktop with sidebar: the in-screen bottom bar is replaced by the sidebar */
-.with-sidebar .bottom-nav {
+/* Desktop with sidebar or student/hub header: bottom-nav handling */
+.with-sidebar .bottom-nav,
+.student-layout .bottom-nav,
+.bottom-nav-wrapper-hub {
   display: none !important;
+}
+
+@media (max-width: 767px) {
+  .student-layout .bottom-nav,
+  .bottom-nav-wrapper-hub {
+    display: flex !important;
+  }
 }
 
 /* Tablet & up: keep content comfortably readable instead of edge-to-edge */

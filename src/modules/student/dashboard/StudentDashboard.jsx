@@ -564,7 +564,7 @@ export default function StudentDashboard({ navigation }) {
         backgroundColor="#faf8ff"
       />
 
-      <Header navigation={navigation} />
+      {/* Student header navigation is now rendered in top app header */}
 
       <ScrollView
         style={styles.scrollView}

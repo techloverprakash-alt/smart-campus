@@ -180,35 +180,16 @@ export default function StudentTimetable({ navigation }) {
             <MaterialIcons name="arrow-back" size={24} color="#191b23" />
           </TouchableOpacity>
 
-          <View style={styles.logoBadge}>
-            <MaterialIcons name="account-balance" size={20} color="#ffffff" />
-          </View>
-
           <View style={styles.headerTitleWrap}>
-            <View style={styles.nexusSubRow}>
-              <Text style={styles.nexusText}>NEXUS</Text>
-              <Text style={styles.dotSeparator}>•</Text>
-              <Text style={styles.collegeSubText}>Info IT</Text>
-            </View>
-            <Text style={styles.headerMainTitle}>Timetable</Text>
+            <Text style={styles.headerMainTitle}>Class Timetable</Text>
+            <Text style={{ fontSize: 12, color: '#64748b' }}>Semester 5 • Info IT Academic Schedule</Text>
           </View>
         </View>
 
         <View style={styles.headerRight}>
           <View style={styles.roleBadge}>
-            <Text style={styles.roleBadgeText}>Student</Text>
+            <Text style={styles.roleBadgeText}>AY 2024–2025</Text>
           </View>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.profileButton}
-            onPress={() => navigation?.navigate("StudentProfile")}
-          >
-            <Image
-              source={{ uri: avatarUri }}
-              style={styles.profileAvatar}
-            />
-          </TouchableOpacity>
         </View>
       </View>
 

@@ -40,7 +40,7 @@ const COLORS = {
 
 
 
-function Header({ navigation, avatarUri }) {
+function Header({ navigation }) {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
@@ -55,29 +55,10 @@ function Header({ navigation, avatarUri }) {
           <MaterialIcons name="arrow-back" size={22} color={COLORS.text} />
         </TouchableOpacity>
 
-        <View style={styles.logoBox}>
-          <Image source={{ uri: CREST_URL }} style={styles.logo} />
-        </View>
-
         <View style={styles.headerText}>
-          <View style={styles.titleRow}>
-            <Text style={styles.nexus}>NEXUS</Text>
-            <Text style={styles.attendanceTitle}>· Attendance</Text>
-          </View>
-
-          <Text style={styles.subtitle}>
-            Student Academic Portal
-          </Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.text }}>Attendance Details</Text>
+          <Text style={styles.subtitle}>Academic record & subject-wise breakdown</Text>
         </View>
-      </View>
-
-      <View style={styles.headerRight}>
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation?.navigate("StudentProfile")}
-        >
-          <Image source={{ uri: avatarUri || STUDENT_IMAGE }} style={styles.profileSmall} />
-        </TouchableOpacity>
       </View>
     </View>
   );
