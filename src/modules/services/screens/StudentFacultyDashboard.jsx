@@ -70,14 +70,14 @@ const navGroups = [
   {
     title: 'Workspace',
     links: [
-      { id: 'Overview / Dashboard', label: 'Overview / Dashboard', icon: LayoutDashboard },
-      { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
-      { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
-      { id: 'Match Suggestions & Verification', label: 'Match Suggestions & AI Triage', icon: Sparkles },
-      { id: 'Field Operations & Work Orders', label: 'Field Operations & Work Orders', icon: Activity },
+      { id: 'Overview / Dashboard', label: 'Overview', icon: LayoutDashboard },
+      { id: 'Report Infrastructure Issue', label: 'Report Issue', icon: Wrench },
+      { id: 'Lost & Found Claims', label: 'Lost & Found', icon: PackageSearch },
+      { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
+      { id: 'Field Operations & Work Orders', label: 'Field Operations', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
-      { id: 'Campus Admin Control Center', label: 'Admin Control Center', icon: Shield },
-      { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
+      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
+      { id: 'Campus Map & Facilities', label: 'Campus Map', icon: MapPin },
     ],
   },
 ];

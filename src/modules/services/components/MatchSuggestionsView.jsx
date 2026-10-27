@@ -415,38 +415,6 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
         </div>
       )}
 
-      {/* Breadcrumb Navigation & Engine Live Badge */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 font-bold text-blue-700 hover:text-blue-900 transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Back to Services Overview
-          </button>
-          <span>•</span>
-          <span className="text-slate-600 font-semibold">Campus Security Command</span>
-          <span>•</span>
-          <span className="text-slate-900 font-bold">Lost & Found Reconciliation Desk</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
-            AI Multimodal Reconciliation Live
-          </span>
-          {onViewBoard && (
-            <button
-              onClick={onViewBoard}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2"
-            >
-              Open Public Board
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Main Page Title & Top Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
