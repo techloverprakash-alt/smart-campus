@@ -290,6 +290,41 @@ const AdminDashboard = ({ navigation }) => {
             </View>
             <Text style={styles.lastSync}>Last sync: 2 mins ago</Text>
           </View>
+
+          {/* NEXUS Campus Control Center Banner */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#1e3a8a',
+              borderRadius: 12,
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+            onPress={() => navigation?.navigate('CampusAdminControlCenter')}
+            activeOpacity={0.8}
+          >
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <MaterialIcons name="admin-panel-settings" size={18} color="#60a5fa" />
+                <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>
+                  Central Command Live
+                </Text>
+              </View>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '800' }}>
+                Campus Administrator Control Center
+              </Text>
+              <Text style={{ color: '#cbd5e1', fontSize: 12, marginTop: 2 }}>
+                Cross-campus dispatch, SLA risk donut, building telemetry & emergency broadcast.
+              </Text>
+            </View>
+            <MaterialIcons name="arrow-forward" size={20} color="#ffffff" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

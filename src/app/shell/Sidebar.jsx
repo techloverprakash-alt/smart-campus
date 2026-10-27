@@ -21,6 +21,7 @@ const NAV = {
   ],
   ADMIN: [
     { label: 'Dashboard', icon: 'dashboard', screen: 'AdminDashboard' },
+    { label: 'Control Center', icon: 'admin-panel-settings', screen: 'CampusAdminControlCenter' },
     { label: 'Reports', icon: 'assessment', screen: 'ReportManagement' },
     { label: 'Timetable', icon: 'schedule', screen: 'AdminTimetable' },
     { label: 'Enroll student', icon: 'person-add', screen: 'EnrollStudent', also: ['EnrollmentSuccess'] },

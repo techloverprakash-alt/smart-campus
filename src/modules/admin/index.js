@@ -1,5 +1,6 @@
 export * from './dashboard/AdminDashboard';
 export { default as AdminDashboard } from './dashboard/AdminDashboard';
+export { default as CampusAdminControlCenter } from './screens/CampusAdminControlCenter';
 export * from './reports/ReportManagement';
 export { default as ReportManagement } from './reports/ReportManagement';
 export * from './attendance';
