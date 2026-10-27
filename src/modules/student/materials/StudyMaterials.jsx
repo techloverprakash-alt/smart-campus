@@ -709,19 +709,12 @@ export default function StudyMaterials({ navigation }) {
             <Icon name="arrow-back" size={22} color={COLORS.onSurface} />
           </TouchableOpacity>
 
-          <Image
-            source={{ uri: LOGO_URL }}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
-
           <View>
-            <Text style={styles.nexusText}>
-              NEXUS
+            <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.onSurface }}>
+              Study Materials
             </Text>
-
             <Text style={styles.headerSubtitle}>
-              Academic Governance
+              Course notes, question papers & syllabus
             </Text>
           </View>
         </View>

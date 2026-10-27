@@ -509,6 +509,13 @@ const monthConfigs = {
   },
 };
 
+const HUB_NAV_ITEMS = [
+  { key: "portal", label: "Overview", icon: "grid-view", isInternal: true },
+  { key: "circulars", label: "Circulars", icon: "campaign", isInternal: true },
+  { key: "calendar", label: "Calendar", icon: "calendar-month", isInternal: true },
+  { key: "more", label: "Laurels & Wins", icon: "emoji-events", isInternal: true },
+];
+
 export default function CommonPortal({ route, navigation }) {
   const [activeScreen, setActiveScreen] = useState("portal");
 
@@ -529,7 +536,7 @@ export default function CommonPortal({ route, navigation }) {
             activeScreen === "portal" && styles.headerBlurPortal
           ]}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, styles.hubHeader]}>
             <View style={styles.headerLeft}>
               <TouchableOpacity
                 style={[
@@ -544,8 +551,9 @@ export default function CommonPortal({ route, navigation }) {
                   }
                 }}
                 activeOpacity={0.7}
+                title="Go back"
               >
-                <MaterialIcons name="arrow-back" size={22} color={activeScreen === "portal" ? "#ffffff" : COLORS.primary} />
+                <MaterialIcons name="arrow-back" size={20} color={activeScreen === "portal" ? "#ffffff" : COLORS.primary} />
               </TouchableOpacity>
               <View style={[styles.logoCircle, activeScreen === "portal" && styles.logoCirclePortal]}>
                 <Image
@@ -556,16 +564,68 @@ export default function CommonPortal({ route, navigation }) {
               </View>
 
               <View style={styles.headerTextContainer}>
-                <Text style={[styles.nexusText, activeScreen === "portal" && styles.nexusTextPortal]}>NEXUS</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.nexusText, activeScreen === "portal" && styles.nexusTextPortal]}>NEXUS</Text>
+                  <View style={[styles.hubBadge, activeScreen === "portal" && styles.hubBadgePortal]}>
+                    <Text style={[styles.hubBadgeText, activeScreen === "portal" && styles.hubBadgeTextPortal]}>Info IT</Text>
+                  </View>
+                </View>
 
                 <Text
                   style={[styles.collegeText, activeScreen === "portal" && styles.collegeTextPortal]}
                   numberOfLines={1}
                 >
-                  INFO INSTITUTE OF TECHNOLOGY
+                  CAMPUS HUB
                 </Text>
               </View>
             </View>
+
+            {/* Center: Navigation Pills (Matching the Student Header design) */}
+            <nav className="hub-header-nav" aria-label="Campus hub header navigation">
+              {HUB_NAV_ITEMS.map((item) => {
+                const isActive = item.isInternal && activeScreen === item.key;
+                const isDark = activeScreen === 'portal';
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`hub-nav-btn${isActive ? ' active' : ''}${isDark ? ' dark-mode' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => {
+                      if (item.isInternal) {
+                        setActiveScreen(item.key);
+                      } else if (item.screen) {
+                        navigation?.navigate(item.screen);
+                      }
+                    }}
+                  >
+                    <MaterialIcons
+                      name={item.icon}
+                      size={18}
+                      color={
+                        isActive
+                          ? (isDark ? '#ffffff' : '#003fb1')
+                          : (isDark ? 'rgba(255,255,255,0.85)' : '#475569')
+                      }
+                    />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Right: Login button */}
+            <div className="hub-header-right">
+              <button
+                type="button"
+                className={`hub-header-login-btn${activeScreen === 'portal' ? ' dark-mode' : ''}`}
+                onClick={() => navigation?.navigate('Login')}
+                title="Login to Institutional Portals"
+              >
+                <MaterialIcons name="login" size={18} />
+                <span className="hub-login-text">Login</span>
+              </button>
+            </div>
           </View>
         </BlurView>
       </View>
@@ -577,7 +637,7 @@ export default function CommonPortal({ route, navigation }) {
       {activeScreen === "more" && <MoreScreen />}
 
       {/* ================= BOTTOM NAV ================= */}
-      <View style={[styles.bottomNavWrapper, activeScreen === "portal" && styles.bottomNavWrapperPortal]}>
+      <View className="bottom-nav-wrapper-hub" style={[styles.bottomNavWrapper, activeScreen === "portal" && styles.bottomNavWrapperPortal]}>
         <BlurView
           intensity={activeScreen === "portal" ? 60 : 85}
           tint={activeScreen === "portal" ? "dark" : "light"}
@@ -5873,5 +5933,28 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(10, 20, 45, 0.75)",
     borderTopWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.12)",
+  },
+  hubHeader: {
+    maxWidth: 1400,
+    width: "100%",
+    marginHorizontal: "auto",
+  },
+  hubBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: "#dbe6ff",
+  },
+  hubBadgePortal: {
+    backgroundColor: "rgba(56, 189, 248, 0.25)",
+  },
+  hubBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#003fb1",
+    letterSpacing: 0.5,
+  },
+  hubBadgeTextPortal: {
+    color: "#38bdf8",
   },
 });

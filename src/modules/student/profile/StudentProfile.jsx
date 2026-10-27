@@ -101,28 +101,8 @@ const StudentProfile = ({ navigation }) => {
               <MaterialIcons name="arrow-back" size={24} color="#1e293b" />
             </TouchableOpacity>
 
-            <View style={styles.logoWrapper}>
-              <Image
-                source={{ uri: COLLEGE_LOGO }}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-
-            <Text style={styles.nexusText}>NEXUS</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1e293b' }}>Student Profile</Text>
           </View>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={styles.notificationButton}
-            onPress={handleLogout}
-          >
-            <MaterialIcons
-              name="logout"
-              size={22}
-              color="#dc2626"
-            />
-          </TouchableOpacity>
         </View>
 
         {/* ================= MAIN CONTENT ================= */}
