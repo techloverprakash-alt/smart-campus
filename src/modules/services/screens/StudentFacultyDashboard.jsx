@@ -5,7 +5,6 @@ import LostAndFoundBoard from '../components/LostAndFoundBoard';
 import ReportInfrastructureView from '../components/ReportInfrastructureView';
 import MatchSuggestionsView from '../components/MatchSuggestionsView';
 import FieldOperationsConsole from '../components/FieldOperationsConsole';
-import CampusAdminControlCenter from '../../admin/screens/CampusAdminControlCenter';
 import CAMPUS_MAP_IMAGE from '@/assets/campus-map.jpg';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
@@ -76,7 +75,6 @@ const navGroups = [
       { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
       { id: 'Field Operations & Work Orders', label: 'Field Operations', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
-      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
       { id: 'Campus Map & Facilities', label: 'Campus Map', icon: MapPin },
     ],
   },
@@ -563,11 +561,6 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
               onBack={() => setActiveNav('Overview / Dashboard')}
               onOpenReportIssue={() => setActiveNav('Report Infrastructure Issue')}
             />
-          )}
-
-          {/* TAB 1.8: CAMPUS ADMIN CONTROL CENTER */}
-          {activeNav === 'Campus Admin Control Center' && (
-            <CampusAdminControlCenter />
           )}
 
           {/* TAB 2: MY COMPLAINTS FULL LIST */}
