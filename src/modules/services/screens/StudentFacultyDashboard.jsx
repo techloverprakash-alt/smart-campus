@@ -439,24 +439,13 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
 
         {/* Row 2: Service & Lost Found Header Navigation Bar */}
         <div className="border-t border-slate-100 bg-slate-50/90">
-          <div className="mx-auto flex max-w-[1720px] items-center px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
             <div className="relative flex w-full items-center gap-1.5 py-2">
-              {/* Left Scroll Chevron Arrow */}
-              <button
-                type="button"
-                onClick={() => scrollNav('left')}
-                title="Scroll Left"
-                aria-label="Scroll navigation left"
-                className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs hover:bg-slate-100 hover:text-blue-700 transition"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
               <nav
                 ref={navRef}
                 onWheel={handleNavWheel}
                 aria-label="Services and Lost & Found Navigation"
-                className="flex w-full items-center gap-1.5 overflow-x-auto py-1 scroll-smooth [scrollbar-width:thin] [-ms-overflow-style:none]"
+                className="flex w-full items-center gap-2 overflow-x-auto py-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {/* Workspace Navigation Links */}
                 {navGroups[0].links.map((link) => {
@@ -504,45 +493,7 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
                     </button>
                   );
                 })}
-
-                {/* Support & Logs Divider */}
-                <div className="mx-1 h-5 w-px bg-slate-200 shrink-0" />
-
-                {/* Support & Logs Navigation Links */}
-                {navGroups[1].links.map((link) => {
-                  const IconComp = link.icon;
-                  const isActive = (link.id === 'Activity History' && modal === 'history') ||
-                    (link.id === 'Help Desk' && modal === 'help');
-                  return (
-                    <button
-                      key={link.id}
-                      onClick={() => navClick(link.id)}
-                      className={`group inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 ring-1 ring-blue-600'
-                          : 'text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs'
-                      }`}
-                    >
-                      <IconComp
-                        size={14}
-                        className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}
-                      />
-                      <span>{link.label}</span>
-                    </button>
-                  );
-                })}
               </nav>
-
-              {/* Right Scroll Chevron Arrow */}
-              <button
-                type="button"
-                onClick={() => scrollNav('right')}
-                title="Scroll Right"
-                aria-label="Scroll navigation right"
-                className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs hover:bg-slate-100 hover:text-blue-700 transition"
-              >
-                <ChevronRight size={16} />
-              </button>
             </div>
           </div>
         </div>
