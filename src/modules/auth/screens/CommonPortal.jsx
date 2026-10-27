@@ -1299,10 +1299,10 @@ function CalendarScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.calendarContentContainer}
       showsVerticalScrollIndicator={false}
+      bounces={false}
     >
       <View style={styles.calendarMainWrapper}>
         <PlannerHeader />
-        <SemesterPace />
         <MonthTabs
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
@@ -1318,14 +1318,21 @@ function PlannerHeader() {
   return (
     <View style={styles.plannerHeader}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.academicPlanner}>ACADEMIC PLANNER</Text>
-        <Text style={styles.semesterTitle}>Even Semester 2024–25</Text>
+        <Text style={styles.academicPlanner}>ACADEMIC PLANNER • EVEN SEMESTER 2024–25</Text>
+        <View style={styles.paceQuickRow}>
+          <Text style={styles.paceQuickText}>
+            Day <Text style={{ fontWeight: "700", color: COLORS.primary }}>68</Text> / 90 Working Days (75.5% Complete)
+          </Text>
+          <View style={styles.quickProgressBar}>
+            <View style={styles.quickProgressFill} />
+          </View>
+        </View>
       </View>
 
       <View style={styles.autonomousBadge}>
         <MaterialIcons
           name="verified"
-          size={16}
+          size={14}
           color={COLORS.primary}
         />
         <Text style={styles.autonomousText}>Autonomous</Text>
@@ -1432,11 +1439,6 @@ function MonthTabs({ selectedMonth, setSelectedMonth }) {
 
   return (
     <View>
-      <View style={styles.timelineHeader}>
-        <Text style={styles.timelineTitle}>Calendar Timeline</Text>
-        <Text style={styles.year}>2025</Text>
-      </View>
-
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1685,16 +1687,16 @@ function ActionButtons() {
               ? "done"
               : "sync"
           }
-          size={20}
+          size={16}
           color={COLORS.onPrimary}
         />
 
         <Text style={styles.primaryButtonText}>
           {syncing
-            ? "Syncing with Google..."
+            ? "Syncing..."
             : synced
-            ? "Synced with Google Calendar!"
-            : "Sync with Google Calendar"}
+            ? "Synced with Calendar!"
+            : "Sync with Calendar"}
         </Text>
       </TouchableOpacity>
 
@@ -1711,7 +1713,7 @@ function ActionButtons() {
               ? "check-circle"
               : "download"
           }
-          size={20}
+          size={16}
           color={COLORS.primary}
         />
 
@@ -1719,8 +1721,8 @@ function ActionButtons() {
           {downloading
             ? "Preparing PDF..."
             : downloaded
-            ? "Calendar PDF Downloaded!"
-            : "Download Academic Calendar PDF"}
+            ? "PDF Downloaded!"
+            : "Download PDF"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -1804,14 +1806,184 @@ function MoreScreen() {
    ABOUT NEXUS VIEW
 ========================================================= */
 
+const INITIAL_CREATORS = [
+  {
+    id: "esakki",
+    image: ESAKKI_IMAGE,
+    initials: "EM",
+    name: "ESAKKI MUTHU  M",
+    roll: "715024243026",
+    department: "B.Tech AI & Data Science (2024–2029)",
+    description:
+      "Spearheaded overall system architecture, database schema, end-to-end responsive UI/UX system, timetable engine, and mobile viewport optimizations.",
+    tags: ["System Design", "UI/UX", "API Integration"],
+  },
+  {
+    id: "prakash",
+    image: PRAKASH_IMAGE,
+    initials: "GP",
+    name: "GNANA PRAKASH V",
+    roll: "715024243030",
+    department: "B.Tech AI & Data Science (2024–2029)",
+    description:
+      "Architected the real-time attendance analytics engine, automated margin calculator, multi-role authentication security, and session management.",
+    tags: ["Cloud Backend", "Attendance Engine", "Security"],
+  },
+  {
+    id: "abishek",
+    image: null,
+    initials: "AR",
+    name: "ABISHEK R K",
+    roll: "715024243004",
+    department: "B.Tech AI & Data Science (2024–2029)",
+    description:
+      "Core developer contributing to frontend interfaces, module data binding, student portal integrations, and cross-device responsiveness.",
+    tags: ["Frontend UI", "Module Integration", "Component Design"],
+  },
+  {
+    id: "member4",
+    image: null,
+    initials: "TM",
+    name: "TEAM MEMBER 4",
+    roll: "715024243015",
+    department: "B.Tech AI & Data Science (2024–2029)",
+    description:
+      "Core developer contributing to system features, component integration, data pipeline workflows, and UI testing.",
+    tags: ["Frontend UI", "Testing & QA", "API Integration"],
+  },
+];
+
 function AboutNexusView() {
+  const [creators, setCreators] = useState(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const saved = window.localStorage.getItem("nexus_creators_list");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_CREATORS;
+  });
+
+  const [editingMember, setEditingMember] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    roll: "",
+    department: "",
+    description: "",
+    tags: "",
+    initials: "",
+    image: "",
+  });
+
+  const handleEditMember = (member) => {
+    setEditingMember(member);
+    setFormData({
+      name: member.name || "",
+      roll: member.roll || "",
+      department: member.department || "B.Tech AI & Data Science (2024–2029)",
+      description: member.description || "",
+      tags: Array.isArray(member.tags) ? member.tags.join(", ") : (member.tags || ""),
+      initials: member.initials || "",
+      image: member.image || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleAddNewMember = () => {
+    const newMember = {
+      id: `member_${Date.now()}`,
+      name: "NEW MEMBER",
+      roll: "715024243000",
+      department: "B.Tech AI & Data Science (2024–2029)",
+      description: "Core contributor assisting in portal features and user experience optimization.",
+      tags: ["Development", "Testing"],
+      initials: "NM",
+      image: null,
+      isNew: true,
+    };
+    setEditingMember(newMember);
+    setFormData({
+      name: newMember.name,
+      roll: newMember.roll,
+      department: newMember.department,
+      description: newMember.description,
+      tags: newMember.tags.join(", "),
+      initials: newMember.initials,
+      image: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveMember = () => {
+    if (!formData.name.trim()) {
+      Alert.alert("Name Required", "Please enter the member name.");
+      return;
+    }
+
+    const tagsArray = formData.tags
+      ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
+    const updated = {
+      ...editingMember,
+      name: formData.name.trim(),
+      roll: formData.roll.trim(),
+      department: formData.department.trim(),
+      description: formData.description.trim(),
+      tags: tagsArray,
+      initials:
+        formData.initials.trim() ||
+        formData.name.trim().substring(0, 2).toUpperCase(),
+      image: formData.image.trim() ? formData.image.trim() : null,
+    };
+
+    let updatedList;
+    if (editingMember.isNew) {
+      delete updated.isNew;
+      updatedList = [...creators, updated];
+    } else {
+      updatedList = creators.map((m) =>
+        m.id === editingMember.id ? updated : m
+      );
+    }
+
+    setCreators(updatedList);
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(
+          "nexus_creators_list",
+          JSON.stringify(updatedList)
+        );
+      }
+    } catch (e) {}
+
+    setIsModalOpen(false);
+    setEditingMember(null);
+  };
+
+  const handleDeleteMember = (memberId) => {
+    const updatedList = creators.filter((m) => m.id !== memberId);
+    setCreators(updatedList);
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(
+          "nexus_creators_list",
+          JSON.stringify(updatedList)
+        );
+      }
+    } catch (e) {}
+    setIsModalOpen(false);
+    setEditingMember(null);
+  };
+
   const openEmail = () => {
     Linking.openURL("mailto:nexus.aids@infotech.edu.in");
   };
 
-  const openGithub = () => {
-    Linking.openURL("https://github.com");
-  };
 
   return (
     <ScrollView
@@ -1879,38 +2051,171 @@ function AboutNexusView() {
             </Text>
           </View>
 
-          <View style={styles.studentLeadsTag}>
-            <Text style={styles.studentLeadsText}>Student Leads</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View style={styles.studentLeadsTag}>
+              <Text style={styles.studentLeadsText}>Student Leads</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.addMemberBtn}
+              onPress={handleAddNewMember}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="person-add" size={14} color="#ffffff" />
+              <Text style={styles.addMemberBtnText}>Add</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* ESAKKI */}
-        <StudentCard
-          image={ESAKKI_IMAGE}
-          name="ESAKKI MUTHU  M"
-          roll="715024243026"
-          description="Spearheaded overall system architecture, database schema, end-to-end responsive UI/UX system, timetable engine, and mobile viewport optimizations."
-          tags={["System Design", "UI/UX", "API Integration"]}
-        />
-
-        {/* PRAKASH */}
-        <StudentCard
-          image={PRAKASH_IMAGE}
-          name="GNANA PRAKASH V"
-          roll="715024243030"
-          description="Architected the real-time attendance analytics engine, automated margin calculator, multi-role authentication security, and session management."
-          tags={["Cloud Backend", "Attendance Engine", "Security"]}
-        />
-
-        {/* ABISHEK */}
-        <StudentCard
-          initials="AR"
-          name="ABISHEK R K"
-          roll="715024243004"
-          description="Core developer contributing to frontend interfaces, module data binding, student portal integrations, and cross-device responsiveness."
-          tags={["Frontend UI", "Module Integration", "Component Design"]}
-        />
+        {creators.map((creator) => (
+          <StudentCard
+            key={creator.id}
+            image={creator.image}
+            initials={creator.initials}
+            name={creator.name}
+            roll={creator.roll}
+            department={creator.department}
+            description={creator.description}
+            tags={creator.tags}
+            onEdit={() => handleEditMember(creator)}
+          />
+        ))}
       </View>
+
+      {/* EDIT / ADD CREATOR MODAL */}
+      <Modal
+        visible={isModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.creatorModalCard}>
+            <View style={styles.creatorModalHeader}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View style={styles.creatorModalIconBg}>
+                  <MaterialIcons name="badge" size={20} color={COLORS.primary} />
+                </View>
+                <Text style={styles.creatorModalTitle}>
+                  {editingMember?.isNew ? "Add Team Member" : "Edit Creator Position"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsModalOpen(false)}
+                style={styles.creatorModalCloseBtn}
+              >
+                <MaterialIcons name="close" size={20} color={COLORS.onSurfaceVariant} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalFieldGroup}>
+                <Text style={styles.modalFieldLabel}>Full Name</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={formData.name}
+                  onChangeText={(val) => setFormData({ ...formData, name: val })}
+                  placeholder="e.g. ESAKKI MUTHU M"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.modalFieldRow}>
+                <View style={[styles.modalFieldGroup, { flex: 1 }]}>
+                  <Text style={styles.modalFieldLabel}>Roll Number</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={formData.roll}
+                    onChangeText={(val) => setFormData({ ...formData, roll: val })}
+                    placeholder="e.g. 715024243026"
+                    placeholderTextColor="#94a3b8"
+                  />
+                </View>
+                <View style={[styles.modalFieldGroup, { width: 90 }]}>
+                  <Text style={styles.modalFieldLabel}>Initials</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={formData.initials}
+                    onChangeText={(val) => setFormData({ ...formData, initials: val })}
+                    placeholder="e.g. EM"
+                    maxLength={3}
+                    placeholderTextColor="#94a3b8"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={styles.modalFieldLabel}>Department / Batch</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={formData.department}
+                  onChangeText={(val) => setFormData({ ...formData, department: val })}
+                  placeholder="B.Tech AI & Data Science (2024–2029)"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={styles.modalFieldLabel}>Role / Description</Text>
+                <TextInput
+                  style={[styles.modalInput, { height: 72, textAlignVertical: "top" }]}
+                  multiline
+                  numberOfLines={3}
+                  value={formData.description}
+                  onChangeText={(val) => setFormData({ ...formData, description: val })}
+                  placeholder="Describe key responsibilities and contributions..."
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={styles.modalFieldLabel}>Tags (comma separated)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={formData.tags}
+                  onChangeText={(val) => setFormData({ ...formData, tags: val })}
+                  placeholder="Frontend UI, API Integration, Testing"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.modalFieldGroup}>
+                <Text style={styles.modalFieldLabel}>Profile Image URL (optional)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={formData.image}
+                  onChangeText={(val) => setFormData({ ...formData, image: val })}
+                  placeholder="https://..."
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.creatorModalActions}>
+              {!editingMember?.isNew && creators.length > 1 && (
+                <TouchableOpacity
+                  style={styles.creatorDeleteBtn}
+                  onPress={() => handleDeleteMember(editingMember.id)}
+                >
+                  <MaterialIcons name="delete-outline" size={16} color={COLORS.error} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.creatorCancelBtn}
+                onPress={() => setIsModalOpen(false)}
+              >
+                <Text style={styles.creatorCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.creatorSaveBtn}
+                onPress={handleSaveMember}
+              >
+                <MaterialIcons name="check" size={16} color="#ffffff" />
+                <Text style={styles.creatorSaveBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* SYSTEM HIGHLIGHTS */}
       <View style={styles.aboutSection}>
@@ -1995,33 +2300,6 @@ function AboutNexusView() {
               color={COLORS.secondary}
             />
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.contactButton}
-            onPress={openGithub}
-            activeOpacity={0.75}
-          >
-            <View style={styles.contactLeft}>
-              <View style={styles.contactIcon}>
-                <MaterialIcons
-                  name="terminal"
-                  size={18}
-                  color={COLORS.primary}
-                />
-              </View>
-              <View>
-                <Text style={styles.contactTitle}>Source Repository & Docs</Text>
-                <Text style={styles.contactSubtitle}>
-                  github.com/suguna-aids/nexus-portal
-                </Text>
-              </View>
-            </View>
-            <MaterialIcons
-              name="open-in-new"
-              size={20}
-              color={COLORS.secondary}
-            />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -2038,7 +2316,7 @@ function AboutNexusView() {
   );
 }
 
-function StudentCard({ image, initials, name, roll, description, tags }) {
+function StudentCard({ image, initials, name, roll, department, description, tags, onEdit }) {
   return (
     <View style={styles.profileCard}>
       <View style={styles.profileTop}>
@@ -2046,16 +2324,32 @@ function StudentCard({ image, initials, name, roll, description, tags }) {
           <Image source={{ uri: image }} style={styles.profileImage} />
         ) : (
           <View style={styles.initialAvatar}>
-            <Text style={styles.initialText}>{initials}</Text>
+            <Text style={styles.initialText}>
+              {initials || (name ? name.substring(0, 2).toUpperCase() : "ST")}
+            </Text>
           </View>
         )}
 
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName} numberOfLines={1}>
-            {name}
-          </Text>
+          <View style={styles.profileHeaderRow}>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {name}
+            </Text>
+            {onEdit && (
+              <TouchableOpacity
+                style={styles.cardEditBtn}
+                onPress={onEdit}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="edit" size={12} color={COLORS.primary} />
+                <Text style={styles.cardEditText}>Edit</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <Text style={styles.profileSub}>
-            B.Tech AI & Data Science (2024–2029) • Roll: {roll}
+            {department
+              ? `${department}${roll ? ` • Roll: ${roll}` : ""}`
+              : `B.Tech AI & Data Science (2024–2029) • Roll: ${roll}`}
           </Text>
         </View>
       </View>
@@ -2066,7 +2360,7 @@ function StudentCard({ image, initials, name, roll, description, tags }) {
 
       <View style={styles.profileBottom}>
         <View style={styles.tagsContainer}>
-          {tags.map((tag, index) => (
+          {(tags || []).map((tag, index) => (
             <View key={index} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -2945,12 +3239,181 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
+  profileHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+    gap: 8,
+  },
+
+  cardEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: COLORS.surfaceContainerHigh,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.45)",
+  },
+
+  cardEditText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: COLORS.primary,
+  },
+
+  addMemberBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+
+  addMemberBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+
+  creatorModalCard: {
+    width: "100%",
+    maxWidth: 480,
+    backgroundColor: COLORS.surfaceContainerLowest,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.3)",
+  },
+
+  creatorModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceContainerHigh,
+  },
+
+  creatorModalIconBg: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: COLORS.primaryFixed,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  creatorModalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.onSurface,
+  },
+
+  creatorModalCloseBtn: {
+    padding: 4,
+    borderRadius: 16,
+  },
+
+  modalFieldGroup: {
+    marginBottom: 12,
+  },
+
+  modalFieldRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  modalFieldLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.onSurfaceVariant,
+    marginBottom: 4,
+  },
+
+  modalInput: {
+    backgroundColor: COLORS.surfaceContainer,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.4)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: COLORS.onSurface,
+  },
+
+  creatorModalActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceContainerHigh,
+  },
+
+  creatorDeleteBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.errorContainer,
+    marginRight: "auto",
+  },
+
+  creatorCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceContainer,
+  },
+
+  creatorCancelBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.onSurfaceVariant,
+  },
+
+  creatorSaveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+  },
+
+  creatorSaveBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+
   profileName: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "700",
     color: COLORS.onSurface,
     marginBottom: 2,
+    flex: 1,
   },
 
   profileSub: {
@@ -3197,13 +3660,16 @@ const styles = StyleSheet.create({
   },
 
   calendarContentContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 82,
-    paddingBottom: 100,
+    paddingHorizontal: 12,
+    paddingTop: 66,
+    paddingBottom: 76,
+    alignItems: "center",
   },
 
   calendarMainWrapper: {
-    gap: 16,
+    maxWidth: 580,
+    width: "100%",
+    gap: 6,
   },
 
   scrollView: {
@@ -3817,15 +4283,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: COLORS.surfaceContainerLowest,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.25)",
   },
 
   academicPlanner: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "600",
-    letterSpacing: 1.2,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
     color: COLORS.primary,
-    marginBottom: 3,
+  },
+
+  paceQuickRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
+
+  paceQuickText: {
+    fontSize: 11,
+    color: COLORS.onSurfaceVariant,
+    fontWeight: "500",
+  },
+
+  quickProgressBar: {
+    width: 60,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.surfaceContainerHigh,
+    overflow: "hidden",
+  },
+
+  quickProgressFill: {
+    width: "75.5%",
+    height: "100%",
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
   },
 
   semesterTitle: {
@@ -3838,18 +4336,18 @@ const styles = StyleSheet.create({
   autonomousBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 18,
-    backgroundColor: COLORS.surfaceContainerHigh,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: COLORS.primaryFixed,
     marginLeft: 8,
   },
 
   autonomousText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    color: COLORS.onSurfaceVariant,
+    color: COLORS.primary,
   },
 
   /* ================= PACE CARD ================= */
@@ -3992,91 +4490,93 @@ const styles = StyleSheet.create({
   },
 
   monthScroll: {
-    gap: 8,
-    paddingBottom: 2,
+    gap: 6,
+    paddingVertical: 2,
   },
 
   monthTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
     backgroundColor: COLORS.surfaceContainer,
   },
 
   monthTabActive: {
     backgroundColor: COLORS.primary,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
     elevation: 2,
   },
 
   monthTabText: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.onSurfaceVariant,
   },
 
   monthTabTextActive: {
     fontWeight: "700",
-    color: COLORS.onPrimary,
+    color: "#b5c4ff",
   },
 
   /* ================= CALENDAR CARD ================= */
   calendarCard: {
     backgroundColor: COLORS.surfaceContainerLowest,
     borderRadius: 12,
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.25)",
   },
 
   calendarHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 12,
+    paddingBottom: 6,
   },
 
   calendarTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
 
   calendarTitle: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: "600",
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "700",
     color: COLORS.onSurface,
   },
 
   workDaysBadge: {
     backgroundColor: COLORS.surfaceContainer,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
   },
 
   workDaysText: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.onSurfaceVariant,
-    fontWeight: "500",
+    fontWeight: "600",
   },
 
   weekHeader: {
     flexDirection: "row",
-    paddingVertical: 8,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
     marginBottom: 4,
   },
 
   weekDay: {
     flex: 1,
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     color: "#475569",
   },
@@ -4088,22 +4588,22 @@ const styles = StyleSheet.create({
   calendarGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -2,
+    marginHorizontal: -1,
   },
 
   calendarDay: {
     width: "14.2857%",
-    aspectRatio: 1,
-    padding: 6,
-    marginBottom: 3,
-    borderRadius: 8,
+    height: 32,
+    padding: 2,
+    marginBottom: 2,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
 
   dayTextBase: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
   },
 
@@ -4214,7 +4714,7 @@ const styles = StyleSheet.create({
 
   dayDot: {
     position: "absolute",
-    bottom: 3,
+    bottom: 2,
     width: 4,
     height: 4,
     borderRadius: 2,
@@ -4222,79 +4722,84 @@ const styles = StyleSheet.create({
 
   /* ================= CALENDAR LEGEND ================= */
   legend: {
-    marginTop: 16,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: COLORS.surfaceContainerLow,
+    marginTop: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#f8fafc",
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "space-around",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
   },
 
   legendItem: {
-    width: "50%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    gap: 5,
   },
 
   legendCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 
   legendText: {
-    flex: 1,
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.onSurfaceVariant,
+    fontWeight: "500",
   },
 
   /* ================= ACTION BUTTONS ================= */
   actionContainer: {
+    flexDirection: "row",
     gap: 8,
-    paddingTop: 2,
+    marginTop: 2,
   },
 
   primaryButton: {
-    height: 48,
-    borderRadius: 12,
+    flex: 1,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: COLORS.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: 6,
+    paddingHorizontal: 10,
   },
 
   syncedButton: {
-    backgroundColor: COLORS.tertiaryContainer,
+    backgroundColor: "#16a34a",
   },
 
   primaryButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.onPrimary,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#ffffff",
   },
 
   secondaryButton: {
-    height: 48,
-    borderRadius: 12,
+    flex: 1,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: COLORS.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: "rgba(195,197,215,0.40)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
+    gap: 6,
+    paddingHorizontal: 10,
     elevation: 1,
   },
 
   secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.onSurface,
   },
 
