@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Activity, AlertTriangle, Camera, Check, CheckCircle2, Clock, Clock3,
   MapPin, Phone, PlayCircle, Plus, Search, UserRound, Wrench, Zap,
@@ -96,23 +96,8 @@ export default function FieldOperationsConsole({ onBack, onOpenReportIssue }) {
   const [remarks, setRemarks] = useState(INITIAL_ORDERS[0].remarks);
   const [notice, setNotice] = useState('');
   const [activeModal, setActiveModal] = useState(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(2085); // 34m 45s
   const [spareRequisitionSuccess, setSpareRequisitionSuccess] = useState('');
   const fileInputRef = useRef(null);
-
-  // Live timer for active in-progress job
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimer = (totalSec) => {
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${m}m ${s < 10 ? '0' : ''}${s}s`;
-  };
 
   const showNotification = (msg) => {
     setNotice(msg);
@@ -199,7 +184,7 @@ export default function FieldOperationsConsole({ onBack, onOpenReportIssue }) {
   }, [orders, query, zone, status, trade, sort]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-28 font-sans text-slate-800 animate-fade-in">
+    <div className="mx-auto max-w-7xl space-y-6 pb-10 font-sans text-slate-800 animate-fade-in">
       {/* Hidden file input for quick photos */}
       <input
         ref={fileInputRef}
@@ -702,53 +687,6 @@ export default function FieldOperationsConsole({ onBack, onOpenReportIssue }) {
         )}
       </div>
 
-      {/* ================= PERSISTENT ACTIVE JOB DOCK (HUD) ================= */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 bg-slate-900 px-4 py-2.5 text-white shadow-2xl sm:px-6">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3 w-3">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-            <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500" />
-          </span>
-
-          <div className="text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Active Job Underway:
-            </span>
-            <span className="ml-1 font-bold text-white">
-              #{activeJob?.id || 'CMP-108'} {activeJob?.trade ? `• ${activeJob.trade}` : ''}
-            </span>
-            <span className="ml-2 hidden text-slate-400 sm:inline">
-              (Live SLA Timer: <strong className="font-mono text-amber-400">{formatTimer(elapsedSeconds)}</strong> • Science Quad Block B)
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            href="tel:4444"
-            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
-          >
-            <Phone size={13} />
-            Desk (ext. 4444)
-          </a>
-          <button
-            type="button"
-            onClick={() => handleAction('Quick Snap')}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
-          >
-            <Camera size={13} />
-            Quick Snap
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAction('Quick Resolve', activeJob?.id || 'CMP-108')}
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
-          >
-            <Check size={13} strokeWidth={3} />
-            Quick Resolve
-          </button>
-        </div>
-      </footer>
 
       {/* ================= MODAL: CENTRAL WAREHOUSE SPARES REQUISITION ================= */}
       {activeModal === 'spares' && (
