@@ -146,13 +146,7 @@ const AdminDashboard = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopAppBar
-        title={profile?.full_name ? `Admin: ${profile.full_name}` : "Admin Portal"}
-        showBack
-        onBackPress={handleLogout}
-        profileImage={profile?.avatar_url || user?.profile?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuD1t5z-_oQFWEaabU_WJXKo_VqO91Cj1cerTlzKrkGfjfKSqcYLxb4osCTXeFfFjZjt_RwN3XSs7E1IjqHQ43_S6DeISPQpGZI_lcQ6DCjefn5fA5c6dauILyxqbS3i7H0BtINyQEDLxsbF_xi4onTPB9L_t93ppw-qwRTYb9mtB6ZZQgC6rfLajdkVnLkA96olIVw7dGBlx7YQ2Lb8Yr0yoJg7mPl5YPriyQ0Eed4zO8R7r8JS1wHO"}
-        onProfilePress={() => navigation?.navigate('AdminProfile')}
-      />
+      {/* Admin header navigation is rendered in top app header */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.contentInner}>
           {/* Header */}

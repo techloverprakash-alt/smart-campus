@@ -408,7 +408,8 @@ textarea.rn-input {
 }
 
 .student-layout,
-.staff-layout {
+.staff-layout,
+.admin-layout {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -767,6 +768,7 @@ textarea.rn-input {
 .with-sidebar .bottom-nav,
 .student-layout .bottom-nav,
 .staff-layout .bottom-nav,
+.admin-layout .bottom-nav,
 .bottom-nav-wrapper-hub {
   display: none !important;
 }
@@ -774,6 +776,7 @@ textarea.rn-input {
 @media (max-width: 767px) {
   .student-layout .bottom-nav,
   .staff-layout .bottom-nav,
+  .admin-layout .bottom-nav,
   .bottom-nav-wrapper-hub {
     display: flex !important;
   }
