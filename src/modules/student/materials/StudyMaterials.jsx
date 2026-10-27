@@ -725,20 +725,6 @@ export default function StudyMaterials({ navigation }) {
             </Text>
           </View>
         </View>
-
-        <TouchableOpacity
-          style={styles.notificationButton}
-          activeOpacity={0.8}
-          onPress={() => navigation?.navigate("StudentProfile")}
-        >
-          <Icon
-            name="notifications"
-            size={24}
-            color={COLORS.onSurfaceVariant}
-          />
-
-          <View style={styles.notificationDot} />
-        </TouchableOpacity>
       </View>
 
       {/* Main Content */}

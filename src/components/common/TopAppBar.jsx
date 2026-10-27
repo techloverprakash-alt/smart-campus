@@ -35,9 +35,11 @@ const TopAppBar = ({
         <Text style={styles.title}>{title || 'NEXUS'}</Text>
       </View>
       <View style={styles.rightSection}>
-        <TouchableOpacity onPress={onNotificationPress} style={styles.iconButton} activeOpacity={0.7}>
-          <MaterialIcons name="notifications" size={24} color={Colors.primary} />
-        </TouchableOpacity>
+        {onNotificationPress && (
+          <TouchableOpacity onPress={onNotificationPress} style={styles.iconButton} activeOpacity={0.7}>
+            <MaterialIcons name="notifications" size={24} color={Colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

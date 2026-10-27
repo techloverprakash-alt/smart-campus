@@ -396,14 +396,6 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
             <Text style={styles.brandTitle}>NEXUS • Admin Portal</Text>
           </View>
           <Pressable
-            accessibilityLabel="Notifications"
-            style={styles.notificationButton}
-            onPress={() => notify('You are all caught up')}
-          >
-            <Text style={styles.notificationSymbol}>♧</Text>
-            <View style={styles.notificationDot} />
-          </Pressable>
-          <Pressable
             style={styles.avatar}
             onPress={() => navigation?.navigate('AdminProfile')}
           >
