@@ -57,11 +57,11 @@ export function RouterProvider({ routes, children }) {
       replace: go('replace'),
       goBack: () => {
         if ((window.history.state?.idx ?? 0) > 0) window.history.back();
-        else go('replace')('Login');
+        else go('replace')('CommonPortal');
       },
       canGoBack: () => (window.history.state?.idx ?? 0) > 0,
       reset: ({ routes: rs = [], index = 0 } = {}) => rs[index] && go('replace')(rs[index].name, rs[index].params),
-      popToTop: () => go('replace')('Login'),
+      popToTop: () => go('replace')('CommonPortal'),
       setOptions: () => {},
       addListener: () => () => {},
       isFocused: () => true,

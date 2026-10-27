@@ -23,11 +23,12 @@ import { StudentFacultyDashboard } from '../../modules/services';
  */
 export const ROUTES = [
   // Public / auth
-  { name: 'Login', path: '/', component: LoginPage },
+  { name: 'CommonPortal', path: '/', component: CommonPortal },
+  { name: 'CommonPortalAlias', path: '/portal', component: CommonPortal },
+  { name: 'Login', path: '/login', component: LoginPage },
   { name: 'StudentLogin', path: '/login/student', component: StudentLogin },
   { name: 'StaffLogin', path: '/login/staff', component: StaffLogin },
   { name: 'AdminLogin', path: '/login/admin', component: AdminLogin },
-  { name: 'CommonPortal', path: '/portal', component: CommonPortal },
   { name: 'StudentFacultyPortal', path: '/services', component: StudentFacultyDashboard },
   {
     name: 'LostAndFound',
@@ -81,7 +82,7 @@ function NotFound({ navigation }) {
   return (
     <div className="notfound">
       <h1>Page not found</h1>
-      <button onClick={() => navigation.replace('Login')}>Back to login</button>
+      <button onClick={() => navigation.replace('CommonPortal')}>Back to home</button>
     </div>
   );
 }
