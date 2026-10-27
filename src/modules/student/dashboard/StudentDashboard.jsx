@@ -1224,6 +1224,7 @@ const styles = StyleSheet.create({
     color: "#585f6c",
   },
 
+
   /* ================= SERVICE GRID ================= */
 
   servicesGrid: {

@@ -12,7 +12,7 @@ import {
   StaffNotes, StaffProfile, StaffEditProfile,
 } from '../../modules/staff';
 import {
-  AdminDashboard, ReportManagement, AdminTimetable, AdminStaffOnboardingScreen,
+  AdminDashboard, CampusAdminControlCenter, ReportManagement, AdminTimetable, AdminStaffOnboardingScreen,
   MentorProctorAllocationScreen, EnrollStudent, EnrollmentSuccess, AdminProfile, AdminEditProfile,
 } from '../../modules/admin';
 import { StudentFacultyDashboard } from '../../modules/services';
@@ -56,6 +56,7 @@ export const ROUTES = [
 
   // Admin
   { name: 'AdminDashboard', path: '/admin', component: AdminDashboard, role: 'ADMIN' },
+  { name: 'CampusAdminControlCenter', path: '/admin/control-center', component: CampusAdminControlCenter, role: 'ADMIN' },
   { name: 'ReportManagement', path: '/admin/reports', component: ReportManagement, role: 'ADMIN' },
   { name: 'AdminTimetable', path: '/admin/timetable', component: AdminTimetable, role: 'ADMIN' },
   { name: 'EnrollStudent', path: '/admin/students/enroll', component: EnrollStudent, role: 'ADMIN' },

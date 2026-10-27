@@ -4,6 +4,8 @@ import { useAuth } from '../../auth/context/AuthContext';
 import LostAndFoundBoard from '../components/LostAndFoundBoard';
 import ReportInfrastructureView from '../components/ReportInfrastructureView';
 import MatchSuggestionsView from '../components/MatchSuggestionsView';
+import FieldOperationsConsole from '../components/FieldOperationsConsole';
+import CampusAdminControlCenter from '../../admin/screens/CampusAdminControlCenter';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
   HelpCircle, LayoutDashboard, MapPin, Plus, Search, ShieldCheck,
@@ -69,9 +71,11 @@ const navGroups = [
     links: [
       { id: 'Overview / Dashboard', label: 'Overview / Dashboard', icon: LayoutDashboard },
       { id: 'Report Infrastructure Issue', label: 'Report Infrastructure Issue', icon: Wrench },
+      { id: 'Field Operations & Work Orders', label: 'Field Operations & Work Orders', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
       { id: 'Lost & Found Claims', label: 'Lost & Found Claims', icon: PackageSearch },
       { id: 'Match Suggestions & Verification', label: 'Match Suggestions & AI Triage', icon: Sparkles },
+      { id: 'Campus Admin Control Center', label: 'Admin Control Center', icon: Shield },
       { id: 'Campus Map & Facilities', label: 'Campus Map & Facilities', icon: MapPin },
     ],
   },
@@ -552,6 +556,19 @@ export default function StudentFacultyDashboard({ initialTab = 'Overview / Dashb
               onBack={() => setActiveNav('Lost & Found Claims')}
               onViewBoard={() => setActiveNav('Lost & Found Claims')}
             />
+          )}
+
+          {/* TAB 1.7: FIELD OPERATIONS & WORK ORDERS CONSOLE */}
+          {activeNav === 'Field Operations & Work Orders' && (
+            <FieldOperationsConsole
+              onBack={() => setActiveNav('Overview / Dashboard')}
+              onOpenReportIssue={() => setActiveNav('Report Infrastructure Issue')}
+            />
+          )}
+
+          {/* TAB 1.8: CAMPUS ADMIN CONTROL CENTER */}
+          {activeNav === 'Campus Admin Control Center' && (
+            <CampusAdminControlCenter />
           )}
 
           {/* TAB 2: MY COMPLAINTS FULL LIST */}

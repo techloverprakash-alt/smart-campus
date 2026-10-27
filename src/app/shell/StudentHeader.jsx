@@ -8,7 +8,6 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Attendance', icon: 'how-to-reg', screen: 'StudentAttendanceDetail', also: ['AttendanceHistory'] },
   { label: 'Timetable', icon: 'schedule', screen: 'StudentTimetable' },
   { label: 'Materials', icon: 'menu-book', screen: 'StudyMaterials' },
-  { label: 'Profile', icon: 'person', screen: 'StudentProfile', also: ['StudentEditProfile'] },
   { label: 'Campus Services', icon: 'support-agent', screen: 'StudentFacultyPortal' },
   { label: 'Campus hub', icon: 'public', screen: 'CommonPortal' },
 ];
@@ -20,6 +19,7 @@ export function StudentHeader({ active }) {
 
   const displayName = profile?.full_name || profile?.name || user?.name || user?.username || 'Student';
   const avatarUri = profile?.avatar_url || user?.profile?.avatar_url;
+  const isProfileActive = active === 'StudentProfile' || active === 'StudentEditProfile';
 
   const logout = async () => {
     try {
@@ -79,8 +79,9 @@ export function StudentHeader({ active }) {
         <div className="student-header-right">
           <button
             type="button"
-            className="student-header-user-btn"
+            className={`student-header-user-btn${isProfileActive ? ' active' : ''}`}
             onClick={() => handleNav('StudentProfile')}
+            aria-current={isProfileActive ? 'page' : undefined}
             title={`Logged in as ${displayName} • View Profile`}
           >
             {avatarUri ? (
