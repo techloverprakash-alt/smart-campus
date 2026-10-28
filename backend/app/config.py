@@ -5,6 +5,16 @@ from pydantic import BaseModel
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env file into os.environ if present
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    with open(env_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
 class Settings(BaseModel):
     # App Settings
     app_name: str = "Smart Campus Cross-Modal Matching Service"

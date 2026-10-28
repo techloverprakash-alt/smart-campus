@@ -49,6 +49,16 @@ class LostAndFoundRepository:
         self.db.refresh(cat)
         return cat
 
+    def get_or_create_category(self, name: str, description: Optional[str] = None) -> ItemCategory:
+        clean_name = name.strip()
+        cat = self.db.query(ItemCategory).filter(ItemCategory.name.ilike(clean_name)).first()
+        if not cat:
+            cat = ItemCategory(name=clean_name, description=description or f"Items categorized under {clean_name}")
+            self.db.add(cat)
+            self.db.commit()
+            self.db.refresh(cat)
+        return cat
+
     def list_locations(self) -> List[CampusLocation]:
         return self.db.query(CampusLocation).order_by(CampusLocation.name.asc()).all()
 

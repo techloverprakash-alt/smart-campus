@@ -63,11 +63,11 @@ class ReportMediaOut(BaseModel):
 # --- Lost Report Schemas ---
 class LostReportCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=255)
-    category_id: Union[int, str]
+    category_id: Optional[Union[int, str]] = 1
     last_seen_location_id: Optional[Union[int, str]] = None
     last_seen_location_name: Optional[str] = None
     brand_model: Optional[str] = None
-    description: str = Field(..., min_length=5)
+    description: str = Field(default="Reported missing item on campus", min_length=2)
     lost_at: Optional[datetime] = None
     reward_text: Optional[str] = None
     image_url: Optional[str] = None
@@ -106,10 +106,10 @@ class LostReportOut(BaseModel):
 # --- Found Report Schemas ---
 class FoundReportCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=255)
-    category_id: Union[int, str]
+    category_id: Optional[Union[int, str]] = 1
     found_location_id: Optional[Union[int, str]] = None
     found_location_name: Optional[str] = None
-    description: str = Field(..., min_length=5)
+    description: str = Field(default="Found article reported on campus", min_length=2)
     found_at: Optional[datetime] = None
     custody_desk: str = Field(default="Admin Ground Floor Custody Desk")
     inventory_tag: Optional[str] = None  # System auto-generates if missing

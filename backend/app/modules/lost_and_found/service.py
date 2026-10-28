@@ -50,9 +50,15 @@ class LostAndFoundService:
 
     def submit_lost_report(self, data: LostReportCreate, reporter_id: int) -> LostReport:
         # Resolve category
-        cat = self.repo.get_category(data.category_id)
+        cat = None
+        if data.category_id:
+            cat = self.repo.get_category(data.category_id)
+            if not cat:
+                cat = self.repo.get_category_by_name(str(data.category_id))
+            if not cat:
+                cat = self.repo.get_or_create_category(str(data.category_id))
         if not cat:
-            cat = self.repo.get_category_by_name(str(data.category_id))
+            cat = self.db.query(ItemCategory).first()
         category_id = cat.id if cat else 1
 
         # Resolve location
@@ -63,7 +69,8 @@ class LostAndFoundService:
                 loc_id = loc.id
         elif data.last_seen_location_name:
             loc = self.repo.get_or_create_location(data.last_seen_location_name)
-            loc_id = loc.id
+            if loc:
+                loc_id = loc.id
 
         report = self.repo.create_lost_report(
             reporter_id=reporter_id,
@@ -71,7 +78,7 @@ class LostAndFoundService:
             last_seen_location_id=loc_id,
             title=data.title,
             brand_model=data.brand_model,
-            description=data.description,
+            description=data.description or f"Reported lost item: {data.title}",
             lost_at=data.lost_at,
             status="OPEN"
         )
@@ -82,40 +89,78 @@ class LostAndFoundService:
             media_urls.append(data.image_url)
 
         for m_url in media_urls:
-            self.repo.attach_media(
-                media_url=m_url,
-                lost_report_id=report.id
-            )
+            try:
+                self.repo.attach_media(
+                    media_url=m_url,
+                    lost_report_id=report.id
+                )
+            except Exception as e:
+                logger.warning(f"Could not attach media to lost report: {e}")
 
         # Generate Jina CLIP v2 text embedding
-        text_content = f"{data.title}. {data.brand_model or ''}. {data.description}"
-        vector = embedding_adapter.get_text_vector(text_content)
-        if vector is not None:
-            vector_search_adapter.upsert_item(
-                record_id=report.id,
-                vector=vector,
-                modality="text",
-                payload={
-                    "report_id": report.id,
-                    "type": "lost",
-                    "title": data.title,
-                    "category_id": category_id,
-                    "description": data.description,
-                    "location_id": loc_id or "",
-                    "created_at": datetime.datetime.utcnow().isoformat(),
-                    "image_url": media_urls[0] if media_urls else "",
-                }
-            )
+        try:
+            text_content = f"{data.title}. {data.brand_model or ''}. {data.description}"
+            vector = embedding_adapter.get_text_vector(text_content)
+            if vector is not None:
+                vector_search_adapter.upsert_item(
+                    record_id=report.id,
+                    vector=vector,
+                    modality="text",
+                    payload={
+                        "report_id": report.id,
+                        "type": "lost",
+                        "title": data.title,
+                        "category_id": category_id,
+                        "description": data.description,
+                        "location_id": loc_id or "",
+                        "created_at": datetime.datetime.utcnow().isoformat(),
+                        "image_url": media_urls[0] if media_urls else "",
+                    }
+                )
+        except Exception as e:
+            logger.warning(f"Vector search upsert skipped: {e}")
 
         # Automatic cross-modal triage against existing found items
-        self.evaluate_matches_for_lost(report.id)
+        try:
+            self.evaluate_matches_for_lost(report.id)
+        except Exception as e:
+            logger.warning(f"Triage evaluation skipped: {e}")
+
+        # Broadcast alert to all active campus users so everyone is informed about the lost item
+        try:
+            active_users = self.db.query(User).filter(User.is_active == True).all()
+            reporter_user = self.db.query(User).filter(User.id == reporter_id).first()
+            rep_name = reporter_user.full_name if reporter_user else "A campus community member"
+            loc_name = report.last_seen_location.name if report.last_seen_location else "campus grounds"
+
+            for u in active_users:
+                if u.id == reporter_id:
+                    continue
+                notif = Notification(
+                    user_id=u.id,
+                    title=f"Campus Lost Alert: {report.title}",
+                    message=f"{rep_name} reported a lost {report.title} near {loc_name}. If you spot or discover this item, please touch 'I Found This' to help return it.",
+                    notification_type="CAMPUS_LOST_ALERT",
+                    is_read=False
+                )
+                self.db.add(notif)
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Could not broadcast lost item alert to users: {e}")
+
         return self.repo.get_lost_report(report.id) or report
 
     def submit_found_report(self, data: FoundReportCreate, reported_by: int) -> FoundReport:
         # Resolve category
-        cat = self.repo.get_category(data.category_id)
+        cat = None
+        if data.category_id:
+            cat = self.repo.get_category(data.category_id)
+            if not cat:
+                cat = self.repo.get_category_by_name(str(data.category_id))
+            if not cat:
+                cat = self.repo.get_or_create_category(str(data.category_id))
         if not cat:
-            cat = self.repo.get_category_by_name(str(data.category_id))
+            cat = self.db.query(ItemCategory).first()
         category_id = cat.id if cat else 1
 
         # Resolve location
@@ -126,12 +171,13 @@ class LostAndFoundService:
                 loc_id = loc.id
         elif data.found_location_name:
             loc = self.repo.get_or_create_location(data.found_location_name)
-            loc_id = loc.id
+            if loc:
+                loc_id = loc.id
 
         # Generate inventory tag if missing
         tag = data.inventory_tag
         if not tag:
-            tag = f"LF-{datetime.datetime.utcnow().year}-{str(report_id_seq() if 'report_id_seq' in globals() else datetime.datetime.utcnow().strftime('%m%d%H%M'))}"
+            tag = f"LF-{datetime.datetime.utcnow().year}-{datetime.datetime.utcnow().strftime('%m%d%H%M%S')}"
 
         report = self.repo.create_found_report(
             reported_by=reported_by,
