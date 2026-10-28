@@ -70,12 +70,12 @@ const navGroups = [
   {
     title: 'Workspace',
     links: [
+      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
       { id: 'Report Infrastructure Issue', label: 'Report Issue', icon: Wrench },
       { id: 'Lost & Found Claims', label: 'Lost & Found', icon: PackageSearch },
       { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
       { id: 'Field Operations & Work Orders', label: 'Field Operations', icon: Activity },
       { id: 'My Complaints', label: 'My Complaints', icon: AlertTriangle },
-      { id: 'Campus Admin Control Center', label: 'Admin Center', icon: Shield },
       { id: 'Campus Map & Facilities', label: 'Campus Map', icon: MapPin },
     ],
   },
