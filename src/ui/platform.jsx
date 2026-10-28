@@ -193,6 +193,16 @@ export function LinearGradient({ colors = [], start, end, locations, style, chil
 }
 
 export function BlurView({ intensity = 50, tint = "light", style, children, className }) {
+  if (intensity === 0) {
+    return (
+      <div
+        className={['rn-view', className].filter(Boolean).join(' ')}
+        style={{ backgroundColor: 'transparent', ...toCss(style) }}
+      >
+        {children}
+      </div>
+    );
+  }
   const blur = Math.max(2, Math.round(intensity / 4));
   const bg = tint === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.55)';
   return (

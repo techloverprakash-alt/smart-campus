@@ -9,7 +9,7 @@ import CampusAdminControlCenter from '../../admin/screens/CampusAdminControlCent
 import CAMPUS_MAP_IMAGE from '@/assets/campus-map.jpg';
 import {
   Activity, Bell, Check, CheckCircle2, ChevronDown, Clock3,
-  HelpCircle, LayoutDashboard, MapPin, Plus, Search, ShieldCheck,
+  HelpCircle, MapPin, Plus, Search, ShieldCheck,
   Smartphone, Zap, AlertTriangle, X, PackageSearch, MessageSquare,
   Wrench, Shield, ArrowRight, ArrowLeft, Building2, Flame,
   FileCode, CheckCheck, RefreshCw, Send, CheckCircle, ExternalLink,
@@ -267,7 +267,7 @@ function Ticket({ ticket, onMessage }) {
 }
 
 export default function StudentFacultyDashboard(props) {
-  const { initialTab = 'Overview / Dashboard', route } = props;
+  const { initialTab = 'Report Infrastructure Issue', route } = props;
   const { navigation, loc } = useRouter();
   const { user, profile, role: authRole } = useAuth();
 
@@ -296,20 +296,19 @@ export default function StudentFacultyDashboard(props) {
     (initialTab === 'Campus Admin Control Center' && !isAdmin) ||
       (isServices && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification')) ||
       (isStudentOrStaff && initialTab === 'Field Operations & Work Orders')
-      ? 'Overview / Dashboard'
-      : initialTab
+      ? 'Report Infrastructure Issue' : initialTab
   );
 
   // Automatically switch away from Admin Center if not authorized, from Lost & Found in services, or from Field Operations in student/staff
   useEffect(() => {
     if (!isAdmin && activeNav === 'Campus Admin Control Center') {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
     }
     if (isServices && (activeNav === 'Lost & Found Claims' || activeNav === 'Match Suggestions & Verification')) {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
     }
     if (isStudentOrStaff && activeNav === 'Field Operations & Work Orders') {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
     }
   }, [isAdmin, isServices, isStudentOrStaff, activeNav]);
 
@@ -415,15 +414,15 @@ export default function StudentFacultyDashboard(props) {
 
   const navClick = (label) => {
     if (label === 'Campus Admin Control Center' && !isAdmin) {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
       return;
     }
     if (isServices && (label === 'Lost & Found Claims' || label === 'Match Suggestions & Verification')) {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
       return;
     }
     if (isStudentOrStaff && label === 'Field Operations & Work Orders') {
-      setActiveNav('Overview / Dashboard');
+      setActiveNav('Report Infrastructure Issue');
       return;
     }
     if (label === 'Campus Map & Facilities') {
@@ -482,7 +481,7 @@ export default function StudentFacultyDashboard(props) {
                 href="#top"
                 onClick={(e) => {
                   e.preventDefault();
-                  setActiveNav('Overview / Dashboard');
+                  setActiveNav('Report Infrastructure Issue');
                 }}
                 className="group flex items-center gap-3"
               >
@@ -594,7 +593,7 @@ export default function StudentFacultyDashboard(props) {
           {/* TAB 0: DETAILED REPORT INFRASTRUCTURE ISSUE (FULL PAGE FROM IMAGE 1) */}
           {activeNav === 'Report Infrastructure Issue' && (
             <ReportInfrastructureView
-              onBack={() => setActiveNav('Overview / Dashboard')}
+              onBack={handleReturnHome}
               onSubmitTicket={handleTicketSubmitted}
               onViewComplaints={() => {
                 setTicketTab('All');
@@ -630,7 +629,7 @@ export default function StudentFacultyDashboard(props) {
           {/* TAB 1.7: FIELD OPERATIONS & WORK ORDERS CONSOLE */}
           {activeNav === 'Field Operations & Work Orders' && !isStudentOrStaff && (
             <FieldOperationsConsole
-              onBack={() => setActiveNav('Overview / Dashboard')}
+              onBack={handleReturnHome}
               onOpenReportIssue={() => setActiveNav('Report Infrastructure Issue')}
             />
           )}
@@ -687,226 +686,6 @@ export default function StudentFacultyDashboard(props) {
                 )}
               </div>
             </div>
-          )}
-
-          {/* TAB 3: OVERVIEW / DASHBOARD (DEFAULT) */}
-          {activeNav === 'Overview / Dashboard' && (
-            <>
-              {/* Hero Banner */}
-              <section className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm md:flex-row md:items-center">
-                <div>
-                  <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                    Welcome to Campus Services, {displayName}! <span>👋</span>
-                  </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-200/60 bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
-                      {isServices ? 'SVC-FAC-042' : 'CS-2023-8841'}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Building2 size={13} className="text-slate-400" />
-                      {isServices ? 'Campus Operations Centre' : 'Computer Science Block A'}
-                    </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin size={13} className="text-blue-500" />
-                      Science Quad District
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" />
-                    {complaints.filter((c) => c.status === 'Active').length} Active Complaints
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                    {complaints.filter((c) => c.status === 'Resolved').length} Resolved
-                  </span>
-                  {!isServices && (
-                    <button
-                      onClick={() => setActiveNav('Lost & Found Claims')}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
-                    >
-                      <Zap size={14} className="text-indigo-600" />1 High AI Match
-                    </button>
-                  )}
-                </div>
-              </section>
-
-              {/* Status Notice Banner if report submitted from Overview */}
-              {dashboardNotice && (
-                <div role="status" className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 shadow-xs animate-fade-in">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                    <span>{dashboardNotice}</span>
-                  </div>
-                  <button onClick={() => setDashboardNotice('')} className="text-emerald-600 hover:text-emerald-800">
-                    <X size={15} />
-                  </button>
-                </div>
-              )}
-              {/* 3 Quick Action Wizard Cards */}
-              <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                {(isServices
-                  ? [
-                      {
-                        icon: Wrench,
-                        color: 'text-blue-600 bg-blue-50',
-                        title: 'Report Infrastructure Issue',
-                        desc: 'Submit classroom, lab, electrical, or hostel repair requests instantly with photo intake and priority triage.',
-                        button: 'Open ticket wizard',
-                        action: openReport,
-                      },
-                      {
-                        icon: Activity,
-                        color: 'text-indigo-600 bg-indigo-50',
-                        title: 'Field Operations & Dispatch',
-                        desc: 'Monitor active technicians, track live telemetry beacons, and manage rapid work order dispatch.',
-                        button: 'Open operations console',
-                        action: () => setActiveNav('Field Operations & Work Orders'),
-                      },
-                      {
-                        icon: MapPin,
-                        color: 'text-cyan-600 bg-cyan-50',
-                        title: 'Campus Map & Facilities',
-                        desc: 'View comprehensive academic blocks, laboratory zones, utility stations, and building layout directory.',
-                        button: 'View campus facilities map',
-                        action: () => setModal('map'),
-                      },
-                    ]
-                  : [
-                      {
-                        icon: Wrench,
-                        color: 'text-blue-600 bg-blue-50',
-                        title: 'Report Infrastructure Issue',
-                        desc: 'Submit classroom, lab, electrical, or hostel repair requests instantly with photo intake and priority triage.',
-                        button: 'Open ticket wizard',
-                        action: openReport,
-                      },
-                      {
-                        icon: Search,
-                        color: 'text-cyan-600 bg-cyan-50',
-                        title: 'I Lost an Item',
-                        desc: 'Search AI intake registry & broadcast lost asset visual signatures across campus in seconds.',
-                        button: 'File lost item report',
-                        action: () => {
-                          setQuickForm({
-                            title: '',
-                            category: 'Electronics',
-                            zone: '',
-                            personName: '',
-                            exactLocation: '',
-                            brandModel: '',
-                            description: '',
-                            type: 'Lost',
-                            reportDate: getTodayDate(),
-                          });
-                          setQuickImagePreview(null);
-                          setQuickLostModal('Lost');
-                        },
-                      },
-                      {
-                        icon: PackageSearch,
-                        color: 'text-indigo-600 bg-indigo-50',
-                        title: 'I Found an Item',
-                        desc: 'Log unattended property for quick custodial desk check-in & automated AI-assisted owner retrieval.',
-                        button: 'Log discovered property',
-                        action: () => {
-                          setQuickForm({
-                            title: '',
-                            category: 'Electronics',
-                            zone: '',
-                            personName: '',
-                            exactLocation: '',
-                            brandModel: '',
-                            description: '',
-                            type: 'Found',
-                            reportDate: getTodayDate(),
-                          });
-                          setQuickImagePreview(null);
-                          setQuickLostModal('Found');
-                        },
-                      },
-                    ]
-                ).map((card) => {
-                  const IconComp = card.icon;
-                  return (
-                    <div
-                      key={card.title}
-                      onClick={card.action}
-                      className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md cursor-pointer"
-                    >
-                      <div>
-                        <div className="mb-3 flex items-center justify-between">
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.color}`}>
-                            <IconComp size={20} />
-                          </div>
-                          <span className="text-slate-400 transition-all group-hover:translate-x-1 group-hover:text-blue-600">
-                            <ArrowRight size={16} />
-                          </span>
-                        </div>
-                        <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-blue-600">
-                          {card.title}
-                        </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500">{card.desc}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          card.action();
-                        }}
-                        className="mt-5 flex items-center gap-1 text-left text-xs font-bold text-blue-600 hover:text-blue-700"
-                      >
-                        {card.button}
-                        <Plus size={13} className="ml-1" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </section>
-
-              {/* Complaints Section */}
-              <section className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <Wrench size={16} />
-                    </div>
-                    <h2 className="text-base font-bold text-slate-900">My Infrastructure Complaints</h2>
-                  </div>
-
-                  <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-xs font-semibold">
-                    {['All', 'Active', 'Resolved'].map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setTicketTab(tab)}
-                        className={`rounded-md px-3 py-1 ${
-                          ticketTab === tab
-                            ? 'border border-slate-200/60 bg-white font-bold text-blue-700 shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        {tab} ({tab === 'All' ? complaints.length : complaints.filter((c) => c.status === tab).length})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  {shownComplaints.length ? (
-                    shownComplaints.map((ticket) => (
-                      <Ticket key={ticket.id} ticket={ticket} onMessage={(t) => setModal({ type: 'message', ticket: t })} />
-                    ))
-                  ) : (
-                    <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-                      No complaints in this category.
-                    </div>
-                  )}
-                </div>
-              </section>
-            </>
           )}
 
           {/* Footer */}

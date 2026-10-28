@@ -70,7 +70,7 @@ const AdminLogin = ({ navigation }) => {
           {/* Branding Header */}
           <View style={styles.brandHeader}>
             <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBtrjPjQd5a2_l9A84VgRqQ1Q0ESjAsOXR-WyXLbLMgjvUOAXLoc86YMon6xSsyMKSz-9CjCNfaVWS9OuQcHYDgVjqYu4o4wkT5bC4ywST3r8n1j8nujITPmY4E3CW8aAJ95_VvsTnwptiUMDDC7sNvnTc91Z_76rICSiW4U43D8qfauToeL4wIO0kNoqpzbhxTizeg-xiS6D2_iuJJzWyCNjcdq6NPB_e1Lzpqhjhk1nwOr1pK-fbXUeSbbV9okX72nw' }}
+              source={{ uri: '/info_logo.png' }}
               style={styles.logo}
               resizeMode="contain"
             />

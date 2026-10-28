@@ -527,20 +527,20 @@ export default function CommonPortal({ route, navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
         barStyle={activeScreen === "portal" ? "light-content" : "dark-content"}
-        backgroundColor={activeScreen === "portal" ? "#0a142d" : COLORS.surface}
+        backgroundColor={activeScreen === "portal" ? "transparent" : COLORS.surface}
       />
 
       {/* ================= HEADER ================= */}
       <View style={[styles.headerWrapper, activeScreen === "portal" && styles.headerWrapperPortal]}>
         <BlurView
-          intensity={activeScreen === "portal" ? 60 : 80}
+          intensity={activeScreen === "portal" ? 0 : 80}
           tint={activeScreen === "portal" ? "dark" : "light"}
           style={[
             styles.headerBlur,
             activeScreen === "portal" && styles.headerBlurPortal
           ]}
         >
-          <View style={[styles.header, styles.hubHeader]}>
+          <View style={[styles.header, styles.hubHeader, activeScreen === "portal" && styles.headerPortal]}>
             <View style={styles.headerLeft}>
               <TouchableOpacity
                 style={[
@@ -698,43 +698,43 @@ const CAMPUS_SLIDES = [
     image: "/assets/campus/info_campus_main.jpg",
     title: "Main Academic Campus Block",
     subtitle: "State-of-the-art engineering blocks & research facilities",
-    focalDesktop: "center 18%",
-    focalMobile: "center 14%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
   {
     image: "/assets/campus/college.jpg",
     title: "Campus Front Promenade & Lawns",
     subtitle: "Lush green modern university campus",
-    focalDesktop: "center 28%",
-    focalMobile: "center 22%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
   {
     image: "/assets/campus/info_campus_library.jpg",
     title: "Central Digital Library & Academic Wing",
     subtitle: "High-tech learning center with expansive digital repositories",
-    focalDesktop: "center 24%",
-    focalMobile: "center 20%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
   {
     image: "/assets/campus/main_campus.jpg",
     title: "Main Campus Entrance & Portal",
     subtitle: "Advanced learning halls and seminar theaters",
-    focalDesktop: "center 22%",
-    focalMobile: "center 18%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
   {
     image: "/assets/campus/top_view.jpg",
     title: "Campus Aerial Panorama",
     subtitle: "Eco-friendly campus sprawling across world-class infrastructure",
-    focalDesktop: "center 30%",
-    focalMobile: "center 25%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
   {
     image: "/assets/campus/ground.jpg",
     title: "Athletic Grounds & Open Arena",
     subtitle: "Expansive university sports facilities and recreation courts",
-    focalDesktop: "center 40%",
-    focalMobile: "center 35%",
+    focalDesktop: "center center",
+    focalMobile: "center center",
   },
 ];
 
@@ -945,7 +945,6 @@ function PortalScreen({ navigation }) {
         {/* Campus Facility / Slide Caption Highlight Pill */}
         <div className="campus-hero-slide-info" key={`caption-${currentSlide}`}>
           <div className="campus-slide-info-pill">
-            <MaterialIcons name="location-on" size={15} color="#00f0b5" />
             <span className="campus-slide-info-title">{CAMPUS_SLIDES[currentSlide].title}</span>
             <span className="campus-slide-info-divider">•</span>
             <span className="campus-slide-info-counter">
@@ -993,7 +992,7 @@ function PortalScreen({ navigation }) {
           >
             <MaterialIcons
               name={isPaused ? "play-arrow" : "pause"}
-              size={16}
+              size={11}
               color="#ffffff"
             />
           </button>
@@ -5585,11 +5584,22 @@ const styles = StyleSheet.create({
   /* ================= PORTAL OVERRIDES ================= */
   headerWrapperPortal: {
     backgroundColor: "transparent",
+    elevation: 0,
+    shadowOpacity: 0,
+    borderBottomWidth: 0,
   },
   headerBlurPortal: {
-    backgroundColor: "rgba(10, 20, 45, 0.40)",
-    borderBottomWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "transparent",
+    borderBottomWidth: 0,
+    borderColor: "transparent",
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  headerPortal: {
+    backgroundColor: "transparent",
+    borderBottomWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   headerBackBtn: {
     marginRight: 10,
