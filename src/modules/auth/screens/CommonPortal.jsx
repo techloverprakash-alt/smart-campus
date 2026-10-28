@@ -21,6 +21,7 @@ import {
 import { MaterialIcons } from '@/ui';
 import { BlurView } from '@/ui';
 import { LinearGradient } from '@/ui';
+import AuthLoadingOverlay from '../components/AuthLoadingOverlay';
 
 
 const COLORS = {
@@ -522,6 +523,19 @@ const HUB_NAV_ITEMS = [
 
 export default function CommonPortal({ route, navigation }) {
   const [activeScreen, setActiveScreen] = useState("portal");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleLoginClick = useCallback(() => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+
+    setTimeout(() => {
+      navigation?.navigate('Login');
+      setTimeout(() => {
+        setIsLoggingIn(false);
+      }, 500);
+    }, 1250);
+  }, [isLoggingIn, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -622,8 +636,9 @@ export default function CommonPortal({ route, navigation }) {
             <div className="hub-header-right">
               <button
                 type="button"
-                className={`hub-header-login-btn${activeScreen === 'portal' ? ' dark-mode' : ''}`}
-                onClick={() => navigation?.navigate('Login')}
+                className={`hub-header-login-btn${activeScreen === 'portal' ? ' dark-mode' : ''}${isLoggingIn ? ' loading' : ''}`}
+                onClick={handleLoginClick}
+                disabled={isLoggingIn}
                 title="Login to Institutional Portals"
               >
                 <MaterialIcons name="login" size={18} />
@@ -635,7 +650,7 @@ export default function CommonPortal({ route, navigation }) {
       </View>
 
       {/* ================= BODY SCREEN CONTENT ================= */}
-      {activeScreen === "portal" && <PortalScreen navigation={navigation} />}
+      {activeScreen === "portal" && <PortalScreen navigation={navigation} isMorphing={isLoggingIn} />}
       {activeScreen === "circulars" && <CircularsScreen />}
       {activeScreen === "calendar" && <CalendarScreen />}
       {activeScreen === "more" && <MoreScreen />}
@@ -685,6 +700,14 @@ export default function CommonPortal({ route, navigation }) {
           </View>
         </BlurView>
       </View>
+
+          {/* ================= CINEMATIC TRANSPARENT LOADING OVERLAY ================= */}
+      <AuthLoadingOverlay
+        visible={isLoggingIn}
+        role="Institutional Gateway"
+        statusText="Connecting to NEXUS Portal..."
+        successText="Opening Login Portal..."
+      />
     </SafeAreaView>
   );
 }
@@ -738,7 +761,7 @@ const CAMPUS_SLIDES = [
   },
 ];
 
-function PortalScreen({ navigation }) {
+function PortalScreen({ navigation, isMorphing = false }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [prevSlideIndex, setPrevSlideIndex] = useState(null);
   const [direction, setDirection] = useState("next"); // 'next' | 'prev'
@@ -839,7 +862,7 @@ function PortalScreen({ navigation }) {
     >
       {/* ================= FULL-SCREEN CAMPUS HERO SLIDESHOW ================= */}
       <div
-        className="campus-hero-container"
+        className={`campus-hero-container${isMorphing ? " morphing" : ""}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -946,10 +969,6 @@ function PortalScreen({ navigation }) {
         <div className="campus-hero-slide-info" key={`caption-${currentSlide}`}>
           <div className="campus-slide-info-pill">
             <span className="campus-slide-info-title">{CAMPUS_SLIDES[currentSlide].title}</span>
-            <span className="campus-slide-info-divider">•</span>
-            <span className="campus-slide-info-counter">
-              {String(currentSlide + 1).padStart(2, "0")} / {String(CAMPUS_SLIDES.length).padStart(2, "0")}
-            </span>
           </div>
         </div>
 

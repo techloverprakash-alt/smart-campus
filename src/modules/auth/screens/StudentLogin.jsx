@@ -5,6 +5,7 @@ import Colors from '../../../constants/colors';
 import Typography from '../../../constants/typography';
 import { login } from '../../../services/api/auth';
 import { useAuth } from '../context/AuthContext';
+import AuthLoadingOverlay from '../components/AuthLoadingOverlay';
 
 const StudentLogin = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -28,11 +29,12 @@ const StudentLogin = ({ navigation }) => {
     try {
       const tokenData = await login(regNo, pass, 'STUDENT');
       await signIn(tokenData);
-      navigation.replace('StudentDashboard');
+      setTimeout(() => {
+        navigation.replace('StudentDashboard');
+      }, 1250);
     } catch (err) {
-      setError(err?.message || 'Login failed. Please check your credentials.');
-    } finally {
       setLoading(false);
+      setError(err?.message || 'Login failed. Please check your credentials.');
     }
   };
 
@@ -173,6 +175,7 @@ const StudentLogin = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      <AuthLoadingOverlay visible={loading} role="Student" />
     </SafeAreaView>
   );
 };

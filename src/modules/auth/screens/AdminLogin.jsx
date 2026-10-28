@@ -5,6 +5,7 @@ import Colors from '../../../constants/colors';
 import Typography from '../../../constants/typography';
 import { login } from '../../../services/api/auth';
 import { useAuth } from '../context/AuthContext';
+import AuthLoadingOverlay from '../components/AuthLoadingOverlay';
 
 const AdminLogin = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -30,11 +31,12 @@ const AdminLogin = ({ navigation }) => {
     try {
       const tokenData = await login(user, pass, 'ADMIN');
       await signIn(tokenData);
-      navigation.replace('AdminDashboard');
+      setTimeout(() => {
+        navigation.replace('AdminDashboard');
+      }, 1250);
     } catch (err) {
-      setError(err?.message || 'Authorization failed. Please check your credentials.');
-    } finally {
       setLoading(false);
+      setError(err?.message || 'Authorization failed. Please check your credentials.');
     }
   };
 
@@ -230,6 +232,7 @@ const AdminLogin = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      <AuthLoadingOverlay visible={loading} role="Administrator" />
     </SafeAreaView>
   );
 };

@@ -11,3 +11,4 @@ export { default as ServicesLogin } from './service-login';
 export * from './screens/CommonPortal';
 export { default as CommonPortal } from './screens/CommonPortal';
 export * from './context/AuthContext';
+export { default as AuthLoadingOverlay } from './components/AuthLoadingOverlay';
