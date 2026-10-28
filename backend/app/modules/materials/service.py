@@ -84,7 +84,14 @@ class MaterialService:
             unit_str = f"Unit {m.unit_number}" if m.unit_number else "Notes"
             mime_str = f.mime_type if f else "application/pdf"
             is_pdf = "pdf" in (mime_str or "").lower()
-            doc_type = "PDF" if is_pdf else "NOTES"
+
+            storage_k = f.storage_key if f else ""
+            is_drive = bool(storage_k and (storage_k.startswith("http") or "drive.google" in storage_k))
+            drive_link = (
+                storage_k if is_drive
+                else (f"https://drive.google.com/drive/folders/{storage_k}" if storage_k else "https://drive.google.com")
+            )
+            doc_type = "G-DRIVE" if is_drive else ("PDF" if is_pdf else "NOTES")
 
             results.append({
                 "id": m.id,
@@ -101,7 +108,9 @@ class MaterialService:
                 "section_name": sec_name,
                 "instructor": instructor_name,
                 "file_name": f.original_filename if f else f"{code_str}_{unit_str}.pdf",
-                "storage_key": f.storage_key if f else "",
+                "storage_key": storage_k,
+                "drive_url": drive_link,
+                "is_drive_link": is_drive,
                 "file_size": f.file_size if f else 2450000,
                 "mime_type": mime_str,
                 "type": doc_type,
@@ -124,6 +133,15 @@ class MaterialService:
             else (off.staff.user.full_name if off and off.staff and off.staff.user else "Faculty")
         )
 
+        storage_k = f.storage_key if f else ""
+        is_drive = bool(storage_k and (storage_k.startswith("http") or "drive.google" in storage_k))
+        drive_link = (
+            storage_k if is_drive
+            else (f"https://drive.google.com/drive/folders/{storage_k}" if storage_k else "https://drive.google.com")
+        )
+        is_pdf = "pdf" in (f.mime_type if f else "").lower()
+        doc_type = "G-DRIVE" if is_drive else ("PDF" if is_pdf else "NOTES")
+
         return {
             "id": m.id,
             "course_offering_id": m.course_offering_id,
@@ -139,10 +157,12 @@ class MaterialService:
             "section_name": off.section.name if off and off.section else "",
             "instructor": instructor_name,
             "file_name": f.original_filename if f else "Document.pdf",
-            "storage_key": f.storage_key if f else "",
+            "storage_key": storage_k,
+            "drive_url": drive_link,
+            "is_drive_link": is_drive,
             "file_size": f.file_size if f else 1024,
             "mime_type": f.mime_type if f else "application/pdf",
-            "type": "PDF",
+            "type": doc_type,
             "unit": f"Unit {m.unit_number}" if m.unit_number else "Notes",
             "reads": "1.4k reads",
         }
@@ -237,15 +257,49 @@ class MaterialService:
         return self.get_material_by_id(material.id)
 
     def create_material(self, current_user: User, data: StudyMaterialCreate) -> Dict[str, Any]:
-        off = self.db.query(CourseOffering).filter_by(id=data.course_offering_id).first()
+        file_id = data.file_id
+        if data.drive_url:
+            media = MediaAttachment(
+                storage_key=data.drive_url,
+                original_filename=f"{data.title or 'Google_Drive_Material'}.gdoc",
+                mime_type="application/vnd.google-apps.document",
+                file_size=0,
+                uploaded_by=current_user.id,
+                created_at=datetime.datetime.utcnow(),
+            )
+            self.db.add(media)
+            self.db.flush()
+            file_id = media.id
+
+        off = None
+        if data.course_offering_id:
+            off = self.db.query(CourseOffering).filter_by(id=data.course_offering_id).first()
+
+        if not off and data.subject_code:
+            clean_code = data.subject_code.split(" ")[0].strip()
+            sub = self.db.query(Subject).filter(Subject.code.ilike(f"%{clean_code}%")).first()
+            if sub:
+                off = self.db.query(CourseOffering).filter_by(subject_id=sub.id).first()
+                if not off:
+                    off = CourseOffering(
+                        subject_id=sub.id,
+                        academic_year=data.academic_year or "2024-2025",
+                        semester=sub.semester or 5,
+                    )
+                    self.db.add(off)
+                    self.db.flush()
+
+        if not off:
+            off = self.db.query(CourseOffering).first()
+
         if not off:
             raise HTTPException(status_code=404, detail="Course offering not found.")
 
         material = StudyMaterial(
-            course_offering_id=data.course_offering_id,
+            course_offering_id=off.id,
             title=data.title,
-            unit_number=data.unit_number,
-            file_id=data.file_id,
+            unit_number=data.unit_number or 1,
+            file_id=file_id,
             uploaded_by=current_user.id,
             published_at=datetime.datetime.utcnow(),
         )

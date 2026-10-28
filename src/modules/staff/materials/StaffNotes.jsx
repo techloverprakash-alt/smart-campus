@@ -10,6 +10,8 @@ import {
   StatusBar,
   Alert,
   Animated,
+  TextInput,
+  Linking,
 } from '@/ui';
 import { MaterialIcons } from '@/ui';
 import BottomNavBar from "../../../components/common/BottomNavBar";
@@ -346,6 +348,23 @@ function SessionFilter({ selectedSession, onSelectSession }) {
 
 function PaperCard({ paper }) {
   const handleAction = (action) => {
+    if (
+      (action === "Open Google Drive" ||
+        action === "Read / Preview" ||
+        action === "preview" ||
+        action === "Open Link" ||
+        action === "cloud") &&
+      paper.drive_url
+    ) {
+      if (typeof window !== "undefined" && window.open) {
+        window.open(paper.drive_url, "_blank");
+        return;
+      }
+      if (Linking && Linking.openURL) {
+        Linking.openURL(paper.drive_url).catch(() => {});
+        return;
+      }
+    }
     Alert.alert(
       action,
       `${action} selected for ${paper.code} - ${paper.title}`
@@ -610,27 +629,25 @@ function SelectBox({
 function UploadForm({ uploadRef, onPublishSuccess }) {
   const [subject, setSubject] = useState(subjects[0]);
   const [year, setYear] = useState(years[0]);
-  const [examSession, setExamSession] = useState(
-    examSessions[0]
-  );
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileDetails, setFileDetails] = useState(null);
-  const fileInputRef = useRef(null);
-
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [uploaded, setUploaded] = useState(false);
+  const [examSession, setExamSession] = useState(examSessions[0]);
+  const [unit, setUnit] = useState("Unit 1");
+  const [title, setTitle] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
 
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
 
-  const chooseFromList = (
-    title,
-    options,
-    current,
-    setter
-  ) => {
+  const units = [
+    "Unit 1",
+    "Unit 2",
+    "Unit 3",
+    "Unit 4",
+    "Unit 5",
+    "Lab Manual",
+    "Model QP",
+  ];
+
+  const chooseFromList = (title, options, current, setter) => {
     Alert.alert(
       title,
       "",
@@ -641,40 +658,34 @@ function UploadForm({ uploadRef, onPublishSuccess }) {
     );
   };
 
-  const handleFilePicked = (file) => {
-    if (!file) return;
-    setSelectedFile(file);
-    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    setFileDetails({
-      name: file.name,
-      size: `${sizeMB} MB`,
-    });
-
-    setUploading(true);
-    setUploaded(false);
-    setProgress(0);
-
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 25;
-      setProgress(currentProgress);
-
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setUploading(false);
-          setUploaded(true);
-        }, 200);
-      }
-    }, 150);
-  };
+  const isDriveValid =
+    driveUrl.trim().length > 8 &&
+    (driveUrl.includes("http") ||
+      driveUrl.includes("drive.google") ||
+      driveUrl.includes("docs.google"));
 
   const handlePublish = async () => {
     if (publishing) return;
 
-    if (!selectedFile && !uploaded) {
-      Alert.alert("File Required", "Please select or drop a PDF / Document file before publishing.");
-      fileInputRef.current?.click();
+    const trimmedUrl = driveUrl.trim();
+    if (!trimmedUrl) {
+      Alert.alert(
+        "Google Drive Link Required",
+        "Staff can only upload via Google Drive link. Please enter or paste the Google Drive link."
+      );
+      return;
+    }
+
+    if (
+      !trimmedUrl.startsWith("http://") &&
+      !trimmedUrl.startsWith("https://") &&
+      !trimmedUrl.includes("drive.google") &&
+      !trimmedUrl.includes("docs.google")
+    ) {
+      Alert.alert(
+        "Invalid Link Format",
+        "Please provide a valid Google Drive URL (e.g., https://drive.google.com/file/d/... or https://docs.google.com/...)."
+      );
       return;
     }
 
@@ -683,28 +694,23 @@ function UploadForm({ uploadRef, onPublishSuccess }) {
 
     try {
       const subjectCode = subject.split(" - ")[0].trim();
-      const formData = new FormData();
+      const unitNum = parseInt(unit.replace(/\D/g, "")) || 1;
+      const cleanTitle = title.trim() || `${subjectCode} - ${unit} Curriculum Notes`;
 
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-      } else {
-        const blob = new Blob(["NEXUS Verified Course Document"], { type: "application/pdf" });
-        formData.append("file", blob, `${subjectCode}_Document.pdf`);
-      }
-
-      formData.append("subject_code", subjectCode);
-      formData.append("title", `${subjectCode} - ${examSession} Notes & Question Paper`);
-      formData.append("unit_number", 1);
-      formData.append("academic_year", year);
-
-      await uploadMaterial(formData);
+      await uploadMaterial({
+        subject_code: subjectCode,
+        title: cleanTitle,
+        unit_number: unitNum,
+        drive_url: trimmedUrl,
+        academic_year: year,
+      });
 
       setPublishing(false);
       setPublished(true);
 
       Alert.alert(
         "Published Successfully",
-        `${fileDetails?.name || subjectCode} has been verified and published to the student & faculty archive.`
+        `${cleanTitle} has been saved to the database with Google Drive link.`
       );
 
       if (onPublishSuccess) {
@@ -713,43 +719,34 @@ function UploadForm({ uploadRef, onPublishSuccess }) {
 
       setTimeout(() => {
         setPublished(false);
-        setSelectedFile(null);
-        setFileDetails(null);
-        setUploaded(false);
-        setProgress(0);
+        setDriveUrl("");
+        setTitle("");
       }, 3000);
     } catch (err) {
       setPublishing(false);
       console.error("Failed to publish study material:", err);
       Alert.alert(
         "Upload Notice",
-        err?.message || "Document verified and saved to repository."
+        err?.message || "Failed to publish study material to database."
       );
     }
   };
 
   return (
-    <View
-      ref={uploadRef}
-      style={styles.uploadSection}
-    >
+    <View ref={uploadRef} style={styles.uploadSection}>
       <View style={styles.uploadHeading}>
         <View style={styles.uploadHeadingLeft}>
           <View style={styles.uploadIconBox}>
-            <MaterialIcons
-              name="post-add"
-              size={19}
-              color="#ffffff"
-            />
+            <MaterialIcons name="cloud-upload" size={19} color="#ffffff" />
           </View>
 
           <View>
             <Text style={styles.uploadTitle}>
-              Upload & Scrutiny Submission
+              Google Drive Study Material Submission
             </Text>
 
             <Text style={styles.uploadSubtitle}>
-              CoE Examination Archive Verification Workflow
+              Link Google Drive or Docs for verified student repository access
             </Text>
           </View>
         </View>
@@ -760,12 +757,7 @@ function UploadForm({ uploadRef, onPublishSuccess }) {
           label="Target Subject & Course Code"
           value={subject}
           onPress={() =>
-            chooseFromList(
-              "Select Subject",
-              subjects,
-              subject,
-              setSubject
-            )
+            chooseFromList("Select Subject", subjects, subject, setSubject)
           }
         />
 
@@ -774,105 +766,110 @@ function UploadForm({ uploadRef, onPublishSuccess }) {
             label="Exam Academic Year"
             value={year}
             onPress={() =>
-              chooseFromList(
-                "Select Academic Year",
-                years,
-                year,
-                setYear
-              )
+              chooseFromList("Select Academic Year", years, year, setYear)
             }
           />
 
           <SelectBox
-            label="Exam Session"
-            value={examSession}
+            label="Syllabus Unit"
+            value={unit}
             onPress={() =>
-              chooseFromList(
-                "Select Exam Session",
-                examSessions,
-                examSession,
-                setExamSession
-              )
+              chooseFromList("Select Syllabus Unit", units, unit, setUnit)
             }
           />
         </View>
 
+        <View style={styles.selectField}>
+          <Text style={styles.fieldLabel}>
+            Material Title / Notes Topic
+          </Text>
+          <View
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#c5c6d0",
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <TextInput
+              style={{ fontSize: 14, color: "#191b23", outline: "none" }}
+              placeholder="e.g. Unit 1 - Supervised Machine Learning Algorithms"
+              value={title}
+              onChangeText={setTitle}
+            />
+          </View>
+        </View>
+
         <View style={styles.fileField}>
           <Text style={styles.fieldLabel}>
-            Question Paper / Notes Document (.PDF / OCR Verified)
+            Google Drive Document Link (.PDF / Docs / Presentation)
           </Text>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            style={{ display: "none" }}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                handleFilePicked(e.target.files[0]);
-              }
+          <View
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: isDriveValid ? "#15803d" : "#003fb1",
+              padding: 14,
+              gap: 10,
             }}
-          />
-
-          <TouchableOpacity
-            style={styles.dropZone}
-            onPress={() => fileInputRef.current?.click()}
-            activeOpacity={0.8}
           >
-            <View style={styles.cloudUploadCircle}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <MaterialIcons
-                name={
-                  uploaded
-                    ? "check-circle"
-                    : uploading
-                    ? "hourglass-top"
-                    : "cloud-upload"
-                }
+                name="cloud"
                 size={26}
-                color={uploaded ? "#15803d" : "#003fb1"}
+                color={isDriveValid ? "#15803d" : "#003fb1"}
               />
+              <TextInput
+                style={{
+                  flex: 1,
+                  fontSize: 14,
+                  color: "#191b23",
+                  outline: "none",
+                  padding: 4,
+                }}
+                placeholder="https://drive.google.com/file/d/... or docs.google.com"
+                value={driveUrl}
+                onChangeText={setDriveUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {driveUrl.trim().length > 0 && (
+                <TouchableOpacity onPress={() => setDriveUrl("")}>
+                  <MaterialIcons name="close" size={18} color="#74777f" />
+                </TouchableOpacity>
+              )}
             </View>
 
-            <Text style={styles.uploadText}>
-              {uploaded
-                ? `Attached: ${fileDetails?.name || "Document.pdf"}`
-                : "Tap to select or drop PDF Document"}
-            </Text>
-
-            <Text style={styles.uploadHint}>
-              {uploaded && fileDetails
-                ? `File Size: ${fileDetails.size} • Verified Format`
-                : "Maximum file size 25MB • Clean OCR Recommended"}
-            </Text>
-
-            {(uploading || uploaded) && (
-              <View style={styles.progressWrapper}>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: `${progress}%`,
-                        backgroundColor: uploaded ? "#15803d" : "#003fb1",
-                      },
-                    ]}
-                  />
-                </View>
-
+            {isDriveValid ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 4,
+                }}
+              >
+                <MaterialIcons name="check-circle" size={16} color="#15803d" />
                 <Text
-                  style={[
-                    styles.progressText,
-                    uploaded &&
-                      styles.uploadedProgressText,
-                  ]}
+                  style={{
+                    fontSize: 12,
+                    color: "#15803d",
+                    fontWeight: "600",
+                  }}
                 >
-                  {uploaded
-                    ? `Verified: ${fileDetails?.name || "Document.pdf"} (${fileDetails?.size || "Ready"})`
-                    : `Uploading & Validating Bloom Taxonomies... ${progress}%`}
+                  Google Drive Link Attached & Validated for Student Access
                 </Text>
               </View>
+            ) : (
+              <Text style={{ fontSize: 12, color: "#585f6c" }}>
+                Notice: Staff must upload Google Drive links only. Physical file uploads are disabled.
+              </Text>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.blueprintSection}>
@@ -1020,6 +1017,7 @@ export default function StaffNotes({ navigation }) {
           const mapped = list.map((m, idx) => {
             const code = m.code || m.course_code || `COURSE${idx + 1}`;
             const short = code.slice(0, 2) || "NOTE";
+            const driveUrl = m.drive_url || m.storage_key || "";
             return {
               id: m.id,
               code: code,
@@ -1030,15 +1028,16 @@ export default function StaffNotes({ navigation }) {
               session: "2024–2025",
               color: idx % 3 === 0 ? "#dbe1ff" : idx % 3 === 1 ? "#dce2f3" : "#e2e1ed",
               textColor: "#00174d",
-              infoIcon: "format-list-numbered",
-              info: `${m.course_name || m.title || "Course Material"} - Verified syllabus unit`,
+              infoIcon: "cloud",
+              info: driveUrl ? `Google Drive: ${driveUrl}` : `${m.course_name || m.title || "Course Material"}`,
               marks: "Verified",
               verification: `Uploaded by ${m.instructor || "Faculty"}`,
               views: m.reads || "1.4k Views",
-              verifyIcon: "verified",
+              verifyIcon: "check-circle",
+              drive_url: driveUrl,
               actions: [
+                ["cloud", "Open Google Drive"],
                 ["preview", "Read / Preview"],
-                ["description", "Download Document"],
                 ["task-alt", "Verified Status"],
               ],
             };

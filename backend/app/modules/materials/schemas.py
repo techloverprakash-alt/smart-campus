@@ -8,9 +8,12 @@ from pydantic import BaseModel, ConfigDict
 # =============================================================================
 class StudyMaterialBase(BaseModel):
     title: str
-    unit_number: Optional[int] = None
-    course_offering_id: int
+    unit_number: Optional[int] = 1
+    course_offering_id: Optional[int] = None
+    subject_code: Optional[str] = None
+    drive_url: Optional[str] = None
     file_id: Optional[int] = None
+    academic_year: Optional[str] = "2024-2025"
 
 
 class StudyMaterialCreate(StudyMaterialBase):
@@ -20,6 +23,9 @@ class StudyMaterialCreate(StudyMaterialBase):
 class StudyMaterialUpdate(BaseModel):
     title: Optional[str] = None
     unit_number: Optional[int] = None
+    course_offering_id: Optional[int] = None
+    subject_code: Optional[str] = None
+    drive_url: Optional[str] = None
     file_id: Optional[int] = None
 
 
@@ -43,6 +49,8 @@ class StudyMaterialResponse(BaseModel):
     instructor: Optional[str] = None
     file_name: Optional[str] = None
     storage_key: Optional[str] = None
+    drive_url: Optional[str] = None
+    is_drive_link: bool = False
     file_size: Optional[int] = None
     mime_type: Optional[str] = None
     type: str = "PDF"

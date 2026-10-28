@@ -10,6 +10,7 @@ import {
   StatusBar,
   Modal,
   Pressable,
+  Linking,
 } from '@/ui';
 import { MaterialIcons } from '@/ui';
 import { BlurView } from '@/ui';
@@ -528,6 +529,35 @@ function ReaderModal({
 
               <View style={styles.documentDivider} />
 
+              {note.drive_url ? (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#003fb1",
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: 10,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                  onPress={() => {
+                    if (typeof window !== "undefined" && window.open) {
+                      window.open(note.drive_url, "_blank");
+                    } else if (Linking && Linking.openURL) {
+                      Linking.openURL(note.drive_url).catch(() => {});
+                    }
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Icon name="cloud" size={20} color="#ffffff" />
+                  <Text style={{ color: "#ffffff", fontWeight: "600", fontSize: 14 }}>
+                    Open in Google Drive
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+
               <Text style={styles.moduleTitle}>
                 Module 1.1: Supervised vs Unsupervised
                 Inductive Learning
@@ -681,28 +711,48 @@ export default function StudyMaterials({ navigation }) {
         if (!isMounted) return;
         const list = Array.isArray(res) ? res : (res?.data || []);
         if (list && list.length > 0) {
-          const mapped = list.map((m) => ({
-            ...m,
-            code: m.code || m.course_code || "GEN",
-            unit: m.unit || `Unit ${m.unit_number || 1}`,
-            title: m.title || "Study Material",
-            instructor: m.instructor || "Faculty",
-            pages: m.pages || "42 Pages",
-            reads: m.reads || "1.4k reads",
-            icon: m.icon || "picture-as-pdf",
-            type: m.type || "PDF",
-            previewTitle: m.previewTitle || `Syllabus Mapping: ${m.title || "Lecture Notes"}`,
-            preview: m.preview || `Verified curriculum material for ${m.course_name || m.title}.`,
-            modalTitle: m.modalTitle || `${m.code || "COURSE"} • ${m.unit || `Unit ${m.unit_number || 1}`}: ${m.title}`,
-            showButton: true,
-          }));
+          const mapped = list.map((m) => {
+            const driveUrl = m.drive_url || m.storage_key || "";
+            const isDrive =
+              m.is_drive_link ||
+              (driveUrl &&
+                (driveUrl.startsWith("http") ||
+                  driveUrl.includes("drive.google")));
+
+            return {
+              ...m,
+              code: m.code || m.course_code || "GEN",
+              unit: m.unit || `Unit ${m.unit_number || 1}`,
+              title: m.title || "Study Material",
+              instructor: m.instructor || "Faculty",
+              pages: isDrive ? "Google Drive" : m.pages || "42 Pages",
+              reads: m.reads || "1.4k reads",
+              icon: isDrive ? "cloud" : m.icon || "picture-as-pdf",
+              type: isDrive ? "G-DRIVE" : m.type || "PDF",
+              previewTitle:
+                m.previewTitle ||
+                `Syllabus Mapping: ${m.title || "Lecture Notes"}`,
+              preview: isDrive
+                ? `Google Drive Document: ${driveUrl}`
+                : m.preview ||
+                  `Verified curriculum material for ${m.course_name || m.title}.`,
+              modalTitle:
+                m.modalTitle ||
+                `${m.code || "COURSE"} • ${m.unit || `Unit ${m.unit_number || 1}`}: ${m.title}`,
+              drive_url: driveUrl,
+              is_drive_link: isDrive,
+              showButton: true,
+            };
+          });
           setLiveMaterials(mapped);
         }
       })
       .catch((err) => {
         console.warn("Failed to fetch study materials:", err);
       });
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const dynamicSubjects = useMemo(() => {
@@ -722,19 +772,34 @@ export default function StudyMaterials({ navigation }) {
 
   const currentDataset =
     selectedTab === "notes"
-      ? (liveMaterials.length > 0
-          ? [...liveMaterials, ...notes.filter((n) => !liveMaterials.some((lm) => lm.code === n.code && lm.title === n.title))]
-          : notes)
+      ? liveMaterials.length > 0
+        ? liveMaterials
+        : notes
       : questionPapers;
 
   const filteredNotes =
     selectedSubject === "all"
       ? currentDataset
-      : currentDataset.filter(
-          (item) => item.code === selectedSubject
-        );
+      : currentDataset.filter((item) => item.code === selectedSubject);
 
   const openReader = (note) => {
+    if (
+      note.drive_url &&
+      (note.drive_url.startsWith("http://") ||
+        note.drive_url.startsWith("https://"))
+    ) {
+      if (typeof window !== "undefined" && window.open) {
+        window.open(note.drive_url, "_blank");
+        return;
+      }
+      if (Linking && Linking.openURL) {
+        Linking.openURL(note.drive_url).catch(() => {
+          setSelectedNote(note);
+          setReaderVisible(true);
+        });
+        return;
+      }
+    }
     setSelectedNote(note);
     setReaderVisible(true);
   };
