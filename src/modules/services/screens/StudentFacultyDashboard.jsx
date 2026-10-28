@@ -279,32 +279,48 @@ export default function StudentFacultyDashboard(props) {
 
   const isFromAdmin = rawFrom === 'admin' || currentRole === 'ADMIN';
   const isFromStudentOrStaff = rawFrom === 'student' || rawFrom === 'staff';
+  const isServices = currentRole === 'SERVICES' || rawFrom === 'services';
 
   // Admin access is granted ONLY if explicitly coming from admin or having ADMIN role, and not explicitly navigating as student/staff
-  const isAdmin = isFromAdmin && !isFromStudentOrStaff;
-  const roleDisplay = isAdmin ? 'Admin' : (currentRole === 'STAFF' || rawFrom === 'staff') ? 'Faculty' : 'Student';
+  const isAdmin = isFromAdmin && !isFromStudentOrStaff && !isServices;
+  const roleDisplay = isAdmin
+    ? 'Admin'
+    : isServices
+    ? 'Services'
+    : currentRole === 'STAFF' || rawFrom === 'staff'
+    ? 'Faculty'
+    : 'Student';
   const role = roleDisplay;
 
   const [activeNav, setActiveNav] = useState(
-    initialTab === 'Campus Admin Control Center' && !isAdmin ? 'Overview / Dashboard' : initialTab
+    (initialTab === 'Campus Admin Control Center' && !isAdmin) ||
+      (isServices && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification'))
+      ? 'Overview / Dashboard'
+      : initialTab
   );
 
-  // Automatically switch away from Admin Center if not authorized
+  // Automatically switch away from Admin Center if not authorized, or from Lost & Found in services
   useEffect(() => {
     if (!isAdmin && activeNav === 'Campus Admin Control Center') {
       setActiveNav('Overview / Dashboard');
     }
-  }, [isAdmin, activeNav]);
+    if (isServices && (activeNav === 'Lost & Found Claims' || activeNav === 'Match Suggestions & Verification')) {
+      setActiveNav('Overview / Dashboard');
+    }
+  }, [isAdmin, isServices, activeNav]);
 
-  // Filter out Admin Center navigation link for students and staff
+  // Filter out Admin Center navigation link for students and staff, and Lost & Found / Match & AI Triage for services
   const filteredNavLinks = useMemo(() => {
     return navGroups[0].links.filter((link) => {
       if (link.id === 'Campus Admin Control Center' && !isAdmin) {
         return false;
       }
+      if (isServices && (link.id === 'Lost & Found Claims' || link.id === 'Match Suggestions & Verification')) {
+        return false;
+      }
       return true;
     });
-  }, [isAdmin]);
+  }, [isAdmin, isServices]);
 
   const [ticketTab, setTicketTab] = useState('All');
   const [modal, setModal] = useState(null);
@@ -395,6 +411,10 @@ export default function StudentFacultyDashboard(props) {
       setActiveNav('Overview / Dashboard');
       return;
     }
+    if (isServices && (label === 'Lost & Found Claims' || label === 'Match Suggestions & Verification')) {
+      setActiveNav('Overview / Dashboard');
+      return;
+    }
     if (label === 'Campus Map & Facilities') {
       setModal('map');
       return;
@@ -413,11 +433,12 @@ export default function StudentFacultyDashboard(props) {
 
   const handleReturnHome = () => {
     if (isAdmin) navigation.navigate('AdminDashboard');
+    else if (isServices) navigation.navigate('ServicesLogin');
     else if (currentRole === 'STAFF' || rawFrom === 'staff') navigation.navigate('StaffDashboard');
     else navigation.navigate('StudentDashboard');
   };
 
-  const displayName = profile?.name || profile?.full_name || user?.name || 'Kamesh S.';
+  const displayName = profile?.name || profile?.full_name || user?.name || (isServices ? 'Er. Rajesh Kumar' : 'Kamesh S.');
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
@@ -668,11 +689,11 @@ export default function StudentFacultyDashboard(props) {
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500">
                     <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-200/60 bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
-                      CS-2023-8841
+                      {isServices ? 'SVC-FAC-042' : 'CS-2023-8841'}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Building2 size={13} className="text-slate-400" />
-                      Computer Science Block A
+                      {isServices ? 'Campus Operations Centre' : 'Computer Science Block A'}
                     </span>
                     <span className="text-slate-300">•</span>
                     <span className="flex items-center gap-1.5">
@@ -691,12 +712,14 @@ export default function StudentFacultyDashboard(props) {
                     <span className="h-2 w-2 rounded-full bg-emerald-600" />
                     {complaints.filter((c) => c.status === 'Resolved').length} Resolved
                   </span>
-                  <button
-                    onClick={() => setActiveNav('Lost & Found Claims')}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
-                  >
-                    <Zap size={14} className="text-indigo-600" />1 High AI Match
-                  </button>
+                  {!isServices && (
+                    <button
+                      onClick={() => setActiveNav('Lost & Found Claims')}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                    >
+                      <Zap size={14} className="text-indigo-600" />1 High AI Match
+                    </button>
+                  )}
                 </div>
               </section>
 
@@ -714,60 +737,88 @@ export default function StudentFacultyDashboard(props) {
               )}
               {/* 3 Quick Action Wizard Cards */}
               <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                {[
-                  {
-                    icon: Wrench,
-                    color: 'text-blue-600 bg-blue-50',
-                    title: 'Report Infrastructure Issue',
-                    desc: 'Submit classroom, lab, electrical, or hostel repair requests instantly with photo intake and priority triage.',
-                    button: 'Open ticket wizard',
-                    action: openReport,
-                  },
-                  {
-                    icon: Search,
-                    color: 'text-cyan-600 bg-cyan-50',
-                    title: 'I Lost an Item',
-                    desc: 'Search AI intake registry & broadcast lost asset visual signatures across campus in seconds.',
-                    button: 'File lost item report',
-                    action: () => {
-                      setQuickForm({
-                        title: '',
-                        category: 'Electronics',
-                        zone: '',
-                        personName: '',
-                        exactLocation: '',
-                        brandModel: '',
-                        description: '',
-                        type: 'Lost',
-                        reportDate: getTodayDate(),
-                      });
-                      setQuickImagePreview(null);
-                      setQuickLostModal('Lost');
-                    },
-                  },
-                  {
-                    icon: PackageSearch,
-                    color: 'text-indigo-600 bg-indigo-50',
-                    title: 'I Found an Item',
-                    desc: 'Log unattended property for quick custodial desk check-in & automated AI-assisted owner retrieval.',
-                    button: 'Log discovered property',
-                    action: () => {
-                      setQuickForm({
-                        title: '',
-                        category: 'Electronics',
-                        zone: '',
-                        personName: '',
-                        exactLocation: '',
-                        brandModel: '',
-                        description: '',
-                        type: 'Found',
-                        reportDate: getTodayDate(),
-                      });
-                      setQuickImagePreview(null);
-                      setQuickLostModal('Found');
-                    },
-                  },
-                ].map((card) => {
+                {(isServices
+                  ? [
+                      {
+                        icon: Wrench,
+                        color: 'text-blue-600 bg-blue-50',
+                        title: 'Report Infrastructure Issue',
+                        desc: 'Submit classroom, lab, electrical, or hostel repair requests instantly with photo intake and priority triage.',
+                        button: 'Open ticket wizard',
+                        action: openReport,
+                      },
+                      {
+                        icon: Activity,
+                        color: 'text-indigo-600 bg-indigo-50',
+                        title: 'Field Operations & Dispatch',
+                        desc: 'Monitor active technicians, track live telemetry beacons, and manage rapid work order dispatch.',
+                        button: 'Open operations console',
+                        action: () => setActiveNav('Field Operations & Work Orders'),
+                      },
+                      {
+                        icon: MapPin,
+                        color: 'text-cyan-600 bg-cyan-50',
+                        title: 'Campus Map & Facilities',
+                        desc: 'View comprehensive academic blocks, laboratory zones, utility stations, and building layout directory.',
+                        button: 'View campus facilities map',
+                        action: () => setModal('map'),
+                      },
+                    ]
+                  : [
+                      {
+                        icon: Wrench,
+                        color: 'text-blue-600 bg-blue-50',
+                        title: 'Report Infrastructure Issue',
+                        desc: 'Submit classroom, lab, electrical, or hostel repair requests instantly with photo intake and priority triage.',
+                        button: 'Open ticket wizard',
+                        action: openReport,
+                      },
+                      {
+                        icon: Search,
+                        color: 'text-cyan-600 bg-cyan-50',
+                        title: 'I Lost an Item',
+                        desc: 'Search AI intake registry & broadcast lost asset visual signatures across campus in seconds.',
+                        button: 'File lost item report',
+                        action: () => {
+                          setQuickForm({
+                            title: '',
+                            category: 'Electronics',
+                            zone: '',
+                            personName: '',
+                            exactLocation: '',
+                            brandModel: '',
+                            description: '',
+                            type: 'Lost',
+                            reportDate: getTodayDate(),
+                          });
+                          setQuickImagePreview(null);
+                          setQuickLostModal('Lost');
+                        },
+                      },
+                      {
+                        icon: PackageSearch,
+                        color: 'text-indigo-600 bg-indigo-50',
+                        title: 'I Found an Item',
+                        desc: 'Log unattended property for quick custodial desk check-in & automated AI-assisted owner retrieval.',
+                        button: 'Log discovered property',
+                        action: () => {
+                          setQuickForm({
+                            title: '',
+                            category: 'Electronics',
+                            zone: '',
+                            personName: '',
+                            exactLocation: '',
+                            brandModel: '',
+                            description: '',
+                            type: 'Found',
+                            reportDate: getTodayDate(),
+                          });
+                          setQuickImagePreview(null);
+                          setQuickLostModal('Found');
+                        },
+                      },
+                    ]
+                ).map((card) => {
                   const IconComp = card.icon;
                   return (
                     <div
