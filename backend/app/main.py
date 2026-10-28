@@ -13,6 +13,7 @@ from app.modules.attendance.router import attendance_router, timetable_router
 from app.modules.materials.router import materials_router, announcements_router
 from app.modules.academic.seeder import seed_academic_csvs
 from app.modules.materials.seeder import seed_materials_and_announcements
+from app.modules.lost_and_found.seeder import seed_lost_and_found_csvs
 from app.modules.auth.service import AuthService
 from app.config import settings
 from app.database import Base, SessionLocal, engine as db_engine
@@ -58,32 +59,6 @@ async def lifespan(app: FastAPI):
     # 2. Seed initial categories and campus locations if empty
     db = SessionLocal()
     try:
-        if db.query(ItemCategory).count() == 0:
-            categories = [
-                ItemCategory(name="Electronics", description="Laptops, calculators, chargers, headphones, smartwatches"),
-                ItemCategory(name="Accessories", description="Water bottles, umbrellas, glasses, keys, ID card holders"),
-                ItemCategory(name="Wallets & Cards", description="Wallets, smart cards, hostel mess passes, driver licenses"),
-                ItemCategory(name="Study Materials", description="Textbooks, lecture note binders, scientific drawing instruments"),
-                ItemCategory(name="Clothing & Bags", description="Jackets, lab coats, backpacks, gym pouches"),
-                ItemCategory(name="Sports & Fitness", description="Sports gear, gym gloves, fitness trackers"),
-            ]
-            db.add_all(categories)
-            db.commit()
-            logger.info("Seeded default Lost and Found item categories.")
-
-        if db.query(Location).count() == 0:
-            locations = [
-                Location(name="Central Library", zone="Central Digital Library Complex", building="Library Quad"),
-                Location(name="Main Canteen Quad 2", zone="Main Canteen / Food Court", building="Food Court"),
-                Location(name="Academic Block B - 302", zone="Science Quad - Academic Block B", building="Block B"),
-                Location(name="Sports Complex Gym", zone="Sports Complex & Gymnasium", building="Sports Complex"),
-                Location(name="AI Lab-1", zone="Science Quad - Academic Block B", building="Block B"),
-                Location(name="Administrative Complex", zone="Administrative Wing", building="Admin Block"),
-            ]
-            db.add_all(locations)
-            db.commit()
-            logger.info("Seeded default campus locations.")
-
         # Seed default auth data (Roles, 23 Users, Profiles, Refresh Tokens)
         try:
             auth_service = AuthService(db)
@@ -102,6 +77,12 @@ async def lifespan(app: FastAPI):
             seed_materials_and_announcements(db)
         except Exception as e:
             logger.warning(f"Materials & Announcements seeder notice: {e}")
+
+        # Seed Lost & Found CSV data (Tables 34 through 41)
+        try:
+            seed_lost_and_found_csvs(db)
+        except Exception as e:
+            logger.warning(f"Lost & Found seeder notice: {e}")
     except Exception as e:
         logger.warning(f"Initial seed notice: {e}")
         db.rollback()

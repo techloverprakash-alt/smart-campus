@@ -285,7 +285,7 @@ const AdminDashboard = ({ navigation }) => {
     { key: 'home', label: 'Home', icon: 'dashboard', screen: 'AdminDashboard' },
     { key: 'attendance', label: 'Attendance', icon: 'how-to-reg', screen: 'ReportManagement' },
     { key: 'timetable', label: 'Timetable', icon: 'calendar-month', screen: 'AdminTimetable' },
-    { key: 'history', label: 'History', icon: 'history', screen: 'AttendanceHistory' },
+    { key: 'review', label: 'Review', icon: 'fact-check', screen: 'AdminAttendanceReview' },
     { key: 'profile', label: 'Profile', icon: 'person', screen: 'AdminProfile' },
   ];
 
@@ -419,7 +419,7 @@ const AdminDashboard = ({ navigation }) => {
           <View style={styles.chartCard}>
             <View style={styles.chartHeader}>
               <Text style={styles.sectionTitle}>Weekly Attendance Trend</Text>
-              <TouchableOpacity onPress={() => navigation?.navigate('AttendanceHistory')}>
+              <TouchableOpacity onPress={() => navigation?.navigate('AdminAttendanceReview')}>
                 <MaterialIcons name="more-vert" size={24} color={Colors.secondary} />
               </TouchableOpacity>
             </View>
@@ -439,7 +439,7 @@ const AdminDashboard = ({ navigation }) => {
           <View style={styles.tableCard}>
             <View style={styles.tableHeader}>
               <Text style={styles.sectionTitle}>Recent Activity</Text>
-              <TouchableOpacity onPress={() => navigation?.navigate('AttendanceHistory')}>
+              <TouchableOpacity onPress={() => navigation?.navigate('AdminAttendanceReview')}>
                 <Text style={styles.viewLink}>View All</Text>
               </TouchableOpacity>
             </View>

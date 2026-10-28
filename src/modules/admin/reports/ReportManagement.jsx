@@ -90,7 +90,7 @@ const ReportManagement = ({ navigation }) => {
     { key: 'home', label: 'Home', icon: 'dashboard', screen: 'AdminDashboard' },
     { key: 'attendance', label: 'Attendance', icon: 'how-to-reg', screen: 'ReportManagement' },
     { key: 'timetable', label: 'Timetable', icon: 'calendar-month', screen: 'AdminTimetable' },
-    { key: 'history', label: 'History', icon: 'history', screen: 'AttendanceHistory' },
+    { key: 'review', label: 'Review', icon: 'fact-check', screen: 'AdminAttendanceReview' },
     { key: 'profile', label: 'Profile', icon: 'person', screen: 'AdminProfile' },
   ];
 
@@ -380,7 +380,7 @@ const ReportManagement = ({ navigation }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionPill}
-                    onPress={() => navigation?.navigate('AttendanceHistory')}
+                    onPress={() => navigation?.navigate('AdminAttendanceReview')}
                   >
                     <MaterialIcons name="history" size={16} color={Colors.primary} />
                     <Text style={styles.actionPillText}>Full Log</Text>
@@ -505,7 +505,7 @@ const ReportManagement = ({ navigation }) => {
                 </Text>
                 <TouchableOpacity
                   style={styles.primaryActionButton}
-                  onPress={() => navigation?.navigate('AttendanceHistory')}
+                  onPress={() => navigation?.navigate('AdminAttendanceReview')}
                 >
                   <MaterialIcons name="history" size={20} color={Colors.onPrimary} />
                   <Text style={styles.primaryActionText}>Open Attendance History Console</Text>

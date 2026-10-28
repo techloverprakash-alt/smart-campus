@@ -12,24 +12,27 @@ class Settings(BaseModel):
     debug: bool = os.getenv("DEBUG", "False").lower() in ("true", "1")
     
     # Qdrant Vector DB Settings
-    # Matches existing docker container 'smart-campus-qdrant' at localhost:6333
-    qdrant_host: str = os.getenv("QDRANT_HOST", "http://localhost:6333")
+    # Supports cloud cluster endpoint if set, otherwise falls back to local host
+    qdrant_cluster_endpoint: str = os.getenv("QDRANT_CLUSTER_ENDPOINT", "").strip()
+    qdrant_api_key: str = os.getenv("QDRANT_API_KEY", "").strip()
+    qdrant_host: str = os.getenv("QDRANT_HOST", "http://localhost:6333").strip()
     qdrant_grpc_port: int = int(os.getenv("QDRANT_GRPC_PORT", "6334"))
-    qdrant_collection_name: str = os.getenv("QDRANT_COLLECTION", "smart_campus_lost_found")
+    qdrant_collection_name: str = os.getenv("QDRANT_COLLECTION", "nexus_lost_found_jina")
     
-    # Model Configuration
-    # Supported variants in ml-mobileclip: mobileclip_s0, mobileclip_s1, mobileclip_s2, mobileclip_b
+    # Model Configuration: Jina CLIP v2 Multimodal Cloud Embeddings
+    jina_api_key: str = os.getenv("JINA_API_KEY", "").strip()
+    jina_clip_model: str = os.getenv("JINA_CLIP_MODEL", "jina-clip-v2")
     model_name: str = os.getenv("MOBILECLIP_MODEL_NAME", "mobileclip_s0")
     
-    # Checkpoint path (optional; will use weights if present, or architecture defaults)
+    # Checkpoint path (optional fallback)
     checkpoints_dir: Path = BASE_DIR / "checkpoints"
     checkpoint_path: Path = BASE_DIR / "checkpoints" / "mobileclip_s0.pt"
     
     # Path to Apple's ml-mobileclip source directory
     mobileclip_source_dir: Path = BASE_DIR / "ml-mobileclip"
     
-    # Shared Embedding Dimension for MobileCLIP-S0 / S1 / S2 is 512
-    embedding_dim: int = 512
+    # Shared Multimodal Embedding Dimension for jina-clip-v2 is 1024
+    embedding_dim: int = 1024
     
     # Search settings
     default_top_k: int = 5

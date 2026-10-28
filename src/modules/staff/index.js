@@ -4,6 +4,8 @@ export * from './attendance/MarkAttendance';
 export { default as MarkAttendance } from './attendance/MarkAttendance';
 export * from './attendance/AttendanceReview';
 export { default as AttendanceReview } from './attendance/AttendanceReview';
+export * from './attendance/StaffAttendanceHistory';
+export { default as StaffAttendanceHistory } from './attendance/StaffAttendanceHistory';
 export * from './timetable/StaffTimetable';
 export { default as StaffTimetable } from './timetable/StaffTimetable';
 export * from './materials/StaffNotes';

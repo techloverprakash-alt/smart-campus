@@ -6,7 +6,7 @@ import { MaterialIcons } from '@/ui';
 const STAFF_NAV_ITEMS = [
   { label: 'Home', icon: 'dashboard', screen: 'StaffDashboard' },
   { label: 'Mark attendance', icon: 'how-to-reg', screen: 'MarkAttendance' },
-  { label: 'Attendance review', icon: 'fact-check', screen: 'AttendanceReview' },
+  { label: 'Attendance history', icon: 'history', screen: 'StaffAttendanceHistory', also: ['AttendanceReview'] },
   { label: 'Timetable', icon: 'push-pin', screen: 'StaffTimetable' },
   { label: 'Notes & QP', icon: 'menu-book', screen: 'StaffNotes' },
   { label: 'Profile', icon: 'person', screen: 'StaffProfile', also: ['StaffEditProfile'] },
