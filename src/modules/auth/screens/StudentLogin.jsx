@@ -68,7 +68,7 @@ const StudentLogin = ({ navigation }) => {
           {/* Logo Header */}
           <View style={styles.logoHeader}>
             <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDSgFolUYApmA7IWd_01YCdc0bZu3WGqImSHYC48VCUHDWbMovVsJpqESPMS89ncNvuRF0e2EmdXaSPufr5dq89c4Ea0A9pY8zwgaw5X3I032ZskkRK4bT53RVeoJ6GKr3Cfkw0yBZIf_PWnx0L_twzM9f0e5-ui7TDz7MjSfKMv-CGHjAQx06OG5Bg21MUD6J32gV93zUqjGzeGV3XT1yk1CCafw9ebZPxQC-huhGRK87FZWCbJsrOo8LHLSgWRAS8qw' }}
+              source={{ uri: '/info_logo.png' }}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -151,33 +151,6 @@ const StudentLogin = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
-
-            {/* Quick Demo Credentials Row */}
-            <View style={styles.demoHintRow}>
-              <Text style={styles.demoHintLabel}>Demo fill:</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setRegisterNumber('STU2025001');
-                  setPassword('Student@123');
-                  setError('');
-                }}
-                style={styles.demoHintPill}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.demoHintBtn}>STU2025001</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setRegisterNumber('STU2025002');
-                  setPassword('Student@123');
-                  setError('');
-                }}
-                style={styles.demoHintPill}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.demoHintBtn}>STU2025002</Text>
-              </TouchableOpacity>
-            </View>
 
             {/* Quick Access to Common Hub */}
             <TouchableOpacity
@@ -396,31 +369,7 @@ const styles = StyleSheet.create({
     color: '#b91c1c',
     fontWeight: '500',
   },
-  demoHintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  demoHintLabel: {
-    fontSize: 11,
-    color: Colors.onSurfaceVariant,
-    fontWeight: '500',
-  },
-  demoHintPill: {
-    backgroundColor: Colors.surfaceContainerHigh || '#eef2ff',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#dbe1ff',
-  },
-  demoHintBtn: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#003fb1',
-  },
+
   commonHubRow: {
     flexDirection: 'row',
     alignItems: 'center',
