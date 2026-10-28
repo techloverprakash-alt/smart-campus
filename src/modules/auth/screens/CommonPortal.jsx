@@ -982,20 +982,7 @@ function PortalScreen({ navigation }) {
           onMouseEnter={() => setIsHoveringControls(true)}
           onMouseLeave={() => setIsHoveringControls(false)}
         >
-          {/* Play/Pause Button */}
-          <button
-            type="button"
-            className="campus-slide-playpause-btn"
-            onClick={() => setIsPaused((prev) => !prev)}
-            aria-label={isPaused ? "Play slideshow" : "Pause slideshow"}
-            title={isPaused ? "Play slideshow" : "Pause slideshow"}
-          >
-            <MaterialIcons
-              name={isPaused ? "play-arrow" : "pause"}
-              size={11}
-              color="#ffffff"
-            />
-          </button>
+
 
           {/* Dots with progress animation */}
           <div className="campus-slide-indicators">
