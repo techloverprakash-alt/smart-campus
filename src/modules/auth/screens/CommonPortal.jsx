@@ -969,10 +969,6 @@ function PortalScreen({ navigation, isMorphing = false }) {
         <div className="campus-hero-slide-info" key={`caption-${currentSlide}`}>
           <div className="campus-slide-info-pill">
             <span className="campus-slide-info-title">{CAMPUS_SLIDES[currentSlide].title}</span>
-            <span className="campus-slide-info-divider">•</span>
-            <span className="campus-slide-info-counter">
-              {String(currentSlide + 1).padStart(2, "0")} / {String(CAMPUS_SLIDES.length).padStart(2, "0")}
-            </span>
           </div>
         </div>
 
