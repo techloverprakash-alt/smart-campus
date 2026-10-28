@@ -16,6 +16,7 @@ from app.modules.attendance.schemas import (
     AttendanceHistoryItem,
     AttendanceHistoryResponse,
     AttendanceSubmitRequest,
+    CreateTimetableEntryRequest,
     RecordSubmitItem,
     SessionRosterResponse,
     StudentAttendanceSummaryResponse,
@@ -832,3 +833,135 @@ class AttendanceService:
             "weekly_grid": frontend_grid,
             "grid": frontend_grid,
         }
+
+    def create_timetable_entry(self, data: CreateTimetableEntryRequest) -> Dict[str, Any]:
+        """
+        Creates a new scheduled timetable period with 3-way transactional conflict detection:
+        1. Faculty conflict check: Prevent overlapping classes for the same instructor.
+        2. Room/Location conflict check: Prevent double-booking classroom/lab.
+        3. Section conflict check: Prevent scheduling two subjects for the same student cohort.
+        """
+        day_upper = data.day_of_week.upper()
+        p_num = data.period_number
+
+        offering_id = data.course_offering_id
+        if not offering_id:
+            if not (data.subject_id and data.section_id and data.staff_id):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Either course_offering_id or (subject_id, section_id, staff_id) must be provided.",
+                )
+            offering = (
+                self.db.query(CourseOffering)
+                .filter(
+                    CourseOffering.subject_id == data.subject_id,
+                    CourseOffering.section_id == data.section_id,
+                    CourseOffering.staff_id == data.staff_id,
+                )
+                .first()
+            )
+            if not offering:
+                offering = CourseOffering(
+                    subject_id=data.subject_id,
+                    section_id=data.section_id,
+                    staff_id=data.staff_id,
+                    academic_year="2025-2026",
+                    semester=7,
+                )
+                self.db.add(offering)
+                self.db.flush()
+            offering_id = offering.id
+        else:
+            offering = self.db.query(CourseOffering).filter(CourseOffering.id == offering_id).first()
+            if not offering:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Course offering with ID {offering_id} not found.",
+                )
+
+        staff_id = offering.staff_id
+        section_id = offering.section_id
+
+        # 1. Faculty Conflict Check
+        faculty_conflict = (
+            self.db.query(TimetableEntry)
+            .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+            .filter(
+                CourseOffering.staff_id == staff_id,
+                TimetableEntry.day_of_week == day_upper,
+                TimetableEntry.period_number == p_num,
+            )
+            .first()
+        )
+        if faculty_conflict:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Faculty scheduling conflict: Instructor is already assigned to a session on {day_upper} Period {p_num}.",
+            )
+
+        # 2. Section Conflict Check
+        section_conflict = (
+            self.db.query(TimetableEntry)
+            .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+            .filter(
+                CourseOffering.section_id == section_id,
+                TimetableEntry.day_of_week == day_upper,
+                TimetableEntry.period_number == p_num,
+            )
+            .first()
+        )
+        if section_conflict:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Section scheduling conflict: This student section already has a class scheduled on {day_upper} Period {p_num}.",
+            )
+
+        # 3. Room / Location Conflict Check
+        if data.location_id:
+            room_conflict = (
+                self.db.query(TimetableEntry)
+                .filter(
+                    TimetableEntry.location_id == data.location_id,
+                    TimetableEntry.day_of_week == day_upper,
+                    TimetableEntry.period_number == p_num,
+                )
+                .first()
+            )
+            if room_conflict:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Room scheduling conflict: The selected venue is already booked on {day_upper} Period {p_num}.",
+                )
+
+        entry = TimetableEntry(
+            course_offering_id=offering_id,
+            day_of_week=day_upper,
+            period_number=p_num,
+            start_time=data.start_time,
+            end_time=data.end_time,
+            location_id=data.location_id,
+        )
+        self.db.add(entry)
+        self.db.commit()
+        self.db.refresh(entry)
+
+        return {
+            "success": True,
+            "message": "Timetable entry created successfully",
+            "entry_id": entry.id,
+            "day": entry.day_of_week,
+            "period": entry.period_number,
+        }
+
+    def delete_timetable_entry(self, entry_id: int) -> Dict[str, Any]:
+        """Deletes a scheduled timetable entry from database."""
+        entry = self.db.query(TimetableEntry).filter(TimetableEntry.id == entry_id).first()
+        if not entry:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Timetable entry with ID {entry_id} not found.",
+            )
+        self.db.delete(entry)
+        self.db.commit()
+        return {"success": True, "message": f"Timetable entry {entry_id} deleted."}
+
