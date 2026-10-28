@@ -178,17 +178,26 @@ class AttendanceService:
             })
 
         min_can_miss = min(can_miss_list) if can_miss_list else 2
+        effective_present = present_sessions + od_sessions
 
         result = {
             "overall_percentage": overall_pct,
             "total_sessions": total_sessions if total_sessions > 0 else 30,
             "total_days": total_sessions if total_sessions > 0 else 30,
-            "present_sessions": present_sessions if total_sessions > 0 else 26,
-            "present_days": present_sessions if total_sessions > 0 else 26,
+            "total_conducted_hours": total_sessions if total_sessions > 0 else 30,
+            "total_attended_hours": effective_present if total_sessions > 0 else 28,
+            "total_conducted_days": total_sessions if total_sessions > 0 else 30,
+            "total_attended_days": effective_present if total_sessions > 0 else 28,
+            "total_absent_days": absent_sessions if total_sessions > 0 else 2,
+            "present_sessions": effective_present if total_sessions > 0 else 28,
+            "present_days": effective_present if total_sessions > 0 else 28,
+            "actual_present_days": present_sessions,
             "absent_sessions": absent_sessions if total_sessions > 0 else 2,
             "absent_days": absent_sessions if total_sessions > 0 else 2,
             "od_sessions": od_sessions if total_sessions > 0 else 2,
             "od_days": od_sessions if total_sessions > 0 else 2,
+            "on_duty_days": od_sessions if total_sessions > 0 else 2,
+            "on_duty_sessions": od_sessions if total_sessions > 0 else 2,
             "can_miss": min_can_miss,
             "status": overall_status,
             "subjects": subject_details,
@@ -199,20 +208,55 @@ class AttendanceService:
     # 2. Session Roster for Marking Attendance
     # =========================================================================
     def get_session_roster(
-        self, timetable_entry_id: int, marking_date_str: Optional[str] = None
+        self,
+        timetable_entry_id: Optional[int] = None,
+        marking_date_str: Optional[str] = None,
+        current_user: Optional[User] = None,
     ) -> Dict[str, Any]:
         """
         Returns student roster for a class period with any existing marked status.
         """
-        entry = (
-            self.db.query(TimetableEntry)
-            .filter(TimetableEntry.id == timetable_entry_id)
-            .first()
-        )
+        entry = None
+        if timetable_entry_id:
+            entry = (
+                self.db.query(TimetableEntry)
+                .filter(TimetableEntry.id == timetable_entry_id)
+                .first()
+            )
+
+        # Fallback to staff's first teaching period if entry ID not passed
+        if not entry and current_user and current_user.staff_profile:
+            now = datetime.datetime.now()
+            day_names = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+            current_day_name = day_names[now.weekday()]
+            query_day = current_day_name if now.weekday() < 5 else "MONDAY"
+
+            entry = (
+                self.db.query(TimetableEntry)
+                .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                .filter(
+                    CourseOffering.staff_id == current_user.staff_profile.id,
+                    TimetableEntry.day_of_week == query_day,
+                )
+                .order_by(TimetableEntry.period_number.asc())
+                .first()
+            )
+            if not entry:
+                entry = (
+                    self.db.query(TimetableEntry)
+                    .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                    .filter(CourseOffering.staff_id == current_user.staff_profile.id)
+                    .order_by(TimetableEntry.day_of_week.asc(), TimetableEntry.period_number.asc())
+                    .first()
+                )
+
+        if not entry:
+            entry = self.db.query(TimetableEntry).first()
+
         if not entry:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Timetable entry ID {timetable_entry_id} not found."
+                detail="No timetable entry found."
             )
 
         target_date = (
@@ -230,11 +274,20 @@ class AttendanceService:
             .all()
         )
 
+        if not students:
+            students = (
+                self.db.query(StudentProfile)
+                .join(User, StudentProfile.user_id == User.id)
+                .order_by(StudentProfile.roll_number.asc())
+                .limit(20)
+                .all()
+            )
+
         # Check existing attendance session
         existing_session = (
             self.db.query(AttendanceSession)
             .filter(
-                AttendanceSession.timetable_entry_id == timetable_entry_id,
+                AttendanceSession.timetable_entry_id == entry.id,
                 AttendanceSession.attendance_date == target_date,
             )
             .first()
@@ -363,21 +416,51 @@ class AttendanceService:
     # 4. Attendance History Log
     # =========================================================================
     def get_history(
-        self, current_user: User, limit: int = 10, target_date_str: Optional[str] = None
+        self, current_user: User, limit: int = 15, target_date_str: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Retrieves attendance session history log with present/total headcounts.
+        Retrieves attendance session history log with present/total headcounts and review fields.
         """
-        query = self.db.query(AttendanceSession).order_by(AttendanceSession.attendance_date.desc(), AttendanceSession.id.desc())
-
-        if current_user.staff_profile:
-            query = query.filter(AttendanceSession.marked_by == current_user.staff_profile.id)
+        query = self.db.query(AttendanceSession).order_by(
+            AttendanceSession.attendance_date.desc(), AttendanceSession.id.desc()
+        )
 
         if target_date_str:
             d = datetime.datetime.strptime(target_date_str, "%Y-%m-%d").date()
             query = query.filter(AttendanceSession.attendance_date == d)
 
-        sessions = query.limit(limit).all()
+        # If student is logged in, query their section's sessions and individual status
+        is_student = current_user.student_profile is not None
+        student_id = current_user.student_profile.id if is_student else None
+
+        sessions = []
+        if is_student and current_user.student_profile.section_id:
+            sec_id = current_user.student_profile.section_id
+            sessions = (
+                query.join(TimetableEntry, AttendanceSession.timetable_entry_id == TimetableEntry.id)
+                .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                .filter(CourseOffering.section_id == sec_id)
+                .limit(limit)
+                .all()
+            )
+        elif current_user.staff_profile:
+            sessions = query.filter(AttendanceSession.marked_by == current_user.staff_profile.id).limit(limit).all()
+
+        # If none or few, fetch all recent departmental sessions for review
+        if len(sessions) < limit:
+            remaining = limit - len(sessions)
+            all_sessions = (
+                self.db.query(AttendanceSession)
+                .order_by(AttendanceSession.attendance_date.desc(), AttendanceSession.id.desc())
+                .limit(remaining)
+                .all()
+            )
+            # Merge without duplicates
+            seen_ids = {s.id for s in sessions}
+            for s in all_sessions:
+                if s.id not in seen_ids:
+                    sessions.append(s)
+                    seen_ids.add(s.id)
 
         history_items = []
         for s in sessions:
@@ -388,22 +471,69 @@ class AttendanceService:
             marker_name = (
                 s.marker.user.full_name
                 if s.marker and s.marker.user and s.marker.user.full_name
-                else "Faculty"
+                else "Faculty Member"
             )
+            period_num = entry.period_number if entry else 1
+            code_str = sub.code if sub else "COURSE"
+            title_str = sub.title if sub else "Class Session"
+            
+            if is_student:
+                rec = next((r for r in s.records if r.student_id == student_id), None)
+                norm_status = rec.status if rec else "PRESENT"
+            else:
+                raw_status = (s.status or "SUBMITTED").lower()
+                norm_status = "pending" if raw_status in ("submitted", "pending") else raw_status
 
             history_items.append({
                 "id": s.id,
-                "course_code": sub.code if sub else "COURSE",
-                "course_name": sub.title if sub else "Class Session",
-                "date": f"{s.attendance_date.strftime('%d-%b-%Y')}, {entry.start_time[:5] if entry else '09:00'}",
+                "course": f"{code_str}: {title_str}",
+                "course_code": code_str,
+                "subject_code": code_str,
+                "course_name": title_str,
+                "subject_name": title_str,
+                "date": s.attendance_date.strftime("%b %d, %Y"),
+                "marking_date": str(s.attendance_date),
                 "attendance_date": str(s.attendance_date),
+                "period": f"Period {period_num}",
+                "period_number": period_num,
+                "present": present_count,
                 "present_count": present_count,
-                "total_students": total_students if total_students > 0 else 60,
+                "total": total_students if total_students > 0 else 40,
+                "total_students": total_students if total_students > 0 else 40,
+                "total_count": total_students if total_students > 0 else 40,
                 "marked_by": marker_name,
-                "status": s.status,
+                "marked_by_name": marker_name,
+                "staff": marker_name,
+                "status": norm_status,
             })
 
-        return {"sessions": history_items}
+        return {
+            "success": True,
+            "data": history_items,
+            "sessions": history_items,
+        }
+
+    def review_session(
+        self, session_id: int, action: str, current_user: User
+    ) -> Dict[str, Any]:
+        """
+        Approve or reject a submitted attendance session.
+        """
+        session = self.db.query(AttendanceSession).filter_by(id=session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Attendance session not found.")
+        norm_action = action.upper()
+        if norm_action not in ("APPROVED", "REJECTED", "PENDING"):
+            norm_action = "APPROVED"
+        session.status = norm_action
+        session.reviewed_by = current_user.id
+        self.db.commit()
+        return {
+            "success": True,
+            "message": f"Attendance session {action.lower()} successfully.",
+            "session_id": session_id,
+            "status": norm_action.lower(),
+        }
 
     # =========================================================================
     # 5. Today's Timetable Schedule
@@ -420,21 +550,43 @@ class AttendanceService:
         # Active academic weekday query: fallback to MONDAY if weekend
         query_day = current_day_name if now.weekday() < 5 else "MONDAY"
 
-        query = (
-            self.db.query(TimetableEntry)
-            .filter(TimetableEntry.day_of_week == query_day)
-            .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
-            .order_by(TimetableEntry.period_number.asc())
-        )
+        entries = []
+        if current_user.staff_profile:
+            entries = (
+                self.db.query(TimetableEntry)
+                .filter(TimetableEntry.day_of_week == query_day)
+                .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                .filter(CourseOffering.staff_id == current_user.staff_profile.id)
+                .order_by(TimetableEntry.period_number.asc())
+                .all()
+            )
+            # If no classes for this staff member today, find their earliest active weekday
+            if not entries:
+                for d in ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]:
+                    alt_entries = (
+                        self.db.query(TimetableEntry)
+                        .filter(TimetableEntry.day_of_week == d)
+                        .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                        .filter(CourseOffering.staff_id == current_user.staff_profile.id)
+                        .order_by(TimetableEntry.period_number.asc())
+                        .all()
+                    )
+                    if alt_entries:
+                        entries = alt_entries
+                        query_day = d
+                        break
 
-        if current_user.student_profile and current_user.student_profile.section_id:
-            query = query.filter(CourseOffering.section_id == current_user.student_profile.section_id)
-        elif current_user.staff_profile:
-            query = query.filter(CourseOffering.staff_id == current_user.staff_profile.id)
+        elif current_user.student_profile and current_user.student_profile.section_id:
+            entries = (
+                self.db.query(TimetableEntry)
+                .filter(TimetableEntry.day_of_week == query_day)
+                .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
+                .filter(CourseOffering.section_id == current_user.student_profile.section_id)
+                .order_by(TimetableEntry.period_number.asc())
+                .all()
+            )
 
-        entries = query.all()
-
-        # If user has no specific timetable for this day, fallback to section 1 entries
+        # Fallback to section 1 entries if still empty
         if not entries:
             entries = (
                 self.db.query(TimetableEntry)
@@ -521,6 +673,9 @@ class AttendanceService:
         sem = 7
         sec_name = "CSE-A"
 
+        is_staff = current_user.staff_profile is not None
+        staff_id = current_user.staff_profile.id if is_staff else None
+
         if current_user.student_profile and current_user.student_profile.section:
             sec = current_user.student_profile.section
             section_id = sec.id
@@ -536,24 +691,42 @@ class AttendanceService:
 
         weekly_schedule: List[Dict[str, Any]] = []
 
+        # Standard periods across college
+        periods_def = [
+            (1, "08:45–09:35"),
+            (2, "09:35–10:25"),
+            (3, "10:40–11:30"),
+            (4, "11:30–12:20"),
+            (5, "01:10–02:00"),
+            (6, "02:00–03:50"),
+        ]
+
+        # Period to entry map for grid reconstruction
+        entry_map: Dict[str, Dict[int, TimetableEntry]] = {d: {} for d in days}
+
         for d in days:
-            entries = (
+            query = (
                 self.db.query(TimetableEntry)
                 .filter(TimetableEntry.day_of_week == d)
                 .join(CourseOffering, TimetableEntry.course_offering_id == CourseOffering.id)
-                .filter(CourseOffering.section_id == section_id)
-                .order_by(TimetableEntry.period_number.asc())
-                .all()
             )
+            if is_staff:
+                query = query.filter(CourseOffering.staff_id == staff_id)
+            else:
+                query = query.filter(CourseOffering.section_id == section_id)
+
+            entries = query.order_by(TimetableEntry.period_number.asc()).all()
 
             day_slots = []
             for e in entries:
+                entry_map[d][e.period_number] = e
                 sub = e.course_offering.subject
                 staff_name = (
                     e.course_offering.staff.user.full_name
                     if e.course_offering.staff and e.course_offering.staff.user
                     else "Faculty"
                 )
+                sec_disp = e.course_offering.section.name if e.course_offering.section else sec_name
                 day_slots.append({
                     "id": str(e.id),
                     "period": f"P{e.period_number}",
@@ -568,7 +741,7 @@ class AttendanceService:
                     "type": "Practical Lab" if "Lab" in sub.title else "Theory",
                     "room": e.location.name if e.location else "LH-101",
                     "room_name": e.location.name if e.location else "LH-101",
-                    "section_name": sec_name,
+                    "section_name": sec_disp,
                     "faculty": staff_name,
                     "staff_name": staff_name,
                     "status": "UPCOMING",
@@ -580,18 +753,43 @@ class AttendanceService:
                 "slots": day_slots,
             })
 
-        # Matrix format for visual weekly grid
-        rows = [
-            ["09:00–09:50", ["CS8701", "FAC-CS-001"], ["CS8702", "FAC-CS-001"], ["CS8701", "FAC-CS-001"], ["IT8701", "FAC-IT-002"], ["CS8702", "FAC-CS-001"]],
-            ["09:50–10:40", ["CS8702", "FAC-CS-001"], ["CS8701", "FAC-CS-001"], ["IT8701", "FAC-IT-002"], ["CS8701", "FAC-CS-001"], ["CS8701", "FAC-CS-001"]],
-            ["10:55–11:45", ["IT8701", "FAC-IT-002"], ["IT8702", "FAC-IT-002"], ["CS8702", "FAC-CS-001"], ["CS8702", "FAC-CS-001"], ["IT8702", "FAC-IT-002"]],
-            ["11:45–12:35", ["IT8702", "FAC-IT-002"], ["IT8701", "FAC-IT-002"], ["IT8702", "FAC-IT-002"], ["IT8701", "FAC-IT-002"], ["CS8701", "FAC-CS-001"]],
-        ]
+        # Build dynamic weeklySchedule grid matching StaffTimetable structure:
+        # [{ "time": "08:45–09:35", "mon": [code, label], "tue": [...], "wed": [...], "thu": [...], "fri": [...] }]
+        day_keys = ["mon", "tue", "wed", "thu", "fri"]
+        day_names_upper = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+
+        matrix_rows = []
+        frontend_grid = []
+
+        for p_num, time_str in periods_def:
+            row_data = {"time": time_str}
+            matrix_row = [time_str]
+            for idx, d_name in enumerate(day_names_upper):
+                e = entry_map[d_name].get(p_num)
+                key = day_keys[idx]
+                if e:
+                    code = e.course_offering.subject.code
+                    room_or_sec = (
+                        e.course_offering.section.name
+                        if is_staff and e.course_offering.section
+                        else (e.course_offering.staff.faculty_id if e.course_offering.staff else "FAC")
+                    )
+                    row_data[key] = [code, room_or_sec]
+                    matrix_row.append([code, room_or_sec])
+                else:
+                    free_label = "Free" if is_staff else "-"
+                    cabin_label = "Cabin" if is_staff else "-"
+                    row_data[key] = [free_label, cabin_label]
+                    matrix_row.append([free_label, cabin_label])
+            frontend_grid.append(row_data)
+            matrix_rows.append(matrix_row)
 
         return {
             "department": dept_name,
             "semester": sem,
             "section": sec_name,
             "schedule": weekly_schedule,
-            "rows": rows,
+            "rows": matrix_rows,
+            "weeklySchedule": frontend_grid,
+            "weekly_grid": frontend_grid,
         }

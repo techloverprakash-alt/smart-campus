@@ -6,6 +6,7 @@ import Typography from '../../../constants/typography';
 import TopAppBar from '../../../components/common/TopAppBar';
 import BottomNavBar from '../../../components/common/BottomNavBar';
 import { getSessionRoster, submitAttendance } from '../../../services/api/attendance';
+import { getTodaySchedule } from '../../../services/api/timetable';
 import { useAuth } from '../../auth/context/AuthContext';
 
 const MarkAttendance = ({ navigation, route }) => {
@@ -22,43 +23,56 @@ const MarkAttendance = ({ navigation, route }) => {
   const today = new Date().toISOString().split('T')[0];
   const selectedDate = markingDate || today;
 
+  const [activeEntryId, setActiveEntryId] = useState(timetableEntryId ? Number(timetableEntryId) : null);
+  const [periods, setPeriods] = useState([]);
   const [roster, setRoster] = useState(null);  // null = not yet loaded
   const [studentStates, setStudentStates] = useState([]);
   const [loadingRoster, setLoadingRoster] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [rosterError, setRosterError] = useState('');
 
+  // ── Load faculty periods for today/schedule ─────────────────────────────────
+  useEffect(() => {
+    let isMounted = true;
+    getTodaySchedule()
+      .then((data) => {
+        if (isMounted && data?.schedule && data.schedule.length > 0) {
+          setPeriods(data.schedule);
+          if (!activeEntryId) {
+            setActiveEntryId(Number(data.schedule[0].id));
+          }
+        }
+      })
+      .catch((err) => console.log('Could not load today schedule:', err));
+    return () => { isMounted = false; };
+  }, []);
+
   // ── Fetch session roster from backend ──────────────────────────────────────
   const fetchRoster = useCallback(async () => {
-    if (!timetableEntryId) {
-      // No params → screen opened directly (dev preview), use demo data
-      setStudentStates([
-        { id: 'DEMO-001', name: 'Demo Student A', roll_no: '001', status: 'PRESENT' },
-        { id: 'DEMO-002', name: 'Demo Student B', roll_no: '002', status: 'ABSENT' },
-        { id: 'DEMO-003', name: 'Demo Student C', roll_no: '003', status: 'PRESENT' },
-      ]);
-      setLoadingRoster(false);
-      return;
-    }
     setLoadingRoster(true);
     setRosterError('');
     try {
-      const data = await getSessionRoster(timetableEntryId, selectedDate);
-      setRoster(data);
-      // Map backend roster to local editable state
-      const mapped = (data.students || []).map((s) => ({
-        id: s.student_id,
-        name: s.full_name,
-        roll_no: s.roll_no,
-        status: s.existing_status || 'PRESENT',
-      }));
-      setStudentStates(mapped);
+      const data = await getSessionRoster(activeEntryId, selectedDate);
+      if (data) {
+        setRoster(data);
+        if (!activeEntryId && data.timetable_entry_id) {
+          setActiveEntryId(Number(data.timetable_entry_id));
+        }
+        // Map backend roster to local editable state
+        const mapped = (data.students || []).map((s) => ({
+          id: s.student_id,
+          name: s.full_name,
+          roll_no: s.roll_no,
+          status: s.existing_status || 'PRESENT',
+        }));
+        setStudentStates(mapped);
+      }
     } catch (err) {
-      setRosterError(err.message || 'Failed to load student roster.');
+      setRosterError(err.message || 'Failed to load student roster from database.');
     } finally {
       setLoadingRoster(false);
     }
-  }, [timetableEntryId, selectedDate]);
+  }, [activeEntryId, selectedDate]);
 
   useEffect(() => { fetchRoster(); }, [fetchRoster]);
 
@@ -73,8 +87,13 @@ const MarkAttendance = ({ navigation, route }) => {
 
   // ── Submit attendance ──────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!timetableEntryId) {
-      Alert.alert('Demo Mode', 'Open this screen from your timetable to submit real attendance.');
+    const targetEntryId = activeEntryId || roster?.timetable_entry_id;
+    if (!targetEntryId) {
+      Alert.alert('Selection Required', 'No timetable period selected for attendance.');
+      return;
+    }
+    if (studentStates.length === 0) {
+      Alert.alert('Empty Roster', 'No students enrolled to submit attendance.');
       return;
     }
     setSubmitting(true);
@@ -84,11 +103,11 @@ const MarkAttendance = ({ navigation, route }) => {
         status: s.status,
       }));
       await submitAttendance({
-        timetable_entry_id: timetableEntryId,
+        timetable_entry_id: Number(targetEntryId),
         marking_date: selectedDate,
         records,
       });
-      Alert.alert('Success', 'Attendance submitted successfully!', [
+      Alert.alert('Success', 'Attendance submitted successfully to the database!', [
         { text: 'OK', onPress: () => navigation?.goBack() },
       ]);
     } catch (err) {
@@ -108,13 +127,11 @@ const MarkAttendance = ({ navigation, route }) => {
   const absentCount = studentStates.filter((s) => s.status === 'ABSENT').length;
   const odCount = studentStates.filter((s) => s.status === 'OD').length;
 
-  const bottomNavItems = [
-    { key: 'home', label: 'Home', icon: 'dashboard' },
-    { key: 'attendance', label: 'Attendance', icon: 'how-to-reg' },
-    { key: 'notes', label: 'Notes & QP', icon: 'menu-book' },
-    { key: 'profile', label: 'Profile', icon: 'person' },
-  ];
-
+  const displayCourseName = roster?.course_name
+    ? `${roster.course_code}: ${roster.course_name}`
+    : subjectName;
+  const displaySection = roster?.section_name || sectionName || 'Class Section';
+  const displayRoom = roster?.room_name || roomName;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -133,22 +150,45 @@ const MarkAttendance = ({ navigation, route }) => {
           {/* Class Info Header */}
           <View style={styles.classInfoCard}>
             <View style={styles.classInfoRow}>
-              <View>
-                <Text style={styles.className}>{subjectName}</Text>
-                <Text style={styles.classDetail}>{sectionName}{roomName ? ` • ${roomName}` : ''}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.className}>{displayCourseName}</Text>
+                <Text style={styles.classDetail}>{displaySection}{displayRoom ? ` • ${displayRoom}` : ''}</Text>
               </View>
               <View style={styles.dateBadge}>
                 <MaterialIcons name="calendar-today" size={14} color={Colors.primary} />
                 <Text style={styles.dateText}>{selectedDate}</Text>
               </View>
             </View>
+
+            {/* Period Switcher if faculty has multiple periods */}
+            {periods.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
+                <View style={styles.periodRow}>
+                  {periods.map((p) => {
+                    const isSelected = String(p.id) === String(activeEntryId);
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[styles.periodChip, isSelected && styles.periodChipActive]}
+                        onPress={() => setActiveEntryId(Number(p.id))}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.periodText, isSelected && styles.periodTextActive]}>
+                          {p.period}: {p.code || p.course_code || 'Slot'}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            )}
           </View>
 
           {/* Loading State */}
           {loadingRoster && (
             <View style={styles.centeredState}>
               <ActivityIndicator size="large" color={Colors.primary} />
-              <Text style={styles.stateText}>Loading student roster…</Text>
+              <Text style={styles.stateText}>Loading student roster from database…</Text>
             </View>
           )}
 
@@ -253,7 +293,6 @@ const MarkAttendance = ({ navigation, route }) => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },

@@ -1,24 +1,25 @@
 /**
- * Attendance API
+ * Attendance API Service
+ * Endpoints for student attendance summary, timetable periods, marking, and history.
  */
+
 import { api } from './client';
 
 /**
- * Get student attendance summary (overall % + per-subject breakdown).
- * Caller: Student (own summary) or Staff/Admin (pass student_id).
- * @param {string|null} studentId - optional, for staff/admin viewing a specific student
+ * Get cumulative student attendance summary.
+ * @param {number} [studentId] - Optional student ID (for staff/admin viewing a student)
  */
-export const getStudentAttendanceSummary = (studentId = null) =>
+export const getStudentAttendanceSummary = (studentId) =>
   api.get('/attendance/student/summary', studentId ? { student_id: studentId } : {});
 
 /**
- * Get the student roster for a timetable session (for attendance marking).
- * @param {string} timetableEntryId
- * @param {string|null} date - 'YYYY-MM-DD', defaults to today
+ * Staff: get roster for marking attendance in a session period.
+ * @param {number} timetableEntryId
+ * @param {string} [date] - YYYY-MM-DD
  */
-export const getSessionRoster = (timetableEntryId, date = null) =>
+export const getSessionRoster = (timetableEntryId, date) =>
   api.get('/attendance/session/students', {
-    timetable_entry_id: timetableEntryId,
+    ...(timetableEntryId ? { timetable_entry_id: timetableEntryId } : {}),
     ...(date ? { date } : {}),
   });
 
@@ -29,8 +30,16 @@ export const getSessionRoster = (timetableEntryId, date = null) =>
 export const submitAttendance = (body) => api.post('/attendance/submit', body);
 
 /**
- * Admin: get attendance history log.
+ * Admin / Staff: get attendance history log.
  * @param {object} params - { date, limit }
  */
 export const getAttendanceHistory = (params = {}) =>
   api.get('/attendance/history', params);
+
+/**
+ * Review (approve / reject) an attendance session.
+ * @param {number} sessionId
+ * @param {string} action - 'approved' | 'rejected' | 'pending'
+ */
+export const reviewAttendanceSession = (sessionId, action = 'approved') =>
+  api.post(`/attendance/session/${sessionId}/review?action=${action}`);

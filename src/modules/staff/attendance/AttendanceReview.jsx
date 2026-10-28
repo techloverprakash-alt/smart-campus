@@ -1,45 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView } from '@/ui';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from '@/ui';
 import { MaterialIcons } from '@/ui';
 import Colors from '../../../constants/colors';
 import Typography from '../../../constants/typography';
 import TopAppBar from '../../../components/common/TopAppBar';
 import BottomNavBar from '../../../components/common/BottomNavBar';
 import { useAuth } from '../../auth/context/AuthContext';
-import { getAttendanceHistory } from '../../../services/api/attendance';
+import { getAttendanceHistory, reviewAttendanceSession } from '../../../services/api/attendance';
 
 const AttendanceReview = ({ navigation }) => {
   const { user, profile } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState('all');
-
-  const [records, setRecords] = useState([
-    { course: 'CS-101: Data Structures', staff: 'Dr. Priya Sharma', date: 'Sep 6, 2024', period: 'Period 1', present: 38, total: 40, status: 'pending' },
-    { course: 'CS-305: Algorithms', staff: 'Prof. Arjun Patel', date: 'Sep 6, 2024', period: 'Period 2', present: 42, total: 45, status: 'approved' },
-    { course: 'MA-201: Linear Algebra', staff: 'Dr. Sneha Gupta', date: 'Sep 5, 2024', period: 'Period 1', present: 35, total: 40, status: 'approved' },
-    { course: 'PH-301: Quantum Physics', staff: 'Dr. Vikram Singh', date: 'Sep 5, 2024', period: 'Period 3', present: 22, total: 25, status: 'rejected' },
-    { course: 'CS-Lab: Python', staff: 'Prof. Meera Nair', date: 'Sep 4, 2024', period: 'Lab', present: 20, total: 20, status: 'approved' },
-  ]);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    getAttendanceHistory({ limit: 10 })
+    getAttendanceHistory({ limit: 30 })
       .then((res) => {
-        if (isMounted && res?.data && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped = res.data.map((item) => ({
-            course: `${item.subject_code || 'SUB'}: ${item.subject_name || 'Class Session'}`,
-            staff: item.marked_by_name || profile?.full_name || 'Faculty Member',
-            date: item.marking_date || 'Today',
-            period: item.period_number ? `Period ${item.period_number}` : 'Class Session',
-            present: item.present_count !== undefined ? item.present_count : 35,
-            total: item.total_count || (item.present_count ? item.present_count + (item.absent_count || 0) : 40),
-            status: 'approved',
-          }));
-          setRecords(mapped);
+        if (isMounted) {
+          const list = Array.isArray(res) ? res : (res?.data || res?.sessions || []);
+          if (list.length > 0) {
+            const mapped = list.map((item) => ({
+              id: item.id,
+              course: item.course || `${item.course_code || item.subject_code || 'SUB'}: ${item.course_name || item.subject_name || 'Class Session'}`,
+              staff: item.staff || item.marked_by_name || profile?.full_name || 'Faculty Member',
+              date: item.date || item.marking_date || 'Today',
+              period: item.period || (item.period_number ? `Period ${item.period_number}` : 'Class Session'),
+              present: item.present_count !== undefined ? item.present_count : (item.present !== undefined ? item.present : 0),
+              total: item.total_count || item.total || item.total_students || 40,
+              status: (item.status || 'pending').toLowerCase(),
+            }));
+            setRecords(mapped);
+          }
+          setLoading(false);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.log('Failed to fetch attendance history:', err);
+        if (isMounted) setLoading(false);
+      });
     return () => { isMounted = false; };
   }, [profile]);
+
+  const handleReviewAction = async (sessionRecord, action) => {
+    try {
+      await reviewAttendanceSession(sessionRecord.id, action);
+      setRecords((prev) =>
+        prev.map((r) => (r.id === sessionRecord.id ? { ...r, status: action } : r))
+      );
+    } catch (err) {
+      console.error('Failed to update review status:', err);
+    }
+  };
 
   const filters = [
     { key: 'all', label: 'All' },
@@ -48,7 +61,9 @@ const AttendanceReview = ({ navigation }) => {
     { key: 'rejected', label: 'Rejected' },
   ];
 
-  const filteredRecords = selectedFilter === 'all' ? records : records.filter((r) => r.status === selectedFilter);
+  const filteredRecords = selectedFilter === 'all'
+    ? records
+    : records.filter((r) => r.status === selectedFilter);
 
   const statusStyles = {
     pending: { bg: '#fef08a', text: '#854d0e', label: 'Pending' },
@@ -96,12 +111,34 @@ const AttendanceReview = ({ navigation }) => {
             ))}
           </View>
 
+          {/* Loading Indicator */}
+          {loading && (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <ActivityIndicator size="large" color={Colors.primary} />
+              <Text style={{ marginTop: 12, color: Colors.onSurfaceVariant, fontSize: 14 }}>
+                Loading attendance history from database…
+              </Text>
+            </View>
+          )}
+
+          {/* Empty State */}
+          {!loading && filteredRecords.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <MaterialIcons name="fact-check" size={48} color={Colors.outlineVariant} />
+              <Text style={{ marginTop: 12, color: Colors.onSurfaceVariant, fontSize: 15, fontWeight: '500' }}>
+                No attendance sessions found for review.
+              </Text>
+            </View>
+          )}
+
           {/* Records */}
-          {filteredRecords.map((record, index) => {
-            const ss = statusStyles[record.status];
-            const percentage = Math.round((record.present / record.total) * 100);
+          {!loading && filteredRecords.map((record, index) => {
+            const ss = statusStyles[record.status] || statusStyles.pending;
+            const percentage = record.total > 0
+              ? Math.round((record.present / record.total) * 100)
+              : 0;
             return (
-              <View key={index} style={styles.recordCard}>
+              <View key={record.id || index} style={styles.recordCard}>
                 <View style={styles.recordHeader}>
                   <View style={styles.recordHeaderLeft}>
                     <Text style={styles.recordCourse}>{record.course}</Text>
@@ -135,11 +172,19 @@ const AttendanceReview = ({ navigation }) => {
                 {/* Action Buttons for Pending */}
                 {record.status === 'pending' && (
                   <View style={styles.actionRow}>
-                    <TouchableOpacity style={styles.rejectButton} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.rejectButton}
+                      activeOpacity={0.7}
+                      onPress={() => handleReviewAction(record, 'rejected')}
+                    >
                       <MaterialIcons name="close" size={16} color={Colors.error} />
                       <Text style={styles.rejectText}>Reject</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.approveButton} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.approveButton}
+                      activeOpacity={0.7}
+                      onPress={() => handleReviewAction(record, 'approved')}
+                    >
                       <MaterialIcons name="check" size={16} color={Colors.onPrimary} />
                       <Text style={styles.approveText}>Approve</Text>
                     </TouchableOpacity>
@@ -188,25 +233,23 @@ const styles = StyleSheet.create({
   recordCourse: { ...Typography.labelMd, color: Colors.onSurface, fontWeight: '600' },
   recordStaff: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 9999 },
-  statusText: { fontSize: 12, fontWeight: '500' },
-  recordDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  statusText: { ...Typography.labelSm, fontWeight: '700' },
+  recordDetails: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   detailText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 12 },
-  progressBarBg: { height: 6, backgroundColor: Colors.surfaceContainerHighest, borderRadius: 3 },
-  progressBarFill: { height: 6, borderRadius: 3 },
-  actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
+  progressBarBg: { height: 6, backgroundColor: Colors.surfaceContainerHighest, borderRadius: 9999, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 9999 },
+  actionRow: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', paddingTop: 4 },
   rejectButton: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
-    borderWidth: 1, borderColor: Colors.error,
+    flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 8, borderWidth: 1, borderColor: Colors.error,
   },
-  rejectText: { ...Typography.labelSm, color: Colors.error },
+  rejectText: { ...Typography.labelSm, color: Colors.error, fontWeight: '600' },
   approveButton: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
-    backgroundColor: Colors.primary,
+    flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 8, backgroundColor: Colors.primary,
   },
-  approveText: { ...Typography.labelSm, color: Colors.onPrimary },
+  approveText: { ...Typography.labelSm, color: Colors.onPrimary, fontWeight: '600' },
 });
 
 export default AttendanceReview;

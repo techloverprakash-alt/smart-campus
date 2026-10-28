@@ -52,7 +52,7 @@ def get_student_attendance_summary(
     summary="Get student roster for attendance marking in a timetable period"
 )
 def get_session_roster(
-    timetable_entry_id: int = Query(..., description="ID of the timetable entry period"),
+    timetable_entry_id: Optional[int] = Query(None, description="ID of the timetable entry period"),
     date: Optional[str] = Query(None, description="Marking date (YYYY-MM-DD)"),
     current_user: User = Depends(require_role(["ADMIN", "STAFF"])),
     db: Session = Depends(get_db),
@@ -62,7 +62,24 @@ def get_session_roster(
     Includes any existing saved status (PRESENT, ABSENT, OD).
     """
     service = AttendanceService(db)
-    return service.get_session_roster(timetable_entry_id, date)
+    return service.get_session_roster(timetable_entry_id, date, current_user=current_user)
+
+
+@attendance_router.post(
+    "/session/{session_id}/review",
+    summary="Review and approve/reject an attendance session"
+)
+def review_attendance_session(
+    session_id: int,
+    action: str = Query("approved", description="Action to take: approved, rejected, or pending"),
+    current_user: User = Depends(require_role(["ADMIN", "STAFF"])),
+    db: Session = Depends(get_db),
+):
+    """
+    Approve or reject a submitted attendance session record.
+    """
+    service = AttendanceService(db)
+    return service.review_session(session_id, action, current_user)
 
 
 @attendance_router.post(
