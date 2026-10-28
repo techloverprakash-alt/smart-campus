@@ -40,7 +40,7 @@ export const KeyboardAvoidingView = View;
 
 /* ───────────────────────────── Text ───────────────────────────── */
 export const Text = forwardRef(function Text(
-  { style, children, numberOfLines, onPress, selectable, className, ...rest },
+  { style, children, numberOfLines, onPress, selectable = false, className, ...rest },
   ref,
 ) {
   const css = toCss(style);
@@ -56,7 +56,17 @@ export const Text = forwardRef(function Text(
     css.WebkitBoxOrient = 'vertical';
     css.WebkitLineClamp = numberOfLines;
   }
-  if (selectable === false) css.userSelect = 'none';
+  if (selectable) {
+    css.userSelect = 'text';
+    css.WebkitUserSelect = 'text';
+    css.cursor = css.cursor || 'text';
+  } else {
+    css.userSelect = 'none';
+    css.WebkitUserSelect = 'none';
+    if (!onPress) {
+      css.cursor = css.cursor || 'inherit';
+    }
+  }
   const handlers = onPress
     ? {
         onClick: (e) => {

@@ -18,10 +18,60 @@ body {
   font: 14px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden; /* screens scroll internally (ScrollView) */
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 button {
   font: inherit;
+}
+
+/* Application typography & UI elements default to normal arrow cursor and no edit caret */
+.rn-view,
+.rn-text,
+h1, h2, h3, h4, h5, h6,
+p, span, label,
+table, th, td {
+  cursor: inherit;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Explicit interactive elements must show pointer cursor */
+button,
+a,
+[role="button"],
+[role="link"],
+[role="tab"],
+.rn-touch,
+.rn-touch *,
+button *,
+a * {
+  cursor: pointer;
+}
+
+/* Text inputs, textareas, and explicitly selectable containers must show text edit cursor and allow selection */
+input,
+textarea,
+.rn-input,
+[contenteditable="true"],
+.selectable,
+.selectable-text,
+[data-selectable="true"],
+[data-selectable="true"] * {
+  cursor: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* ───────────────────────── Primitives ───────────────────────── */
