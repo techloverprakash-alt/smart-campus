@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   SafeAreaView,
   View,
@@ -15,6 +15,7 @@ import { MaterialIcons } from '@/ui';
 import { BlurView } from '@/ui';
 import StudentBottomNav from "../../../components/common/StudentBottomNav";
 import { useAuth } from "../../auth/context/AuthContext";
+import { getMaterials } from "../../../services/api/materials";
 
 const COLORS = {
   primary: "#003fb1",
@@ -661,8 +662,8 @@ function ReaderModal({
 
 export default function StudyMaterials({ navigation }) {
   const { user, profile } = useAuth();
-  const [selectedSubject, setSelectedSubject] =
-    useState("CS3351");
+  const [liveMaterials, setLiveMaterials] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState("all");
 
   const [selectedTab, setSelectedTab] =
     useState("notes");
@@ -673,7 +674,58 @@ export default function StudyMaterials({ navigation }) {
   const [selectedNote, setSelectedNote] =
     useState(null);
 
-  const currentDataset = selectedTab === "notes" ? notes : questionPapers;
+  useEffect(() => {
+    let isMounted = true;
+    getMaterials()
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        if (list && list.length > 0) {
+          const mapped = list.map((m) => ({
+            ...m,
+            code: m.code || m.course_code || "GEN",
+            unit: m.unit || `Unit ${m.unit_number || 1}`,
+            title: m.title || "Study Material",
+            instructor: m.instructor || "Faculty",
+            pages: m.pages || "42 Pages",
+            reads: m.reads || "1.4k reads",
+            icon: m.icon || "picture-as-pdf",
+            type: m.type || "PDF",
+            previewTitle: m.previewTitle || `Syllabus Mapping: ${m.title || "Lecture Notes"}`,
+            preview: m.preview || `Verified curriculum material for ${m.course_name || m.title}.`,
+            modalTitle: m.modalTitle || `${m.code || "COURSE"} • ${m.unit || `Unit ${m.unit_number || 1}`}: ${m.title}`,
+            showButton: true,
+          }));
+          setLiveMaterials(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch study materials:", err);
+      });
+    return () => { isMounted = false; };
+  }, []);
+
+  const dynamicSubjects = useMemo(() => {
+    const list = [...subjects];
+    if (liveMaterials && liveMaterials.length > 0) {
+      liveMaterials.forEach((m) => {
+        if (m.code && !list.some((s) => s.code === m.code)) {
+          list.push({
+            code: m.code,
+            label: `${m.code} ${m.course_name || m.title || ""}`.trim(),
+          });
+        }
+      });
+    }
+    return list;
+  }, [liveMaterials]);
+
+  const currentDataset =
+    selectedTab === "notes"
+      ? (liveMaterials.length > 0
+          ? [...liveMaterials, ...notes.filter((n) => !liveMaterials.some((lm) => lm.code === n.code && lm.title === n.title))]
+          : notes)
+      : questionPapers;
 
   const filteredNotes =
     selectedSubject === "all"
@@ -834,7 +886,7 @@ export default function StudyMaterials({ navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsContainer}
         >
-          {subjects.map((item) => (
+          {dynamicSubjects.map((item) => (
             <SubjectChip
               key={item.code}
               item={item}

@@ -27,6 +27,8 @@ class StudentAttendanceSummaryResponse(BaseModel):
     total_absent_days: int = 0
     present_sessions: int = 0
     present_days: int = 0
+    effective_present_days: int = 0
+    effective_present_sessions: int = 0
     actual_present_days: int = 0
     absent_sessions: int = 0
     absent_days: int = 0

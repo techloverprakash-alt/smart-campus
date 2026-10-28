@@ -191,6 +191,8 @@ class AttendanceService:
             "total_absent_days": absent_sessions if total_sessions > 0 else 2,
             "present_sessions": effective_present if total_sessions > 0 else 28,
             "present_days": effective_present if total_sessions > 0 else 28,
+            "effective_present_days": effective_present if total_sessions > 0 else 28,
+            "effective_present_sessions": effective_present if total_sessions > 0 else 28,
             "actual_present_days": present_sessions,
             "absent_sessions": absent_sessions if total_sessions > 0 else 2,
             "absent_days": absent_sessions if total_sessions > 0 else 2,

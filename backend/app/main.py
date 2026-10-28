@@ -10,13 +10,16 @@ from app.api.routes_matching import router as matching_router
 from app.modules.lost_and_found.router import router as lost_and_found_router
 from app.modules.auth.router import auth_router, profile_router
 from app.modules.attendance.router import attendance_router, timetable_router
+from app.modules.materials.router import materials_router, announcements_router
 from app.modules.academic.seeder import seed_academic_csvs
+from app.modules.materials.seeder import seed_materials_and_announcements
 from app.modules.auth.service import AuthService
 from app.config import settings
 from app.database import Base, SessionLocal, engine as db_engine
 import app.modules.auth.models  # Register Tables 1-7 (users, roles, profiles, refresh_tokens)
 import app.modules.academic.models  # Register Tables 8-15 (departments, batches, sections, locations)
 import app.modules.attendance.models  # Register Tables 16-20 (subjects, offerings, timetable, attendance)
+import app.modules.materials.models  # Register Tables 21-23 (study_materials, announcements, announcement_targets)
 import app.modules.core.models  # Register core models
 import app.modules.lost_and_found.models  # Register Tables 34-41 models
 from app.modules.lost_and_found.models import ItemCategory
@@ -93,6 +96,12 @@ async def lifespan(app: FastAPI):
             seed_academic_csvs(db)
         except Exception as e:
             logger.warning(f"Academic seeder notice: {e}")
+
+        # Seed study materials & announcements CSV data (Tables 21 through 23)
+        try:
+            seed_materials_and_announcements(db)
+        except Exception as e:
+            logger.warning(f"Materials & Announcements seeder notice: {e}")
     except Exception as e:
         logger.warning(f"Initial seed notice: {e}")
         db.rollback()
@@ -157,6 +166,10 @@ app.include_router(attendance_router, prefix="/api/v1/attendance", tags=["Attend
 app.include_router(attendance_router, prefix="/api/attendance", tags=["Attendance Management"])
 app.include_router(timetable_router, prefix="/api/v1/timetable", tags=["Timetable Management (v1)"])
 app.include_router(timetable_router, prefix="/api/timetable", tags=["Timetable Management"])
+app.include_router(materials_router, prefix="/api/v1", tags=["Study Materials (v1)"])
+app.include_router(materials_router, prefix="/api", tags=["Study Materials"])
+app.include_router(announcements_router, prefix="/api/v1", tags=["Announcements (v1)"])
+app.include_router(announcements_router, prefix="/api", tags=["Announcements"])
 app.include_router(engine_router)
 app.include_router(embeddings_router)
 app.include_router(matching_router)
