@@ -152,6 +152,35 @@ def get_weekly_timetable(
     return service.get_weekly_timetable(current_user)
 
 
+@timetable_router.post(
+    "/entry",
+    summary="Admin: Create timetable entry with conflict checks"
+)
+def create_timetable_entry(
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    from app.modules.attendance.schemas import CreateTimetableEntryRequest
+    req = CreateTimetableEntryRequest(**payload)
+    service = AttendanceService(db)
+    return service.create_timetable_entry(req)
+
+
+@timetable_router.delete(
+    "/entry/{entry_id}",
+    summary="Admin: Delete a timetable entry"
+)
+def delete_timetable_entry(
+    entry_id: int,
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = AttendanceService(db)
+    return service.delete_timetable_entry(entry_id)
+
+
+
 @timetable_router.get(
     "/department",
     summary="Admin: Get department timetable grid"
@@ -165,3 +194,5 @@ def get_department_timetable(
 ):
     service = AttendanceService(db)
     return service.get_weekly_timetable(current_user)
+
+

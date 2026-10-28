@@ -151,3 +151,16 @@ class WeeklyTimetableResponse(BaseModel):
     weeklySchedule: Optional[List[Dict[str, Any]]] = []
     weekly_grid: Optional[List[Dict[str, Any]]] = []
     grid: Optional[List[Dict[str, Any]]] = []
+
+
+class CreateTimetableEntryRequest(BaseModel):
+    course_offering_id: Optional[int] = None
+    subject_id: Optional[int] = None
+    section_id: Optional[int] = None
+    staff_id: Optional[int] = None
+    day_of_week: str
+    period_number: int
+    start_time: str = "09:00:00"
+    end_time: str = "09:50:00"
+    location_id: Optional[int] = None
+
