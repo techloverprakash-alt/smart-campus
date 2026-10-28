@@ -15,6 +15,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.modules.academic import models as _academic_models
+from app.modules.attendance import models as _attendance_models
 
 
 # =============================================================================
@@ -111,12 +113,13 @@ class StaffProfile(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     faculty_id = Column(String(64), unique=True, nullable=False, index=True)  # FAC-CS-001
-    department_id = Column(Integer, nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
     designation = Column(String(128), nullable=False)
     cabin_number = Column(String(64), nullable=True)
     mentor_capacity = Column(Integer, default=15, nullable=False)
 
     user = relationship("User", back_populates="staff_profile")
+    department = relationship("Department", back_populates="staff_members", lazy="joined")
     mentees = relationship("StudentProfile", back_populates="mentor", foreign_keys="StudentProfile.mentor_id")
 
     def __repr__(self):
@@ -137,13 +140,14 @@ class StudentProfile(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     register_number = Column(String(64), unique=True, nullable=False, index=True)  # REG20251001
     roll_number = Column(String(64), unique=True, nullable=False, index=True)      # 21CS001
-    section_id = Column(Integer, nullable=True)
+    section_id = Column(Integer, ForeignKey("sections.id", ondelete="SET NULL"), nullable=True, index=True)
     mentor_id = Column(Integer, ForeignKey("staff_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
     cgpa = Column(Float, nullable=True)
     date_of_birth = Column(String(32), nullable=True)
 
     user = relationship("User", back_populates="student_profile")
     mentor = relationship("StaffProfile", back_populates="mentees", foreign_keys=[mentor_id], lazy="joined")
+    section = relationship("Section", back_populates="students", lazy="joined")
 
     def __repr__(self):
         return f"<StudentProfile id={self.id} roll='{self.roll_number}'>"

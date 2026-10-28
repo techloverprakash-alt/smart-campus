@@ -133,9 +133,33 @@ export default function StudentTimetable({ navigation }) {
   const { user, profile } = useAuth();
   const { isWide } = useBreakpoint();
   const [tab, setTab] = useState("today");
+  const [liveSchedule, setLiveSchedule] = useState(todaySchedule);
   const [facultyOpen, setFacultyOpen] = useState(false);
   const [toastText, setToastText] = useState("");
   const toastFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let isMounted = true;
+    getTodaySchedule()
+      .then((data) => {
+        if (isMounted && data?.schedule && data.schedule.length > 0) {
+          const mapped = data.schedule.map((slot) => ({
+            time: [slot.start_time || "09:00", slot.end_time || "09:50"],
+            period: slot.period || `P${slot.period_number}`,
+            name: slot.title || slot.subject_name || "Class Session",
+            code: slot.code || slot.course_code || "",
+            type: slot.type || "Theory",
+            room: slot.room || slot.room_name || "LH-101",
+            status: slot.status || "UPCOMING",
+            faculty: slot.faculty || slot.staff_name || "Faculty",
+            break: slot.is_break || false,
+          }));
+          setLiveSchedule(mapped);
+        }
+      })
+      .catch((err) => console.log("Failed to load student schedule:", err));
+    return () => { isMounted = false; };
+  }, []);
 
   const studentName = profile?.full_name || user?.profile?.full_name || "Student";
   const registerNo = profile?.register_number || user?.identifier || "24AD012";
@@ -407,7 +431,7 @@ export default function StudentTimetable({ navigation }) {
               </View>
 
               <View style={[styles.scheduleList, isWide && styles.scheduleListDesktop]}>
-                {todaySchedule.map((item, i) => {
+                {(liveSchedule || todaySchedule).map((item, i) => {
                   if (item.break) {
                     return (
                       <View key={i} style={[styles.breakRow, isWide && styles.breakRowDesktop]}>

@@ -1,0 +1,4 @@
+id,name,description
+1,Admin,System administrator with full privileges
+2,Staff,Faculty member handling courses and student mentorship
+3,Student,Enrolled student

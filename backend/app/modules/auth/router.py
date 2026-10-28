@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.access.permissions import get_current_user, require_role
 from app.database import get_db
+from app.modules.academic.models import AcademicBatch, Department, Section
 from app.modules.auth.models import User
 from app.modules.auth.schemas import (
     AdminProfileOut,
@@ -113,18 +114,20 @@ def get_cohort_options(
     db: Session = Depends(get_db),
 ):
     """
-    Returns dropdown options for student/staff onboarding and allocation.
+    Returns dropdown options for student/staff onboarding and allocation directly from database.
     """
     service = AuthService(db)
     mentors = service.get_faculty_mentors()
+    depts = db.query(Department).all()
+    batches = db.query(AcademicBatch).all()
+    secs = db.query(Section).all()
     return {
         "departments": [
-            {"id": 1, "name": "Computer Science and Engineering", "code": "CSE"},
-            {"id": 2, "name": "Information Technology", "code": "IT"},
-            {"id": 3, "name": "Artificial Intelligence & Data Science", "code": "AI&DS"},
+            {"id": d.id, "name": d.name, "code": d.code, "degree": d.degree}
+            for d in depts
         ],
-        "batches": ["2021-2025", "2022-2026", "2023-2027", "2024-2028"],
-        "sections": ["Section A", "Section B", "Section C"],
+        "batches": [b.name for b in batches],
+        "sections": list(dict.fromkeys([s.name for s in secs])),
         "mentors": mentors,
     }
 

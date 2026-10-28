@@ -1,0 +1,3 @@
+id,lost_report_id,found_report_id,text_similarity,image_similarity,combined_score,criteria_json,status
+1,1,1,0.94,0.91,0.925,"{""model"": ""clip-vit-base-patch32"", ""location_match"": true, ""category_match"": true}",VERIFIED
+2,2,2,0.96,0.88,0.92,"{""model"": ""clip-vit-base-patch32"", ""location_match"": true, ""category_match"": true}",CANDIDATE

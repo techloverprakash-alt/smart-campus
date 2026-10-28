@@ -1,0 +1,4 @@
+id,department_id,batch_id,name,semester
+1,1,1,CSE-A,7
+2,2,1,IT-A,7
+3,1,2,CSE-A,5

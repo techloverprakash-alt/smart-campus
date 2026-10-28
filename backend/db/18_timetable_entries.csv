@@ -1,0 +1,5 @@
+id,course_offering_id,day_of_week,period_number,start_time,end_time,location_id
+1,1,MONDAY,1,09:00:00,09:50:00,5
+2,2,MONDAY,2,09:50:00,10:40:00,5
+3,3,MONDAY,1,09:00:00,09:50:00,6
+4,4,TUESDAY,3,11:00:00,11:50:00,7

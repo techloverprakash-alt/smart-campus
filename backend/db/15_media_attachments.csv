@@ -1,0 +1,11 @@
+id,storage_key,original_filename,mime_type,file_size,uploaded_by,created_at
+1,imports/2025/batch2025_students.csv,batch2025_students.csv,text/csv,4520,1,2025-06-15 09:29:00
+2,imports/2025/batch2025_retry_err.csv,batch2025_retry_err.csv,text/csv,1024,1,2025-06-16 14:14:00
+3,materials/cs8701/unit1_distributed_systems.pdf,Unit1_Distributed_Systems_Notes.pdf,application/pdf,2458000,2,2025-07-10 11:00:00
+4,materials/cs8702/unit1_cloud_architecture.pdf,Unit1_Cloud_Architecture.pdf,application/pdf,3120000,2,2025-07-12 14:30:00
+5,materials/it8701/unit1_fullstack_dev.pdf,Unit1_FullStack_Web_Dev.pdf,application/pdf,1980000,3,2025-07-14 09:15:00
+6,maintenance/wo1_ac_leaking_before.jpg,ac_leaking_before.jpg,image/jpeg,845000,4,2025-08-01 10:15:00
+7,maintenance/wo1_ac_repaired_after.jpg,ac_repaired_after.jpg,image/jpeg,790000,1,2025-08-02 16:00:00
+8,lost_found/lost_airpods_pro.jpg,my_airpods_case.jpg,image/jpeg,512000,4,2025-08-10 13:00:00
+9,lost_found/found_airpods_cafeteria.jpg,found_white_earbuds.jpg,image/jpeg,620000,14,2025-08-10 14:20:00
+10,lost_found/found_casio_calc.jpg,casio_fx991ex.jpg,image/jpeg,480000,2,2025-08-12 11:10:00

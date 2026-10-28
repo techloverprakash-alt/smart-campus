@@ -1,0 +1,5 @@
+id,code,title,department_id
+1,CS8701,Distributed Systems,1
+2,CS8702,Cloud Computing,1
+3,IT8701,Full Stack Web Development,2
+4,IT8702,Data Analytics and Visualization,2

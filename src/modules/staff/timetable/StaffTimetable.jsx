@@ -152,6 +152,7 @@ const weeklySchedule = [
 export default function StaffTimetable({ navigation }) {
   const { user, profile } = useAuth();
   const [tab, setTab] = useState("today");
+  const [liveSchedule, setLiveSchedule] = useState(todaySchedule);
   const [facultyOpen, setFacultyOpen] = useState(false);
   const [lessonOpen, setLessonOpen] = useState(false);
   const [substitutionAccepted, setSubstitutionAccepted] = useState(false);
@@ -159,6 +160,28 @@ export default function StaffTimetable({ navigation }) {
   const [customNote, setCustomNote] = useState("");
   const [toastText, setToastText] = useState("");
   const toastFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let isMounted = true;
+    getTodaySchedule()
+      .then((data) => {
+        if (isMounted && data?.schedule && data.schedule.length > 0) {
+          const mapped = data.schedule.map((slot) => ({
+            id: slot.id,
+            period: slot.period || `P${slot.period_number}`,
+            time: `${slot.start_time} – ${slot.end_time}`,
+            title: slot.title || slot.subject_name,
+            section: `${slot.section_name} • ${slot.room_name}`,
+            status: slot.attendance_marked ? "Completed" : (slot.status === "NOW" ? "In Progress" : "Upcoming"),
+            attendance: slot.attendance_marked ? "Attendance Marked" : "Attendance Pending",
+            lab: (slot.type || "").toLowerCase().includes("lab"),
+          }));
+          setLiveSchedule(mapped);
+        }
+      })
+      .catch((err) => console.log("Failed to load staff schedule:", err));
+    return () => { isMounted = false; };
+  }, []);
 
   const facultyName = profile?.full_name || user?.profile?.full_name || "Dr. Kumar";
   const facultyId = profile?.faculty_id || user?.identifier || "FAC-2022-019";
@@ -422,7 +445,7 @@ export default function StaffTimetable({ navigation }) {
             </View>
 
             <View style={styles.scheduleCardList}>
-              {todaySchedule.map((item, idx) => (
+              {(liveSchedule || todaySchedule).map((item, idx) => (
                 <View
                   key={idx}
                   style={[
@@ -476,7 +499,11 @@ export default function StaffTimetable({ navigation }) {
                         <Text style={styles.attendanceText}>{item.attendance}</Text>
                       </View>
                       <TouchableOpacity
-                        onPress={() => navigation?.navigate("MarkAttendance")}
+                        onPress={() => navigation?.navigate("MarkAttendance", {
+                          timetableEntryId: item.id || 1,
+                          subjectName: item.title,
+                          sectionName: item.section,
+                        })}
                         activeOpacity={0.7}
                       >
                         <Text style={styles.viewLogLink}>View Log ›</Text>
@@ -501,7 +528,11 @@ export default function StaffTimetable({ navigation }) {
                       <TouchableOpacity
                         style={styles.labPrimaryBtn}
                         activeOpacity={0.8}
-                        onPress={() => navigation?.navigate("MarkAttendance")}
+                        onPress={() => navigation?.navigate("MarkAttendance", {
+                          timetableEntryId: item.id || 1,
+                          subjectName: item.title,
+                          sectionName: item.section,
+                        })}
                       >
                         <MaterialIcons name="fingerprint" size={18} color="#ffffff" />
                         <Text style={styles.labPrimaryBtnText}>Mark Lab Attendance</Text>

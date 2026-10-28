@@ -1,0 +1,4 @@
+id,notification_id,channel,delivery_status,attempt_count,delivered_at
+1,1,IN_APP,DELIVERED,1,2025-08-02 16:10:01
+2,2,EMAIL,DELIVERED,1,2025-08-10 14:25:05
+3,3,PUSH,DELIVERED,1,2025-08-04 10:00:02

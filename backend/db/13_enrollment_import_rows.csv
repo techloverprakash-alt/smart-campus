@@ -1,0 +1,6 @@
+id,import_id,row_number,row_data,validation_errors,status
+1,1,1,"{""identifier"": ""STU2025001"", ""name"": ""Aravind K"", ""email"": ""aravind.k@student.edu"", ""roll_number"": ""21CS001"", ""section"": ""CSE-A"", ""cgpa"": 8.75}",,SUCCESS
+2,1,2,"{""identifier"": ""STU2025002"", ""name"": ""Bhavna M"", ""email"": ""bhavna.m@student.edu"", ""roll_number"": ""21CS002"", ""section"": ""CSE-A"", ""cgpa"": 9.1}",,SUCCESS
+3,1,3,"{""identifier"": ""STU2025003"", ""name"": ""Chandresh R"", ""email"": ""chandresh.r@student.edu"", ""roll_number"": ""21CS003"", ""section"": ""CSE-A"", ""cgpa"": 7.8}",,SUCCESS
+4,2,1,"{""identifier"": ""STU2025999"", ""name"": ""John Doe"", ""email"": ""invalid-email"", ""roll_number"": ""21CS999""}","[""Invalid email format""]",FAILED
+5,2,2,"{""identifier"": ""STU2025001"", ""name"": ""Duplicate Entry"", ""email"": ""dup@student.edu"", ""roll_number"": ""21CS001""}","[""Duplicate roll number 21CS001""]",FAILED

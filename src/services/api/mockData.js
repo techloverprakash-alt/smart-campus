@@ -254,23 +254,8 @@ export function getMockResponse(path, options = {}) {
     return { success: true, message: "Operation completed successfully in demo mode" };
   }
 
-  // Attendance endpoints
-  if (cleanPath.includes('/attendance/student/summary')) {
-    return MOCK_ATTENDANCE_SUMMARY;
-  }
-
-  if (cleanPath.includes('/attendance/session/students') || cleanPath.includes('/attendance/history')) {
-    return MOCK_STUDENT_ROSTER;
-  }
-
-  if (cleanPath.includes('/attendance/submit')) {
-    return { success: true, message: "Attendance submitted successfully" };
-  }
-
-  // Timetable
-  if (cleanPath.includes('/timetable')) {
-    return MOCK_TIMETABLE;
-  }
+  // Auth, profile, attendance, and timetable endpoints are handled strictly by the authoritative backend database.
+  // Real relational tables (users, profiles, subjects, offerings, timetable, sessions, records) are authoritative.
 
   // Reports
   if (cleanPath.includes('/reports')) {

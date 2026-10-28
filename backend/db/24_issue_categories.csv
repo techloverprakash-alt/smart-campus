@@ -1,0 +1,4 @@
+id,name,description,default_priority
+1,HVAC & Air Conditioning,"AC cooling, water leakage, or ventilation issues",HIGH
+2,Electrical & Lighting,"Fans, tube lights, power sockets, and breakers",MEDIUM
+3,IT & Projector Equipment,"Smartboards, projectors, LAN ports, and Wi-Fi",HIGH

@@ -1,0 +1,3 @@
+id,complaint_id,status,target_sla,diagnostic_note,technician_remarks,lockout_tag
+1,1,COMPLETED,2025-08-03 10:15:00,Clogged drain pipe and worn capacitor,Replaced drain pipe and 45uF capacitor; tested cooling.,LOTO-AC-101
+2,2,IN_PROGRESS,2025-08-07 11:30:00,Damaged 10m HDMI cable in conduit,Awaiting replacement 10m braided HDMI cable from store.,NONE
