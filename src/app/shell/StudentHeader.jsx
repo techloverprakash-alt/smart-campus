@@ -18,7 +18,7 @@ export function StudentHeader({ active }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const displayName = profile?.full_name || profile?.name || user?.name || user?.username || 'Student';
-  const avatarUri = profile?.avatar_url || user?.profile?.avatar_url;
+  const avatarUri = profile?.avatar_url || profile?.avatar || user?.profile?.avatar_url || user?.avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVXP3laCjvBlZEVugtzpX20kCifG87-9yGGVWnUCmaIhNtCcDdG9HmCKcyaSa4oTc-QPnHNb5RR_pO0Xd8oVLNtxyVdxbttBW5KjbrzMiMJD0HcqApHxFuVbC5_KEUHnW0qOr98kurfIJ2NAVvw464MLzvDAN8LdJTSZXSqkbDkysN8V9Lzled9wZvQVwVorYcKfLMT1do8whwEUyopOcVpVMNt3wTCpl8mQ00dAziqalPOmZQTqcZ';
   const isProfileActive = active === 'StudentProfile' || active === 'StudentEditProfile';
 
   const logout = async () => {
@@ -55,6 +55,7 @@ export function StudentHeader({ active }) {
             }
           }}
         >
+          <img src="/info_logo.png" alt="NEXUS" style={{ width: 26, height: 26, objectFit: 'contain', flexShrink: 0 }} />
           <span className="student-header-logo">NEXUS</span>
           <span className="student-header-badge">Info IT</span>
           <span className="student-header-role">STUDENT PORTAL</span>

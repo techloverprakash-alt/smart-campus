@@ -30,59 +30,6 @@ const ReportManagement = ({ navigation }) => {
   const [facultyWorkload, setFacultyWorkload] = useState([]);
   const [todaySessions, setTodaySessions] = useState([]);
 
-  const defaultTodaySessions = [
-    {
-      period: 'Period 1 (08:45 – 09:35)',
-      course_code: 'CS3301',
-      course_name: 'Data Structures',
-      staff_name: 'Dr. R. Kavitha',
-      room: 'Room 204',
-      present_count: 51,
-      total_count: 54,
-      status: 'COMPLETED',
-    },
-    {
-      period: 'Period 2 (09:35 – 10:25)',
-      course_code: 'CS3352',
-      course_name: 'Database Management Systems',
-      staff_name: 'Prof. M. Selvam',
-      room: 'Room 204',
-      present_count: 50,
-      total_count: 54,
-      status: 'COMPLETED',
-    },
-    {
-      period: 'Period 3 (10:40 – 11:30)',
-      course_code: 'AD3501',
-      course_name: 'Deep Learning Architectures',
-      staff_name: 'Dr. S. Kabilan',
-      room: 'Turing Hall 302',
-      present_count: 52,
-      total_count: 54,
-      status: 'COMPLETED',
-    },
-    {
-      period: 'Period 4 (11:30 – 12:20)',
-      course_code: 'GE3451',
-      course_name: 'Professional Ethics & Governance',
-      staff_name: 'Dr. B. Vijayalakshmi',
-      room: 'Room 204',
-      present_count: 49,
-      total_count: 54,
-      status: 'ONGOING',
-    },
-    {
-      period: 'Period 5 (01:10 – 02:00)',
-      course_code: 'CS3401',
-      course_name: 'Operating Systems & Virtualization',
-      staff_name: 'Prof. S. Anand',
-      room: 'Room 302',
-      present_count: 48,
-      total_count: 54,
-      status: 'SCHEDULED',
-    },
-  ];
-
   const loadReportData = async () => {
     setLoading(true);
     try {
@@ -111,7 +58,13 @@ const ReportManagement = ({ navigation }) => {
       if (histRes.status === 'fulfilled' && histRes.value) {
         const hData = histRes.value.data || histRes.value.sessions || histRes.value;
         const list = Array.isArray(hData) ? hData : [];
-        if (list.length > 0) setTodaySessions(list);
+        if (list.length > 0) {
+          const todayIso = new Date().toISOString().slice(0, 10);
+          const todayOnly = list.filter((item) => item.date === todayIso || item.marking_date === todayIso);
+          setTodaySessions(todayOnly.length > 0 ? todayOnly : list);
+        } else {
+          setTodaySessions([]);
+        }
       }
     } catch (err) {
       console.error('Error loading report analytics:', err);
@@ -132,26 +85,6 @@ const ReportManagement = ({ navigation }) => {
     { key: 'today_attendance', label: "Today's Attendance", icon: 'today' },
   ];
 
-  const quickReports = [
-    {
-      label: 'Shortage List',
-      icon: 'warning',
-      description: `${kpis.students_below_75_count || 0} students below 75%`,
-      action: () => setSelectedReportType('attendance'),
-    },
-    {
-      label: 'Staff Teaching Load',
-      icon: 'badge',
-      description: `${kpis.total_staff || facultyWorkload.length || 0} faculty teaching load`,
-      action: () => setSelectedReportType('staff'),
-    },
-    {
-      label: 'Dept KPI Summary',
-      icon: 'insights',
-      description: 'Institutional performance overview',
-      action: () => setSelectedReportType('department'),
-    },
-  ];
 
   const bottomNavItems = [
     { key: 'home', label: 'Home', icon: 'dashboard', screen: 'AdminDashboard' },
@@ -178,7 +111,7 @@ const ReportManagement = ({ navigation }) => {
           if (navigation && navigation.canGoBack()) navigation.goBack();
           else navigation?.navigate('AdminDashboard');
         }}
-        profileImage={profile?.avatar_url || user?.profile?.avatar_url}
+        profileImage={profile?.avatar_url || profile?.avatar || user?.profile?.avatar_url || user?.avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVXP3laCjvBlZEVugtzpX20kCifG87-9yGGVWnUCmaIhNtCcDdG9HmCKcyaSa4oTc-QPnHNb5RR_pO0Xd8oVLNtxyVdxbttBW5KjbrzMiMJD0HcqApHxFuVbC5_KEUHnW0qOr98kurfIJ2NAVvw464MLzvDAN8LdJTSZXSqkbDkysN8V9Lzled9wZvQVwVorYcKfLMT1do8whwEUyopOcVpVMNt3wTCpl8mQ00dAziqalPOmZQTqcZ'}
         onProfilePress={() => navigation?.navigate('AdminProfile')}
       />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -189,26 +122,6 @@ const ReportManagement = ({ navigation }) => {
             <Text style={styles.pageSubtitle}>Live database metrics, attendance shortage, and faculty teaching load.</Text>
           </View>
 
-          {/* Quick Actions */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Quick Generate</Text>
-            <View style={styles.quickGrid}>
-              {quickReports.map((qr, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickItem}
-                  activeOpacity={0.7}
-                  onPress={qr.action}
-                >
-                  <View style={styles.quickIconWrap}>
-                    <MaterialIcons name={qr.icon} size={24} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.quickLabel}>{qr.label}</Text>
-                  <Text style={styles.quickDesc}>{qr.description}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
 
           {/* Report Type Filter Chips */}
           <View style={styles.filterRow}>
@@ -279,7 +192,7 @@ const ReportManagement = ({ navigation }) => {
                   <MaterialIcons name="verified" size={32} color="#16a34a" />
                   <Text style={styles.successTitle}>Zero Attendance Shortages</Text>
                   <Text style={styles.successDesc}>
-                    All {kpis.total_students || 54} enrolled students currently satisfy the 75.0% minimum requirement across all registered courses.
+                    All {kpis.total_students || 0} enrolled students currently satisfy the 75.0% minimum requirement across all registered courses.
                   </Text>
                 </View>
               ) : (
@@ -418,7 +331,9 @@ const ReportManagement = ({ navigation }) => {
               <View style={styles.sectionHeader}>
                 <View>
                   <Text style={styles.sectionTitle}>Students & Cohort Management</Text>
-                  <Text style={styles.sectionSub}>54 Active Students across Section A & B</Text>
+                  <Text style={styles.sectionSub}>
+                    {kpis.total_students ? `${kpis.total_students} Active Students across Cohort` : 'Active Students across Cohort'}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={styles.actionPill}
@@ -477,92 +392,110 @@ const ReportManagement = ({ navigation }) => {
               <View style={styles.kpiRow}>
                 <View style={styles.kpiBox}>
                   <Text style={styles.kpiVal}>
-                    {kpis.today_attendance_percentage || kpis.overall_attendance_percentage || 94.4}%
+                    {todaySessions.length > 0
+                      ? `${Math.round(todaySessions.reduce((acc, s) => acc + ((s.present_count / (s.total_count || 1)) * 100), 0) / todaySessions.length)}%`
+                      : `${kpis.today_attendance_percentage || 0}%`}
                   </Text>
                   <Text style={styles.kpiLbl}>Today's Attendance</Text>
                 </View>
                 <View style={styles.kpiBox}>
                   <Text style={styles.kpiVal}>
-                    {(todaySessions.length > 0 ? todaySessions : defaultTodaySessions).filter(s => s.status === 'COMPLETED' || s.status === 'Marked' || (s.present_count > 0 && s.status !== 'ONGOING')).length} / {(todaySessions.length > 0 ? todaySessions : defaultTodaySessions).length}
+                    {todaySessions.length > 0
+                      ? `${todaySessions.filter(s => s.status === 'COMPLETED' || s.status === 'Marked' || (s.present_count > 0 && s.status !== 'ONGOING')).length} / ${todaySessions.length}`
+                      : '0'}
                   </Text>
                   <Text style={styles.kpiLbl}>Completed Periods</Text>
                 </View>
                 <View style={styles.kpiBox}>
                   <Text style={styles.kpiVal}>
-                    {kpis.total_students || 54}
+                    {kpis.total_students || 0}
                   </Text>
                   <Text style={styles.kpiLbl}>Enrolled Cohort</Text>
                 </View>
                 <View style={[styles.kpiBox, { backgroundColor: 'rgba(220,252,231,0.4)', borderColor: '#86efac' }]}>
                   <Text style={[styles.kpiVal, { color: '#16a34a' }]}>
-                    {Math.round((kpis.total_students || 54) * ((kpis.today_attendance_percentage || 94.4) / 100))}
+                    {todaySessions.length > 0
+                      ? Math.max(...todaySessions.map(s => s.present_count || 0))
+                      : Math.round((kpis.total_students || 0) * ((kpis.today_attendance_percentage || 0) / 100))}
                   </Text>
                   <Text style={[styles.kpiLbl, { color: '#16a34a' }]}>Present Today</Text>
                 </View>
               </View>
 
-              {/* Sessions Table / Cards */}
-              <View style={{ marginTop: 8, gap: 10 }}>
-                {(todaySessions.length > 0 ? todaySessions : defaultTodaySessions).map((session, idx) => {
-                  const pct = session.total_count > 0 ? Math.round((session.present_count / session.total_count) * 100) : 95;
-                  const isDone = session.status === 'COMPLETED' || session.status === 'Marked' || (session.present_count > 0 && session.status !== 'ONGOING' && session.status !== 'SCHEDULED');
-                  const isOngoing = session.status === 'ONGOING';
-                  return (
-                    <View
-                      key={idx}
-                      style={{
-                        padding: 12,
-                        borderRadius: 10,
-                        backgroundColor: Colors.surfaceContainerLow,
-                        borderWidth: 1,
-                        borderColor: isOngoing ? Colors.primary : 'rgba(195,197,215,0.2)',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 12,
-                      }}
-                    >
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Text style={{ ...Typography.labelMd, fontWeight: '700', color: Colors.onSurface }}>
-                            {session.course_code ? `${session.course_code} • ${session.course_name}` : (session.course || 'Classroom Session')}
-                          </Text>
-                          <View
-                            style={{
-                              paddingHorizontal: 8,
-                              paddingVertical: 2,
-                              borderRadius: 4,
-                              backgroundColor: isDone ? '#dcfce7' : isOngoing ? '#dbeafe' : '#f1f5f9',
-                            }}
-                          >
-                            <Text
+              {/* Sessions Table or Clean Empty State */}
+              {todaySessions.length === 0 ? (
+                <View style={[styles.emptyBox, { paddingVertical: 36, alignItems: 'center' }]}>
+                  <MaterialIcons name="event-busy" size={44} color={Colors.onSurfaceVariant} style={{ marginBottom: 10, opacity: 0.6 }} />
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.onSurface, marginBottom: 4 }}>
+                    No Attendance Sessions Recorded Today
+                  </Text>
+                  <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 420 }}>
+                    No classroom attendance sessions have been logged or submitted for today yet. When faculty members submit attendance periods, records will appear here in real time.
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ marginTop: 8, gap: 10 }}>
+                  {todaySessions.map((session, idx) => {
+                    const pct = session.total_count > 0 ? Math.round((session.present_count / session.total_count) * 100) : 0;
+                    const isDone = session.status === 'COMPLETED' || session.status === 'Marked' || (session.present_count > 0 && session.status !== 'ONGOING' && session.status !== 'SCHEDULED');
+                    const isOngoing = session.status === 'ONGOING';
+                    return (
+                      <View
+                        key={session.id || idx}
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          backgroundColor: Colors.surfaceContainerLow,
+                          borderWidth: 1,
+                          borderColor: isOngoing ? Colors.primary : 'rgba(195,197,215,0.2)',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                        }}
+                      >
+                        <View style={{ flex: 1, gap: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Text style={{ ...Typography.labelMd, fontWeight: '700', color: Colors.onSurface }}>
+                              {session.course_code ? `${session.course_code} • ${session.course_name}` : (session.course || 'Classroom Session')}
+                            </Text>
+                            <View
                               style={{
-                                fontSize: 10,
-                                fontWeight: '700',
-                                color: isDone ? '#166534' : isOngoing ? '#1d4ed8' : '#64748b',
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                                borderRadius: 4,
+                                backgroundColor: isDone ? '#dcfce7' : isOngoing ? '#dbeafe' : '#f1f5f9',
                               }}
                             >
-                              {isDone ? 'COMPLETED' : isOngoing ? 'IN PROGRESS' : 'SCHEDULED'}
-                            </Text>
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: '700',
+                                  color: isDone ? '#166534' : isOngoing ? '#1d4ed8' : '#64748b',
+                                }}
+                              >
+                                {isDone ? 'COMPLETED' : isOngoing ? 'IN PROGRESS' : 'SCHEDULED'}
+                              </Text>
+                            </View>
                           </View>
+                          <Text style={{ ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 12 }}>
+                            {session.staff_name || session.instructor || 'Faculty Member'} • {session.period || session.time || 'Period'} • {session.room || 'LH-302'}
+                          </Text>
                         </View>
-                        <Text style={{ ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 12 }}>
-                          {session.staff_name || session.instructor || 'Faculty Member'} • {session.period || session.time || 'Period'} • {session.room || 'LH-302'}
-                        </Text>
-                      </View>
 
-                      <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: pct >= 85 ? '#16a34a' : pct >= 75 ? Colors.primary : Colors.error }}>
-                          {session.present_count !== undefined && session.total_count !== undefined ? `${session.present_count}/${session.total_count} (${pct}%)` : `${pct}%`}
-                        </Text>
-                        <Text style={{ fontSize: 11, color: Colors.onSurfaceVariant }}>
-                          Attendance
-                        </Text>
+                        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: pct >= 85 ? '#16a34a' : pct >= 75 ? Colors.primary : Colors.error }}>
+                            {session.present_count !== undefined && session.total_count !== undefined ? `${session.present_count}/${session.total_count} (${pct}%)` : `${pct}%`}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: Colors.onSurfaceVariant }}>
+                            Attendance
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  );
-                })}
-              </View>
+                    );
+                  })}
+                </View>
+              )}
 
               {/* Action Banner to View Full History */}
               <View style={styles.studentActionBox}>
@@ -645,17 +578,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { ...Typography.headlineSm, color: Colors.onSurface },
   sectionSub: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: 2 },
-  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  quickItem: {
-    flex: 1, minWidth: 200, backgroundColor: Colors.surfaceContainerLow, borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: 'rgba(195,197,215,0.2)', gap: 8,
-  },
-  quickIconWrap: {
-    width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0,63,177,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  quickLabel: { ...Typography.labelMd, color: Colors.onSurface, fontWeight: '600' },
-  quickDesc: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 12 },
+
   filterRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   filterChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
