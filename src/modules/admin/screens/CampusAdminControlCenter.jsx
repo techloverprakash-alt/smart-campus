@@ -7,7 +7,7 @@ import {
   Eye, FileText, Filter, HelpCircle, Layers, LayoutDashboard, MapPin,
   Megaphone, RefreshCw, Search, Send, Shield, ShieldAlert, ShieldCheck,
   SlidersHorizontal, Sparkles, TrendingUp, UserCheck, Users, Wrench, X,
-  Radio
+  Radio, ArrowRight
 } from 'lucide-react';
 
 const CATEGORY_ROWS = [
@@ -123,10 +123,8 @@ export default function CampusAdminControlCenter() {
 
   // SVG Donut calculation
   const circumference = 2 * Math.PI * 38;
-  let runningOffset = 0;
-
   return (
-    <div className="min-h-screen bg-slate-50/90 font-sans text-slate-800 antialiased pb-20">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden bg-slate-50/90 font-sans text-slate-800 antialiased pb-20" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-blue-200 bg-slate-900 px-5 py-3 text-xs font-semibold text-white shadow-2xl animate-fade-in">
@@ -487,24 +485,27 @@ export default function CampusAdminControlCenter() {
               <div className="relative h-40 w-40 shrink-0 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90 transform">
                   <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" strokeWidth="14" />
-                  {STATUSES.map((s) => {
-                    const len = (circumference * s.percent) / 100;
-                    const offset = runningOffset;
-                    runningOffset += len;
-                    return (
-                      <circle
-                        key={s.label}
-                        cx="50"
-                        cy="50"
-                        r="38"
-                        fill="none"
-                        stroke={s.color}
-                        strokeWidth="14"
-                        strokeDasharray={`${len} ${circumference - len}`}
-                        strokeDashoffset={-offset}
-                      />
-                    );
-                  })}
+                  {(() => {
+                    let donutOffset = 0;
+                    return STATUSES.map((s) => {
+                      const len = (circumference * s.percent) / 100;
+                      const offset = donutOffset;
+                      donutOffset += len;
+                      return (
+                        <circle
+                          key={s.label}
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          fill="none"
+                          stroke={s.color}
+                          strokeWidth="14"
+                          strokeDasharray={`${len} ${circumference - len}`}
+                          strokeDashoffset={-offset}
+                        />
+                      );
+                    });
+                  })()}
                 </svg>
                 <div className="absolute flex flex-col items-center text-center pointer-events-none">
                   <strong className="text-2xl font-black text-slate-900 leading-none">1,248</strong>

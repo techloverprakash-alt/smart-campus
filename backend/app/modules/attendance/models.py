@@ -13,6 +13,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+import app.modules.academic.models as _academic_models
+import app.modules.auth.models as _auth_models
 
 
 # =============================================================================

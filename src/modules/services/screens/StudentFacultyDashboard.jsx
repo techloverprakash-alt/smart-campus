@@ -282,6 +282,7 @@ export default function StudentFacultyDashboard(props) {
 
   // Admin access is granted ONLY if explicitly coming from admin or having ADMIN role, and not explicitly navigating as student/staff
   const isAdmin = isFromAdmin && !isFromStudentOrStaff && !isServices;
+  const isStudentOrStaff = !isAdmin && !isServices;
   const roleDisplay = isAdmin
     ? 'Admin'
     : isServices
@@ -293,12 +294,13 @@ export default function StudentFacultyDashboard(props) {
 
   const [activeNav, setActiveNav] = useState(
     (initialTab === 'Campus Admin Control Center' && !isAdmin) ||
-      (isServices && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification'))
+      (isServices && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification')) ||
+      (isStudentOrStaff && initialTab === 'Field Operations & Work Orders')
       ? 'Overview / Dashboard'
       : initialTab
   );
 
-  // Automatically switch away from Admin Center if not authorized, or from Lost & Found in services
+  // Automatically switch away from Admin Center if not authorized, from Lost & Found in services, or from Field Operations in student/staff
   useEffect(() => {
     if (!isAdmin && activeNav === 'Campus Admin Control Center') {
       setActiveNav('Overview / Dashboard');
@@ -306,9 +308,12 @@ export default function StudentFacultyDashboard(props) {
     if (isServices && (activeNav === 'Lost & Found Claims' || activeNav === 'Match Suggestions & Verification')) {
       setActiveNav('Overview / Dashboard');
     }
-  }, [isAdmin, isServices, activeNav]);
+    if (isStudentOrStaff && activeNav === 'Field Operations & Work Orders') {
+      setActiveNav('Overview / Dashboard');
+    }
+  }, [isAdmin, isServices, isStudentOrStaff, activeNav]);
 
-  // Filter out Admin Center navigation link for students and staff, and Lost & Found / Match & AI Triage for services
+  // Filter out Admin Center for students and staff, Lost & Found / Match & AI Triage for services, and Field Operations for student & staff
   const filteredNavLinks = useMemo(() => {
     return navGroups[0].links.filter((link) => {
       if (link.id === 'Campus Admin Control Center' && !isAdmin) {
@@ -317,9 +322,12 @@ export default function StudentFacultyDashboard(props) {
       if (isServices && (link.id === 'Lost & Found Claims' || link.id === 'Match Suggestions & Verification')) {
         return false;
       }
+      if (isStudentOrStaff && link.id === 'Field Operations & Work Orders') {
+        return false;
+      }
       return true;
     });
-  }, [isAdmin, isServices]);
+  }, [isAdmin, isServices, isStudentOrStaff]);
 
   const [ticketTab, setTicketTab] = useState('All');
   const [modal, setModal] = useState(null);
@@ -411,6 +419,10 @@ export default function StudentFacultyDashboard(props) {
       return;
     }
     if (isServices && (label === 'Lost & Found Claims' || label === 'Match Suggestions & Verification')) {
+      setActiveNav('Overview / Dashboard');
+      return;
+    }
+    if (isStudentOrStaff && label === 'Field Operations & Work Orders') {
       setActiveNav('Overview / Dashboard');
       return;
     }
@@ -616,7 +628,7 @@ export default function StudentFacultyDashboard(props) {
           )}
 
           {/* TAB 1.7: FIELD OPERATIONS & WORK ORDERS CONSOLE */}
-          {activeNav === 'Field Operations & Work Orders' && (
+          {activeNav === 'Field Operations & Work Orders' && !isStudentOrStaff && (
             <FieldOperationsConsole
               onBack={() => setActiveNav('Overview / Dashboard')}
               onOpenReportIssue={() => setActiveNav('Report Infrastructure Issue')}

@@ -234,7 +234,7 @@ export default function AdminEditProfile({ navigation }) {
                   />
 
                   <Text style={styles.adminBadgeText}>
-                    {profile?.id ? `ADM-${profile.id.slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
+                    {profile?.id ? `ADM-${String(profile.id).slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
                   </Text>
                 </View>
 
@@ -315,7 +315,7 @@ export default function AdminEditProfile({ navigation }) {
                   <View style={styles.disabledInputContainer}>
 
                     <TextInput
-                      value={profile?.id ? `ADM-${profile.id.slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
+                      value={profile?.id ? `ADM-${String(profile.id).slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
                       editable={false}
                       style={styles.disabledInput}
                     />
