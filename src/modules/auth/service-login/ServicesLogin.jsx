@@ -17,8 +17,8 @@ const ServicesLogin = ({ navigation }) => {
     setError('');
     setLoading(true);
     setTimeout(() => {
-      const role = demoRole || (identifier.toLowerCase().includes('fac') ? 'STAFF' : 'STUDENT');
-      const name = role === 'STAFF' ? 'Prof. M. Selvam' : 'Prakash S';
+      const role = demoRole || 'SERVICES';
+      const name = role === 'STAFF' ? 'Prof. M. Selvam' : (role === 'STUDENT' ? 'Prakash S' : 'Er. Rajesh Kumar');
       signIn({
         access_token: 'mock-services-token',
         refresh_token: 'mock-refresh-services',
@@ -26,18 +26,23 @@ const ServicesLogin = ({ navigation }) => {
           id: 101,
           name,
           role,
-          identifier: identifier.trim() || (role === 'STAFF' ? 'FAC-AIDS-018' : 'CS-2023-8841'),
+          identifier: identifier.trim() || (role === 'STAFF' ? 'FAC-AIDS-018' : (role === 'STUDENT' ? 'CS-2023-8841' : 'SVC-FAC-042')),
         },
         profile: {
           full_name: name,
-          designation: role === 'STAFF' ? 'Assistant Professor (Sr. Gr.)' : 'Student',
-          department: { name: 'Dept. of AI & DS' },
+          designation: role === 'STAFF' ? 'Assistant Professor (Sr. Gr.)' : (role === 'STUDENT' ? 'Student' : 'Campus Facilities & Operations Lead'),
+          department: { name: 'Campus Services & Facilities Desk' },
         },
       });
       setLoading(false);
-      navigation.navigate('StudentFacultyPortal');
+      if (demoRole === 'STUDENT' || demoRole === 'STAFF') {
+        navigation.navigate('StudentFacultyPortal');
+      } else {
+        navigation.navigate('CampusServiceDashboard');
+      }
     }, 400);
   };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -165,6 +170,15 @@ const ServicesLogin = ({ navigation }) => {
             <View style={styles.demoSection}>
               <Text style={styles.demoHeading}>Instant Demo Sign-in:</Text>
               <View style={styles.demoButtonsRow}>
+                <TouchableOpacity
+                  style={styles.demoBtn}
+                  onPress={() => handleLogin('SERVICES')}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="support-agent" size={16} color="#003fb1" />
+                  <Text style={styles.demoBtnText}>Services Desk</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.demoBtn}
                   onPress={() => handleLogin('STUDENT')}

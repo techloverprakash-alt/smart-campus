@@ -18,7 +18,7 @@ import {
   MentorProctorAllocationScreen, EnrollStudent, EnrollmentSuccess, AdminProfile, AdminEditProfile,
   AdminLostFoundManagement,
 } from '../../modules/admin';
-import { StudentFacultyDashboard } from '../../modules/services';
+import { StudentFacultyDashboard, CampusServiceDashboard } from '../../modules/services';
 
 /**
  * One entry per screen. `role` drives the access guard + sidebar in <Shell>;
@@ -33,6 +33,7 @@ export const ROUTES = [
   { name: 'StaffLogin', path: '/login/staff', component: StaffLogin },
   { name: 'AdminLogin', path: '/login/admin', component: AdminLogin },
   { name: 'ServicesLogin', path: '/login/services', component: ServicesLogin },
+  { name: 'CampusServiceDashboard', path: '/services/dashboard', component: CampusServiceDashboard },
   { name: 'StudentFacultyPortal', path: '/services', component: StudentFacultyDashboard },
   {
     name: 'LostAndFound',

@@ -40,8 +40,8 @@ const LoginPage = ({ navigation }) => {
 
   const handleQuickInspect = () => {
     if (selectedRole === 'services') {
-      loginAs('STAFF');
-      navigation.navigate('StudentFacultyPortal');
+      loginAs('SERVICES');
+      navigation.navigate('CampusServiceDashboard');
       return;
     }
     const roleKey = selectedRole.toUpperCase();
