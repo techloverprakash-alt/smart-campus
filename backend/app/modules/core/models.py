@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -36,7 +36,7 @@ class Media(Base):
     file_path = Column(String(512), nullable=False)
     file_url = Column(String(512), nullable=False)
     media_type = Column(String(64), default="image/jpeg")
-    uploaded_by = Column(String(64), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     uploader = relationship("User", foreign_keys=[uploaded_by])

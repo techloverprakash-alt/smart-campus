@@ -150,7 +150,7 @@ export default function CampusAdminControlCenter() {
               </span>
             </div>
             <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400">
-              Suguna College of Engineering
+              Info Institute of Engineering
             </p>
           </div>
         </div>
@@ -710,7 +710,7 @@ export default function CampusAdminControlCenter() {
 
         {/* Footer */}
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5 text-xs text-slate-400">
-          <div>© 2026 NEXUS • Suguna College of Engineering</div>
+          <div>© 2026 NEXUS • Info Institute of Engineering</div>
           <div>Campus operations dashboard • {range}</div>
         </footer>
       </main>

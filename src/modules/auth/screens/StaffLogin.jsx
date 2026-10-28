@@ -69,7 +69,7 @@ const StaffLogin = ({ navigation }) => {
           {/* Brand Header */}
           <View style={styles.logoHeader}>
             <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlZjm4-4-zZtv9Nk2s62FpHayFCQeaQVoAk6bJB658Dwhl_3I0jPbW1SIfwd0cu4I5He7Wl_6sPSjE3J7BLlCwlpg9rvqGECQxJlUf247NQY44YTb_CNTmnTsNCs4uxk4Z214N2LLg_n8SdVk2IYURZ-h9tqntGuUG93vvDjI0rj_7pY33kvUARNYq7sTgB387TFcnkmdSwmDWMWSZbm-rBhajjZRsfFy4K8TMXYtNFY8mqq27tAbtC_USNF1_RPXa6A' }}
+              source={{ uri: '/info_logo.png' }}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -164,33 +164,6 @@ const StaffLogin = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
-
-            {/* Quick Demo Credentials Row */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-              <Text style={{ fontSize: 11, color: Colors.onSurfaceVariant, fontWeight: '500' }}>Demo fill:</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setStaffId('FAC101');
-                  setPassword('Staff@123');
-                  setError('');
-                }}
-                style={{ backgroundColor: '#eef2ff', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: '#dbe1ff' }}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#003fb1' }}>FAC101</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setStaffId('FAC102');
-                  setPassword('Staff@123');
-                  setError('');
-                }}
-                style={{ backgroundColor: '#eef2ff', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: '#dbe1ff' }}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#003fb1' }}>FAC102</Text>
-              </TouchableOpacity>
-            </View>
 
             {/* Quick Access to Common Hub */}
             <TouchableOpacity
