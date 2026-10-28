@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.access.permissions import get_current_user, require_role
@@ -64,6 +64,33 @@ def get_material_by_id(
 ):
     service = MaterialService(db)
     return service.get_material_by_id(material_id)
+
+
+@materials_router.post(
+    "/upload",
+    response_model=StudyMaterialResponse,
+    summary="Staff / Admin: Upload physical study material document (PDF / DOCX)"
+)
+def upload_material_file(
+    file: UploadFile = File(..., description="Document file to upload (PDF, DOCX)"),
+    title: Optional[str] = Form(None),
+    course_offering_id: Optional[int] = Form(None),
+    subject_code: Optional[str] = Form(None),
+    unit_number: Optional[int] = Form(1),
+    academic_year: Optional[str] = Form(None),
+    current_user: User = Depends(require_role(["ADMIN", "STAFF"])),
+    db: Session = Depends(get_db),
+):
+    service = MaterialService(db)
+    return service.upload_material_file(
+        current_user=current_user,
+        file=file,
+        title=title,
+        course_offering_id=course_offering_id,
+        subject_code=subject_code,
+        unit_number=unit_number,
+        academic_year=academic_year,
+    )
 
 
 @materials_router.post(

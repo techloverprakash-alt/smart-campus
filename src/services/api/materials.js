@@ -15,9 +15,20 @@ export const getMaterials = (params = {}) => api.get('/materials', params);
 export const getMaterialById = (id) => api.get(`/materials/${id}`);
 
 /**
- * Staff: upload study material metadata (file upload handled separately).
+ * Staff: upload study material document or metadata.
+ * If body is FormData (with physical document file), posts to /materials/upload.
  */
-export const uploadMaterial = (body) => api.post('/materials', body);
+export const uploadMaterial = (body) => {
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    return api.upload('/materials/upload', body);
+  }
+  return api.post('/materials', body);
+};
+
+/**
+ * Staff: upload physical file with FormData.
+ */
+export const uploadMaterialFile = (formData) => api.upload('/materials/upload', formData);
 
 /**
  * Staff/Admin: update material metadata.

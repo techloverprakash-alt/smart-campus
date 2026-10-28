@@ -1,7 +1,9 @@
 import datetime
 import logging
+import os
+import uuid
 from typing import Any, Dict, List, Optional
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.modules.academic.models import Department, MediaAttachment, Section
@@ -144,6 +146,95 @@ class MaterialService:
             "unit": f"Unit {m.unit_number}" if m.unit_number else "Notes",
             "reads": "1.4k reads",
         }
+
+    def upload_material_file(
+        self,
+        current_user: User,
+        file: UploadFile,
+        title: Optional[str] = None,
+        course_offering_id: Optional[int] = None,
+        subject_code: Optional[str] = None,
+        unit_number: Optional[int] = 1,
+        academic_year: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Saves the physical document file to disk, creates a media_attachment,
+        and links it to a new StudyMaterial record.
+        """
+        if hasattr(file, "file") and hasattr(file.file, "read"):
+            content = file.file.read()
+        elif hasattr(file, "read") and callable(file.read):
+            content = file.read()
+        else:
+            content = b""
+        file_size = len(content)
+
+        unique_name = f"{uuid.uuid4().hex}_{file.filename or 'document.pdf'}"
+        from app.infrastructure.storage import UPLOAD_DIR
+        destination = UPLOAD_DIR / unique_name
+        with open(destination, "wb") as f_out:
+            f_out.write(content)
+
+        file_url = f"/static/uploads/{unique_name}"
+
+        # 1. Create MediaAttachment in Table 15
+        media = MediaAttachment(
+            storage_key=file_url,
+            original_filename=file.filename or "Document.pdf",
+            mime_type=file.content_type or "application/pdf",
+            file_size=file_size,
+            uploaded_by=current_user.id,
+            created_at=datetime.datetime.utcnow(),
+        )
+        self.db.add(media)
+        self.db.flush()
+
+        # 2. Resolve Course Offering
+        offering = None
+        if course_offering_id:
+            offering = self.db.query(CourseOffering).filter_by(id=course_offering_id).first()
+
+        if not offering and subject_code:
+            clean_code = subject_code.split(" ")[0].strip()
+            sub = self.db.query(Subject).filter(Subject.code.ilike(f"%{clean_code}%")).first()
+            if sub:
+                offering = self.db.query(CourseOffering).filter_by(subject_id=sub.id).first()
+                if not offering:
+                    offering = CourseOffering(
+                        subject_id=sub.id,
+                        academic_year=academic_year or "2024-2025",
+                        semester=sub.semester or 5,
+                    )
+                    self.db.add(offering)
+                    self.db.flush()
+
+        if not offering:
+            offering = self.db.query(CourseOffering).first()
+
+        if not offering:
+            sub = self.db.query(Subject).first()
+            if not sub:
+                sub = Subject(code="GEN101", title="General Engineering", semester=1)
+                self.db.add(sub)
+                self.db.flush()
+            offering = CourseOffering(subject_id=sub.id, academic_year="2024-2025", semester=1)
+            self.db.add(offering)
+            self.db.flush()
+
+        # 3. Create StudyMaterial in Table 21
+        clean_title = title or (file.filename.rsplit(".", 1)[0] if file.filename else "Curriculum Document")
+        material = StudyMaterial(
+            course_offering_id=offering.id,
+            title=clean_title,
+            unit_number=unit_number or 1,
+            file_id=media.id,
+            uploaded_by=current_user.id,
+            published_at=datetime.datetime.utcnow(),
+        )
+        self.db.add(material)
+        self.db.commit()
+        self.db.refresh(material)
+        return self.get_material_by_id(material.id)
 
     def create_material(self, current_user: User, data: StudyMaterialCreate) -> Dict[str, Any]:
         off = self.db.query(CourseOffering).filter_by(id=data.course_offering_id).first()
