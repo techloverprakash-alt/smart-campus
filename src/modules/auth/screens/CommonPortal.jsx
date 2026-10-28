@@ -945,7 +945,6 @@ function PortalScreen({ navigation }) {
         {/* Campus Facility / Slide Caption Highlight Pill */}
         <div className="campus-hero-slide-info" key={`caption-${currentSlide}`}>
           <div className="campus-slide-info-pill">
-            <MaterialIcons name="location-on" size={15} color="#00f0b5" />
             <span className="campus-slide-info-title">{CAMPUS_SLIDES[currentSlide].title}</span>
             <span className="campus-slide-info-divider">•</span>
             <span className="campus-slide-info-counter">
@@ -993,7 +992,7 @@ function PortalScreen({ navigation }) {
           >
             <MaterialIcons
               name={isPaused ? "play-arrow" : "pause"}
-              size={16}
+              size={11}
               color="#ffffff"
             />
           </button>
