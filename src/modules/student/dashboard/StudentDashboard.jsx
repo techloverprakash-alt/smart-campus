@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getStudentAttendanceSummary } from '../../../services/api/attendance';
+import { getAnnouncements } from '../../../services/api/announcements';
 import { useAuth } from '../../auth/context/AuthContext';
 import {
   SafeAreaView,
@@ -472,8 +473,9 @@ export default function StudentDashboard({ navigation }) {
   const { user, profile } = useAuth();
   const [activeModal, setActiveModal] = useState(null);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
+  const [liveCirculars, setLiveCirculars] = useState([]);
 
-  // Fetch live attendance summary on mount
+  // Fetch live attendance summary and announcements on mount
   useEffect(() => {
     let isMounted = true;
     getStudentAttendanceSummary()
@@ -483,6 +485,19 @@ export default function StudentDashboard({ navigation }) {
       .catch((err) => {
         console.error("Failed to fetch student attendance summary:", err);
       });
+
+    getAnnouncements({ limit: 10 })
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        if (list && list.length > 0) {
+          setLiveCirculars(list);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch live announcements:", err);
+      });
+
     return () => {
       isMounted = false;
     };
@@ -636,13 +651,15 @@ export default function StudentDashboard({ navigation }) {
               style={{ maxHeight: '70vh' }}
               contentContainerStyle={{ padding: 16, gap: 12 }}
             >
-              {circularsData.map((c, i) => (
-                <View key={i} style={styles.circularItem}>
+              {(liveCirculars.length > 0 ? liveCirculars : circularsData).map((c, i) => (
+                <View key={c.id ? `db-${c.id}` : i} style={styles.circularItem}>
                   <View style={styles.circularTop}>
                     <View style={styles.circularTag}>
-                      <Text style={styles.circularTagText}>{c.tag}</Text>
+                      <Text style={styles.circularTagText}>{c.tag || "NOTICE"}</Text>
                     </View>
-                    <Text style={styles.circularDate}>{c.date}</Text>
+                    <Text style={styles.circularDate}>
+                      {c.date || (c.published_at ? new Date(c.published_at).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "")}
+                    </Text>
                   </View>
                   <Text style={styles.circularTitle}>{c.title}</Text>
                   <Text style={styles.circularBody}>{c.body}</Text>
