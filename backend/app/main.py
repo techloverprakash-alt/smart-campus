@@ -11,6 +11,8 @@ from app.modules.lost_and_found.router import router as lost_and_found_router
 from app.modules.auth.router import auth_router, profile_router
 from app.modules.attendance.router import attendance_router, timetable_router
 from app.modules.materials.router import materials_router, announcements_router
+from app.modules.reports.router import reports_router
+from app.modules.complaints.router import control_center_router
 from app.modules.academic.seeder import seed_academic_csvs
 from app.modules.materials.seeder import seed_materials_and_announcements
 from app.modules.lost_and_found.seeder import seed_lost_and_found_csvs
@@ -153,6 +155,10 @@ app.include_router(materials_router, prefix="/api/v1", tags=["Study Materials (v
 app.include_router(materials_router, prefix="/api", tags=["Study Materials"])
 app.include_router(announcements_router, prefix="/api/v1", tags=["Announcements (v1)"])
 app.include_router(announcements_router, prefix="/api", tags=["Announcements"])
+app.include_router(reports_router, prefix="/api/v1/reports", tags=["Institutional Reports (v1)"])
+app.include_router(reports_router, prefix="/api/reports", tags=["Institutional Reports"])
+app.include_router(control_center_router, prefix="/api/v1/admin/control-center", tags=["Admin Control Center (v1)"])
+app.include_router(control_center_router, prefix="/api/admin/control-center", tags=["Admin Control Center"])
 app.include_router(engine_router)
 app.include_router(embeddings_router)
 app.include_router(matching_router)

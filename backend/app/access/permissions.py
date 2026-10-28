@@ -29,32 +29,35 @@ def get_current_user(
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:].strip()
 
-        # 1. Attempt standard JWT decoding
-        try:
-            payload = jwt.decode(
-                token,
-                settings.jwt_secret,
-                algorithms=[settings.jwt_algorithm],
-            )
-            sub = payload.get("sub")
-            if sub:
-                user = db.query(User).filter(User.id == int(sub)).first()
-                if user and not user.is_active:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="User account has been deactivated.",
-                    )
-                if user:
-                    return user
-        except jwt.PyJWTError:
-            # Fallback for dev / mock tokens (e.g. 'mock-access-admin', 'mock-access-staff')
-            token_lower = token.lower()
-            if "admin" in token_lower:
-                user = db.query(User).filter(User.identifier == "ADM001").first()
-            elif "staff" in token_lower or "fac" in token_lower:
-                user = db.query(User).filter(User.identifier == "FAC101").first()
-            elif "student" in token_lower or "stu" in token_lower:
-                user = db.query(User).filter(User.identifier == "STU2025001").first()
+        # 1. Attempt standard JWT decoding if token is formatted as a JWT (header.payload.signature)
+        if token.count(".") == 2:
+            try:
+                payload = jwt.decode(
+                    token,
+                    settings.jwt_secret,
+                    algorithms=[settings.jwt_algorithm],
+                )
+                sub = payload.get("sub")
+                if sub:
+                    user = db.query(User).filter(User.id == int(sub)).first()
+                    if user and not user.is_active:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="User account has been deactivated.",
+                        )
+                    if user:
+                        return user
+            except jwt.PyJWTError:
+                pass
+
+        # Fallback for dev / mock tokens (e.g. 'mock-access-admin', 'mock-access-staff', 'mock-access-student')
+        token_lower = token.lower()
+        if "admin" in token_lower:
+            user = db.query(User).filter(User.identifier == "ADM001").first()
+        elif "staff" in token_lower or "fac" in token_lower:
+            user = db.query(User).filter(User.identifier == "FAC101").first()
+        elif "student" in token_lower or "stu" in token_lower:
+            user = db.query(User).filter(User.identifier == "STU2025001").first()
 
     # 2. Support explicit test headers (useful for automated test harnesses)
     if not user and x_user_id:

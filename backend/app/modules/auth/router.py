@@ -1,6 +1,8 @@
+import csv
+import io
 import logging
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
@@ -171,6 +173,70 @@ def get_student_template():
     )
 
 
+@profile_router.post("/students/parse-file", summary="Admin: Parse uploaded student file")
+async def parse_student_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role(["ADMIN"])),
+):
+    content = await file.read()
+    text = content.decode("utf-8", errors="ignore")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = []
+    for idx, r in enumerate(reader, start=1):
+        clean_row = {k.strip(): (v.strip() if v else "") for k, v in r.items() if k}
+        rows.append({"row_number": idx, "data": clean_row, "status": "VALID"})
+    return {"valid": True, "total_rows": len(rows), "rows": rows}
+
+
+@profile_router.post("/students/upload", summary="Admin: Upload student CSV roster and enroll")
+async def upload_student_roster(
+    file: UploadFile = File(...),
+    default_department_code: Optional[str] = Form(None),
+    default_batch_name: Optional[str] = Form(None),
+    default_section_name: Optional[str] = Form(None),
+    conflict_strategy: Optional[str] = Form("skip"),
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+    text = content.decode("utf-8", errors="ignore")
+    reader = csv.DictReader(io.StringIO(text))
+    service = AuthService(db)
+
+    student_items = []
+    for r in reader:
+        reg = r.get("register_number") or r.get("Register Number") or r.get("reg_no")
+        name = r.get("full_name") or r.get("Name") or r.get("name")
+        email = r.get("email") or r.get("Email")
+        phone = r.get("phone") or r.get("Phone")
+        roll = r.get("roll_number") or r.get("Roll Number") or (reg[-7:] if reg else "")
+        cgpa_str = r.get("cgpa") or r.get("CGPA") or "8.0"
+        try:
+            cgpa = float(cgpa_str)
+        except Exception:
+            cgpa = 8.0
+
+        if reg and name:
+            student_items.append({
+                "register_number": reg.strip(),
+                "full_name": name.strip(),
+                "email": email.strip() if email else None,
+                "phone": phone.strip() if phone else None,
+                "roll_number": roll.strip() if roll else None,
+                "cgpa": cgpa,
+            })
+
+    from app.modules.auth.schemas import BulkStudentEnrollRequest, BulkStudentItem
+    bulk_req = BulkStudentEnrollRequest(
+        department_name=default_department_code or "CSE",
+        section_name=default_section_name or "Section A",
+        students=[BulkStudentItem(**s) for s in student_items]
+    )
+    result = service.bulk_enroll_students(bulk_req)
+    return {"data": result, **result}
+
+
+
 # =============================================================================
 # Admin Staff Onboarding Endpoints
 # =============================================================================
@@ -206,6 +272,50 @@ def get_staff_template():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=staff_onboarding_template.csv"},
     )
+
+
+@profile_router.post("/staff/upload", summary="Admin: Upload staff CSV roster and enroll")
+async def upload_staff_roster(
+    file: UploadFile = File(...),
+    default_department_code: Optional[str] = Form(None),
+    conflict_strategy: Optional[str] = Form("skip"),
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+    text = content.decode("utf-8", errors="ignore")
+    reader = csv.DictReader(io.StringIO(text))
+    service = AuthService(db)
+    results = []
+    success_count = 0
+    for r in reader:
+        fac_id = r.get("faculty_id") or r.get("Faculty ID")
+        name = r.get("full_name") or r.get("Name") or r.get("name")
+        email = r.get("email") or r.get("Email")
+        dept = r.get("department_name") or default_department_code or "Computer Science and Engineering"
+        desig = r.get("designation") or "Assistant Professor"
+        cabin = r.get("cabin_number") or "Cabin 101"
+        phone = r.get("phone")
+        if fac_id and name:
+            from app.modules.auth.schemas import StaffEnrollRequest
+            req = StaffEnrollRequest(
+                faculty_id=fac_id.strip(),
+                full_name=name.strip(),
+                email=email.strip() if email else None,
+                phone=phone.strip() if phone else None,
+                department_name=dept.strip(),
+                designation=desig.strip(),
+                cabin_number=cabin.strip(),
+                mentor_capacity=15
+            )
+            try:
+                res = service.enroll_staff_member(req)
+                results.append(res)
+                success_count += 1
+            except Exception as e:
+                results.append({"faculty_id": fac_id, "status": "error", "error": str(e)})
+    return {"success": True, "enrolled_count": success_count, "results": results}
+
 
 
 # =============================================================================
