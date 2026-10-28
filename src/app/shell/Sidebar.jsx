@@ -27,8 +27,6 @@ const NAV = {
     { label: 'Control Center', icon: 'admin-panel-settings', screen: 'CampusAdminControlCenter' },
     { label: 'Reports', icon: 'assessment', screen: 'ReportManagement' },
     { label: 'Timetable', icon: 'schedule', screen: 'AdminTimetable' },
-    { label: 'Enroll student', icon: 'person-add', screen: 'EnrollStudent', also: ['EnrollmentSuccess'] },
-    { label: 'Staff onboarding', icon: 'badge', screen: 'AdminStaffOnboarding', also: ['AddStaff'] },
     { label: 'Mentor / Proctor', icon: 'supervisor-account', screen: 'MentorProctorAllocation', also: ['AssignStudent'] },
     { label: 'Profile', icon: 'person', screen: 'AdminProfile', also: ['AdminEditProfile'] },
   ],
