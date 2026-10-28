@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   SafeAreaView,
   View,
@@ -698,66 +698,123 @@ const CAMPUS_SLIDES = [
     image: "/assets/campus/info_campus_main.jpg",
     title: "Main Academic Campus Block",
     subtitle: "State-of-the-art engineering blocks & research facilities",
+    focalDesktop: "center 18%",
+    focalMobile: "center 14%",
   },
   {
     image: "/assets/campus/college.jpg",
-    title: "Campus Front Promenade",
+    title: "Campus Front Promenade & Lawns",
     subtitle: "Lush green modern university campus",
+    focalDesktop: "center 28%",
+    focalMobile: "center 22%",
   },
   {
     image: "/assets/campus/info_campus_library.jpg",
-    title: "Central Digital Library",
+    title: "Central Digital Library & Academic Wing",
     subtitle: "High-tech learning center with expansive digital repositories",
+    focalDesktop: "center 24%",
+    focalMobile: "center 20%",
   },
   {
     image: "/assets/campus/main_campus.jpg",
-    title: "Main Academic Complex",
+    title: "Main Campus Entrance & Portal",
     subtitle: "Advanced learning halls and seminar theaters",
-  },
-  {
-    image: "/assets/campus/info_campus_labs.jpg",
-    title: "Advanced AI & Robotics Labs",
-    subtitle: "Modern laboratories with industry-standard testbeds",
+    focalDesktop: "center 22%",
+    focalMobile: "center 18%",
   },
   {
     image: "/assets/campus/top_view.jpg",
-    title: "Campus Panorama",
+    title: "Campus Aerial Panorama",
     subtitle: "Eco-friendly campus sprawling across world-class infrastructure",
+    focalDesktop: "center 30%",
+    focalMobile: "center 25%",
+  },
+  {
+    image: "/assets/campus/ground.jpg",
+    title: "Athletic Grounds & Open Arena",
+    subtitle: "Expansive university sports facilities and recreation courts",
+    focalDesktop: "center 40%",
+    focalMobile: "center 35%",
   },
 ];
 
 function PortalScreen({ navigation }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [prevSlideIndex, setPrevSlideIndex] = useState(null);
+  const [direction, setDirection] = useState("next"); // 'next' | 'prev'
   const [isPaused, setIsPaused] = useState(false);
+  const [isHoveringControls, setIsHoveringControls] = useState(false);
+  const touchStartX = useRef(null);
 
-  // Auto slide transitions every 5.5s
+  // Transition handler
+  const goToSlide = useCallback((newIndex, dir = null) => {
+    if (newIndex === currentSlide) return;
+    const computedDir = dir || (newIndex > currentSlide ? "next" : "prev");
+    setDirection(computedDir);
+    setPrevSlideIndex(currentSlide);
+    setCurrentSlide(newIndex);
+  }, [currentSlide]);
+
+  const prevSlide = useCallback(() => {
+    const prevIdx = currentSlide === 0 ? CAMPUS_SLIDES.length - 1 : currentSlide - 1;
+    goToSlide(prevIdx, "prev");
+  }, [currentSlide, goToSlide]);
+
+  const nextSlide = useCallback(() => {
+    const nextIdx = (currentSlide + 1) % CAMPUS_SLIDES.length;
+    goToSlide(nextIdx, "next");
+  }, [currentSlide, goToSlide]);
+
+  // Clean up exit class after animation completes
   useEffect(() => {
-    if (isPaused) return;
+    if (prevSlideIndex !== null) {
+      const timer = setTimeout(() => {
+        setPrevSlideIndex(null);
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [prevSlideIndex]);
+
+  // Auto slide transitions every 5.5s (only pauses when user explicitly pauses or hovers interactive controls)
+  useEffect(() => {
+    if (isPaused || isHoveringControls) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % CAMPUS_SLIDES.length);
+      nextSlide();
     }, 5500);
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, isHoveringControls, nextSlide]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "ArrowLeft") {
-        setCurrentSlide((prev) => (prev === 0 ? CAMPUS_SLIDES.length - 1 : prev - 1));
+        prevSlide();
       } else if (e.key === "ArrowRight") {
-        setCurrentSlide((prev) => (prev + 1) % CAMPUS_SLIDES.length);
+        nextSlide();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [prevSlide, nextSlide]);
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? CAMPUS_SLIDES.length - 1 : prev - 1));
+  // Touch swipe support for mobile/tablets
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchStartX.current = e.touches[0].clientX;
+    }
   };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % CAMPUS_SLIDES.length);
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      const diff = touchStartX.current - e.changedTouches[0].clientX;
+      if (diff > 45) {
+        nextSlide();
+      } else if (diff < -45) {
+        prevSlide();
+      }
+    }
+    touchStartX.current = null;
   };
 
   const openWebsite = async () => {
@@ -783,20 +840,48 @@ function PortalScreen({ navigation }) {
       {/* ================= FULL-SCREEN CAMPUS HERO SLIDESHOW ================= */}
       <div
         className="campus-hero-container"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Slides */}
-        {CAMPUS_SLIDES.map((slide, index) => (
-          <div
-            key={slide.image}
-            className={`campus-hero-slide ${index === currentSlide ? "active" : ""}`}
-            style={{
-              backgroundImage: `url(${slide.image})`,
-            }}
-            aria-hidden={index !== currentSlide}
-          />
-        ))}
+        {/* Slides Track */}
+        <div className="campus-hero-slides-wrapper">
+          {CAMPUS_SLIDES.map((slide, index) => {
+            let slideClass = "campus-hero-slide";
+            if (index === currentSlide) {
+              slideClass += " active";
+            } else if (index === prevSlideIndex) {
+              slideClass += direction === "next" ? " exiting-left" : " exiting-right";
+            } else {
+              slideClass += direction === "next" ? " entering-right" : " entering-left";
+            }
+
+            return (
+              <div
+                key={slide.image}
+                className={slideClass}
+                aria-hidden={index !== currentSlide}
+              >
+                {/* Ambient Blurred Background (Zero black-bars or cropped look on any screen ratio) */}
+                <div
+                  className="campus-hero-ambient"
+                  style={{
+                    backgroundImage: `url(${slide.image})`,
+                  }}
+                />
+
+                {/* Main Sharp Slide with Screen-Size-Adjusted Focal Positioning & Ken Burns Effect */}
+                <div
+                  className="campus-hero-slide-img"
+                  style={{
+                    backgroundImage: `url(${slide.image})`,
+                    "--focal-desktop": slide.focalDesktop,
+                    "--focal-mobile": slide.focalMobile,
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
 
         {/* Dark Transparent Gradient Overlay */}
         <div className="campus-hero-overlay" />
@@ -828,7 +913,11 @@ function PortalScreen({ navigation }) {
           </h1>
 
           {/* Action Buttons Row: Qfix & Institutional Website side-by-side */}
-          <div className="campus-hero-buttons-row">
+          <div
+            className="campus-hero-buttons-row"
+            onMouseEnter={() => setIsHoveringControls(true)}
+            onMouseLeave={() => setIsHoveringControls(false)}
+          >
             {/* Button 1: Qfix */}
             <button
               type="button"
@@ -853,11 +942,25 @@ function PortalScreen({ navigation }) {
           </div>
         </div>
 
+        {/* Campus Facility / Slide Caption Highlight Pill */}
+        <div className="campus-hero-slide-info" key={`caption-${currentSlide}`}>
+          <div className="campus-slide-info-pill">
+            <MaterialIcons name="location-on" size={15} color="#00f0b5" />
+            <span className="campus-slide-info-title">{CAMPUS_SLIDES[currentSlide].title}</span>
+            <span className="campus-slide-info-divider">•</span>
+            <span className="campus-slide-info-counter">
+              {String(currentSlide + 1).padStart(2, "0")} / {String(CAMPUS_SLIDES.length).padStart(2, "0")}
+            </span>
+          </div>
+        </div>
+
         {/* Left & Right Slideshow Arrow Controls */}
         <button
           type="button"
           className="campus-slide-arrow prev"
           onClick={prevSlide}
+          onMouseEnter={() => setIsHoveringControls(true)}
+          onMouseLeave={() => setIsHoveringControls(false)}
           aria-label="Previous slide"
         >
           <MaterialIcons name="chevron-left" size={32} color="#ffffff" />
@@ -867,22 +970,50 @@ function PortalScreen({ navigation }) {
           type="button"
           className="campus-slide-arrow next"
           onClick={nextSlide}
+          onMouseEnter={() => setIsHoveringControls(true)}
+          onMouseLeave={() => setIsHoveringControls(false)}
           aria-label="Next slide"
         >
           <MaterialIcons name="chevron-right" size={32} color="#ffffff" />
         </button>
 
-        {/* Bottom Slide Indicators */}
-        <div className="campus-slide-indicators">
-          {CAMPUS_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`campus-indicator-dot ${i === currentSlide ? "active" : ""}`}
-              onClick={() => setCurrentSlide(i)}
-              aria-label={`Go to slide ${i + 1}`}
+        {/* Bottom Slide Indicators with Auto-Play Progress and Play/Pause Toggle */}
+        <div
+          className="campus-slide-indicators-wrapper"
+          onMouseEnter={() => setIsHoveringControls(true)}
+          onMouseLeave={() => setIsHoveringControls(false)}
+        >
+          {/* Play/Pause Button */}
+          <button
+            type="button"
+            className="campus-slide-playpause-btn"
+            onClick={() => setIsPaused((prev) => !prev)}
+            aria-label={isPaused ? "Play slideshow" : "Pause slideshow"}
+            title={isPaused ? "Play slideshow" : "Pause slideshow"}
+          >
+            <MaterialIcons
+              name={isPaused ? "play-arrow" : "pause"}
+              size={16}
+              color="#ffffff"
             />
-          ))}
+          </button>
+
+          {/* Dots with progress animation */}
+          <div className="campus-slide-indicators">
+            {CAMPUS_SLIDES.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`campus-indicator-dot ${i === currentSlide ? "active" : ""}`}
+                onClick={() => goToSlide(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              >
+                {i === currentSlide && !isPaused && !isHoveringControls && (
+                  <span className="campus-indicator-progress" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
