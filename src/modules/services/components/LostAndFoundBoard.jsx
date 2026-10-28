@@ -9,7 +9,8 @@ import {
   getLostReports,
   getFoundReports,
   createLostReport,
-  createFoundReport
+  createFoundReport,
+  sendFoundRequest
 } from '../../../services/api/lostAndFound';
 
 const initialItems = [];
@@ -821,17 +822,19 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const item = modal.item;
                       closeModal();
-                      if (onOpenMatchSuggestions) {
-                        onOpenMatchSuggestions(item);
-                      } else {
-                        setNotice(
-                          `Discovery interest for ${item?.id} recorded! Please deposit the item at Quad Security Desk #02.`
-                        );
-                        setTimeout(() => setNotice(''), 5500);
+                      try {
+                        await sendFoundRequest(item.id, {
+                          description: `Found unattended by peer: ${item.title}`,
+                          custody_desk: 'Quad Security Desk #02'
+                        });
+                        setNotice(`Discovery request sent to the owner of ${item.title}! They can now initiate human verification.`);
+                      } catch (err) {
+                        setNotice(`Discovery interest recorded for ${item.title}. Please deposit at Quad Security Desk #02.`);
                       }
+                      setTimeout(() => setNotice(''), 5500);
                     }}
                     className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-sm"
                   >

@@ -148,6 +148,30 @@ class FoundReportOut(BaseModel):
 
 
 # --- Match Schemas ---
+class FoundRequestCreate(BaseModel):
+    title: Optional[str] = None
+    description: str = Field(..., min_length=3, description="Where and how the item was found")
+    found_location_id: Optional[Union[int, str]] = None
+    found_location_name: Optional[str] = None
+    custody_desk: Optional[str] = "Admin Ground Floor Custody Desk"
+    image_url: Optional[str] = None
+    finder_notes: Optional[str] = None
+
+
+class MoveToVerificationRequest(BaseModel):
+    owner_response: Optional[str] = Field(None, description="Owner's proof, secret mark, or description")
+    challenge_question: Optional[str] = "Confirm unique markings, color shade, or specific contents."
+    officer_notes: Optional[str] = None
+
+
+class SimilarFoundItemOut(BaseModel):
+    found_report: FoundReportOut
+    similarity_score: float  # e.g. 0.94 (94%)
+    text_similarity: Optional[float] = None
+    image_similarity: Optional[float] = None
+    match_id: Optional[Union[int, str]] = None
+
+
 class MatchVerificationOut(BaseModel):
     id: Union[int, str]
     match_id: Union[int, str]

@@ -155,11 +155,16 @@ class JinaClipEmbeddingService:
     def _generate_fallback_vector(self, seed: str) -> np.ndarray:
         """Deterministic unit vector from string seed when cloud is inaccessible."""
         import hashlib
-        h = hashlib.sha256(seed.encode("utf-8")).digest()
-        # Repeat hash bytes to fill 1024 floats
-        raw = np.frombuffer((h * 32)[: 1024 * 4], dtype=np.float32)
+        # Use multiple hashes to fill 1024 floats cleanly in [-1.0, 1.0]
+        byte_list = []
+        for i in range(32):
+            h = hashlib.sha256(f"{seed}:{i}".encode("utf-8")).digest()
+            byte_list.extend(h)
+        byte_arr = np.array(byte_list[:1024], dtype=np.uint8)
+        raw = (byte_arr.astype(np.float32) - 128.0) / 128.0
         norm = np.linalg.norm(raw)
         return raw / norm if norm > 0 else raw
+
 
 
 embedding_service = JinaClipEmbeddingService.get_instance()

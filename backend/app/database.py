@@ -36,8 +36,19 @@ def build_engine(url: str):
     is_sqlite = "sqlite" in url
     return create_engine(
         url,
-        connect_args={"check_same_thread": False} if is_sqlite else {"connect_timeout": 15},
+        connect_args=(
+            {"check_same_thread": False}
+            if is_sqlite
+            else {
+                "connect_timeout": 15,
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            }
+        ),
         pool_pre_ping=True,
+        pool_recycle=60,
     )
 
 

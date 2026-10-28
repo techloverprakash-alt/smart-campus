@@ -16,6 +16,8 @@ export const getLostReport = (id) => api.get(`/lost-found/lost/${id}`);
 export const createLostReport = (data) => api.post('/lost-found/lost', data);
 export const updateLostReport = (id, data) => api.patch(`/lost-found/lost/${id}`, data);
 export const deleteLostReport = (id) => api.delete(`/lost-found/lost/${id}`);
+export const sendFoundRequest = (lostReportId, data) =>
+  api.post(`/lost-found/lost/${lostReportId}/found-request`, data);
 
 // ── Found Reports (Table 36) ───────────────────────────────────────────────
 export const getFoundReports = (params = {}) => api.get('/lost-found/found', params);
@@ -27,6 +29,10 @@ export const updateFoundCustody = (id, data) => api.patch(`/lost-found/found/${i
 export const getMatches = (params = {}) => api.get('/lost-found/matches', params);
 export const triggerMatching = (data) => api.post('/lost-found/matches/trigger', data);
 export const dismissMatch = (id) => api.post(`/lost-found/matches/${id}/dismiss`);
+export const requestHumanVerification = (matchId, data = {}) =>
+  api.post(`/lost-found/matches/${matchId}/request-human-verification`, data);
+export const searchSimilarFoundItems = (params = {}) =>
+  api.get('/lost-found/similarity-search', params);
 
 // ── Double-Blind Match Verification (Table 39) ─────────────────────────────
 export const verifyMatchChallenge = (matchId, data) =>

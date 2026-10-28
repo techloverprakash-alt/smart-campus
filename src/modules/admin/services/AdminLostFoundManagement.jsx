@@ -405,8 +405,8 @@ export default function AdminLostFoundManagement() {
                         <span>Report #{m.lost_report_id}</span>
                         <span>Reporter: {m.reporter_name || 'Student'}</span>
                       </div>
-                      <h4 className="mt-2 text-sm font-bold text-slate-900">{m.lost_title}</h4>
-                      <p className="mt-1 text-slate-600 leading-relaxed">{m.lost_description}</p>
+                      <h4 className="mt-2 text-sm font-bold text-slate-900">{m.lost_report?.title || m.lost_title}</h4>
+                      <p className="mt-1 text-slate-600 leading-relaxed">{m.lost_report?.description || m.lost_description}</p>
                     </div>
 
                     {/* Found Side */}
@@ -415,8 +415,8 @@ export default function AdminLostFoundManagement() {
                         <span>Deposit #{m.found_report_id}</span>
                         <span>Custodian: {m.custody_desk || 'Security'}</span>
                       </div>
-                      <h4 className="mt-2 text-sm font-bold text-slate-900">{m.found_title}</h4>
-                      <p className="mt-1 text-slate-600 leading-relaxed">{m.found_description}</p>
+                      <h4 className="mt-2 text-sm font-bold text-slate-900">{m.found_report?.title || m.found_title}</h4>
+                      <p className="mt-1 text-slate-600 leading-relaxed">{m.found_report?.description || m.found_description}</p>
                     </div>
                   </div>
                 </div>

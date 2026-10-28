@@ -27,6 +27,7 @@ from app.modules.lost_and_found.schemas import (
     FoundReportCreate,
     FoundReportOut,
     FoundReportUpdate,
+    FoundRequestCreate,
     HandoverCreate,
     ItemClaimOut,
     ItemHandoverOut,
@@ -36,8 +37,10 @@ from app.modules.lost_and_found.schemas import (
     LostReportOut,
     LostReportUpdate,
     MatchVerificationOut,
+    MoveToVerificationRequest,
     ReportMediaOut,
     RunMatchingRequest,
+    SimilarFoundItemOut,
     StandardResponse,
     VerificationCreate,
 )
@@ -316,6 +319,31 @@ def delete_lost_report(
     return StandardResponse(data={"deleted_id": report_id}, message="Report deleted.")
 
 
+@router.post("/lost/{report_id}/found-request", response_model=StandardResponse[ItemMatchOut], status_code=status.HTTP_201_CREATED)
+def submit_found_request_endpoint(
+    report_id: Union[int, str],
+    payload: FoundRequestCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Finder action: Touch a reported lost item and send a found discovery request to the owner.
+    Creates a candidate match in 'FOUND_REQUEST' status and alerts the lost item reporter.
+    """
+    service = LostAndFoundService(db)
+    try:
+        rid = int(report_id)
+        match = service.submit_found_request(rid, payload, finder_id=user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return StandardResponse(
+        data=format_match(match),
+        message="Found request submitted. The lost item owner has been notified to verify."
+    )
+
+
+
 # =============================================================================
 # Found Reports (Table 36)
 # =============================================================================
@@ -381,8 +409,41 @@ def update_found_custody(
 
 
 # =============================================================================
-# AI Similarity Candidate Matches (Table 38)
+# AI Similarity Candidate Matches & Search (Table 38)
 # =============================================================================
+
+@router.get("/similarity-search", response_model=StandardResponse[List[SimilarFoundItemOut]])
+def search_similar_found(
+    query: str = Query(..., min_length=1, description="Lost item query or description"),
+    category_id: Optional[Union[int, str]] = Query(None),
+    location_id: Optional[Union[int, str]] = Query(None),
+    top_k: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Calculates multimodal/text similarity scores of all existing found items against a lost user's query.
+    Used when a found item was turned in BEFORE the lost report was logged.
+    """
+    service = LostAndFoundService(db)
+    raw_results = service.search_similar_found_items(
+        query=query,
+        category_id=category_id,
+        location_id=location_id,
+        top_k=top_k
+    )
+    out = [
+        SimilarFoundItemOut(
+            found_report=format_found_report(r["found_report"]),
+            similarity_score=r["similarity_score"],
+            text_similarity=r["text_similarity"],
+            image_similarity=r["image_similarity"],
+            match_id=r["match_id"]
+        )
+        for r in raw_results
+    ]
+    return StandardResponse(data=out, message=f"Found {len(out)} potential match candidates.")
+
 
 @router.get("/matches", response_model=StandardResponse[List[ItemMatchOut]])
 def list_matches(
@@ -391,16 +452,62 @@ def list_matches(
     status: Optional[str] = Query(None),
     user_id: Optional[Union[int, str]] = Query(None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    """Retrieve AI-ranked candidate matches."""
+    """
+    Retrieve candidate matches.
+    Admins see all matches across campus.
+    Normal students/staff see matches where they are the reporter of the lost item or finder of the found item.
+    """
     repo = LostAndFoundRepository(db)
+    effective_user_id = user_id
+    if user.primary_role not in ("ADMIN", "STAFF") and not user_id:
+        effective_user_id = user.id
+
     matches = repo.list_matches(
         lost_report_id=lost_report_id,
         found_report_id=found_report_id,
         status=status,
-        user_id=user_id,
+        user_id=effective_user_id,
     )
     return StandardResponse(data=[format_match(m) for m in matches])
+
+
+@router.post("/matches/{match_id}/request-human-verification", response_model=StandardResponse[MatchVerificationOut])
+def request_human_verification_endpoint(
+    match_id: Union[int, str],
+    payload: MoveToVerificationRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Lost User action: Review the incoming found request and click the button to move to Human Verification.
+    Queues the candidate match for physical custody verification by campus administrative staff.
+    """
+    service = LostAndFoundService(db)
+    try:
+        mid = int(match_id)
+        is_admin = (getattr(user, "primary_role", "") == "ADMIN")
+        verification = service.request_human_verification(mid, payload, user_id=user.id, is_admin=is_admin)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    out = MatchVerificationOut(
+        id=verification.id,
+        match_id=verification.match_id,
+        challenge_question=verification.challenge_question,
+        owner_response=verification.owner_response,
+        officer_notes=verification.officer_notes,
+        concordance_score=verification.concordance_score,
+        verified_by=verification.verified_by,
+        status=verification.status,
+        created_at=verification.created_at,
+    )
+    return StandardResponse(
+        data=out,
+        message="Item successfully queued for human verification at the campus custody desk."
+    )
+
 
 
 @router.post("/matches/trigger", response_model=StandardResponse[List[ItemMatchOut]])
