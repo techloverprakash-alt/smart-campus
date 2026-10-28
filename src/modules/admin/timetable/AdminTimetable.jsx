@@ -207,7 +207,7 @@ export default function AdminTimetable({ navigation }) {
 
   const adminName = profile?.full_name || user?.profile?.full_name || "Administrator";
   const adminInitial = adminName.charAt(0).toUpperCase();
-  const adminId = profile?.id ? `ADM-${profile.id.slice(0, 8).toUpperCase()}` : "Admin";
+  const adminId = profile?.id ? `ADM-${String(profile.id).slice(0, 8).toUpperCase()}` : "Admin";
   const adminDept = profile?.department?.name ? `${profile.department.name} • Institutional Oversight` : "Academic Administration & Department Oversight";
   const avatarUrl = profile?.avatar_url || user?.profile?.avatar_url || PROFILE_IMAGE;
 

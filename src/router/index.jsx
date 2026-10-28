@@ -81,6 +81,40 @@ export const useRoute = () => {
   return { name: match?.name, path: loc.path, params: loc.params || {} };
 };
 
+class ScreenErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('Screen render error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', color: '#1e293b' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 24, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626', fontSize: 24, marginBottom: 16 }}>⚠</div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0' }}>Something went wrong loading this screen</h2>
+          <p style={{ fontSize: 13, color: '#64748b', maxWidth: 460, margin: '0 0 16px 0' }}>
+            {this.state.error?.message || 'An unexpected runtime error occurred.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{ padding: '8px 18px', borderRadius: 8, background: '#1d4ed8', color: '#fff', border: 0, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /** Renders the screen matching the current URL, passing `navigation` + `route`. */
 export function Routes({ fallback: Fallback }) {
   const { loc, routes, navigation } = useRouter();
@@ -90,7 +124,9 @@ export function Routes({ fallback: Fallback }) {
   const route = { name: match.name, path: match.path, params: loc.params || {} };
   return (
     <div key={loc.path} className="screen-enter">
-      <Screen navigation={navigation} route={route} />
+      <ScreenErrorBoundary key={loc.path}>
+        <Screen navigation={navigation} route={route} />
+      </ScreenErrorBoundary>
     </div>
   );
 }
