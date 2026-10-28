@@ -20,12 +20,20 @@ class StudentAttendanceSummaryResponse(BaseModel):
     overall_percentage: float = 0.0
     total_sessions: int = 0
     total_days: int = 0
+    total_conducted_hours: int = 0
+    total_attended_hours: int = 0
+    total_conducted_days: int = 0
+    total_attended_days: int = 0
+    total_absent_days: int = 0
     present_sessions: int = 0
     present_days: int = 0
+    actual_present_days: int = 0
     absent_sessions: int = 0
     absent_days: int = 0
     od_sessions: int = 0
     od_days: int = 0
+    on_duty_days: int = 0
+    on_duty_sessions: int = 0
     can_miss: int = 0
     status: str = "Safe Zone"
     subjects: List[SubjectAttendanceDetail] = []
@@ -41,7 +49,7 @@ class StudentRosterItem(BaseModel):
 
 class SessionRosterResponse(BaseModel):
     session_id: Optional[int] = None
-    timetable_entry_id: int
+    timetable_entry_id: Optional[int] = None
     date: str
     course_code: str
     course_name: str
@@ -64,18 +72,31 @@ class AttendanceSubmitRequest(BaseModel):
 
 class AttendanceHistoryItem(BaseModel):
     id: int
+    course: Optional[str] = None
     course_code: str
+    subject_code: Optional[str] = None
     course_name: str
+    subject_name: Optional[str] = None
     date: str
+    marking_date: Optional[str] = None
     attendance_date: str
-    present_count: int
-    total_students: int
-    marked_by: str
-    status: str
+    period: Optional[str] = None
+    period_number: Optional[int] = None
+    present: Optional[int] = None
+    present_count: int = 0
+    total: Optional[int] = None
+    total_students: int = 0
+    total_count: Optional[int] = None
+    marked_by: str = ""
+    marked_by_name: Optional[str] = None
+    staff: Optional[str] = None
+    status: str = "pending"
 
 
 class AttendanceHistoryResponse(BaseModel):
+    success: bool = True
     sessions: List[AttendanceHistoryItem] = []
+    data: List[AttendanceHistoryItem] = []
 
 
 class TimetableSlotItem(BaseModel):
@@ -117,3 +138,5 @@ class WeeklyTimetableResponse(BaseModel):
     section: str
     schedule: List[WeeklyDaySchedule] = []
     rows: List[List[Any]] = []
+    weeklySchedule: Optional[List[Dict[str, Any]]] = []
+    weekly_grid: Optional[List[Dict[str, Any]]] = []

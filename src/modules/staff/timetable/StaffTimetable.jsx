@@ -153,6 +153,10 @@ export default function StaffTimetable({ navigation }) {
   const { user, profile } = useAuth();
   const [tab, setTab] = useState("today");
   const [liveSchedule, setLiveSchedule] = useState(todaySchedule);
+  const [liveWeeklyGrid, setLiveWeeklyGrid] = useState(weeklySchedule);
+  const [todayDayName, setTodayDayName] = useState(
+    new Date().toLocaleDateString('en-US', { weekday: 'long' })
+  );
   const [facultyOpen, setFacultyOpen] = useState(false);
   const [lessonOpen, setLessonOpen] = useState(false);
   const [substitutionAccepted, setSubstitutionAccepted] = useState(false);
@@ -165,21 +169,36 @@ export default function StaffTimetable({ navigation }) {
     let isMounted = true;
     getTodaySchedule()
       .then((data) => {
-        if (isMounted && data?.schedule && data.schedule.length > 0) {
-          const mapped = data.schedule.map((slot) => ({
-            id: slot.id,
-            period: slot.period || `P${slot.period_number}`,
-            time: `${slot.start_time} – ${slot.end_time}`,
-            title: slot.title || slot.subject_name,
-            section: `${slot.section_name} • ${slot.room_name}`,
-            status: slot.attendance_marked ? "Completed" : (slot.status === "NOW" ? "In Progress" : "Upcoming"),
-            attendance: slot.attendance_marked ? "Attendance Marked" : "Attendance Pending",
-            lab: (slot.type || "").toLowerCase().includes("lab"),
-          }));
-          setLiveSchedule(mapped);
+        if (isMounted) {
+          if (data?.day) setTodayDayName(data.day);
+          if (data?.schedule && data.schedule.length > 0) {
+            const mapped = data.schedule.map((slot) => ({
+              id: slot.id,
+              period: slot.period || `P${slot.period_number}`,
+              time: `${slot.start_time} – ${slot.end_time}`,
+              title: slot.title || slot.subject_name,
+              section: `${slot.section_name} • ${slot.room_name}`,
+              status: slot.attendance_marked ? "Completed" : (slot.status === "NOW" ? "In Progress" : "Upcoming"),
+              attendance: slot.attendance_marked ? "Attendance Marked" : "Attendance Pending",
+              lab: (slot.type || "").toLowerCase().includes("lab"),
+            }));
+            setLiveSchedule(mapped);
+          }
         }
       })
       .catch((err) => console.log("Failed to load staff schedule:", err));
+
+    getWeeklyTimetable()
+      .then((data) => {
+        if (isMounted) {
+          const grid = data?.weeklySchedule || data?.weekly_grid;
+          if (grid && Array.isArray(grid) && grid.length > 0) {
+            setLiveWeeklyGrid(grid);
+          }
+        }
+      })
+      .catch((err) => console.log("Failed to load weekly timetable:", err));
+
     return () => { isMounted = false; };
   }, []);
 
@@ -441,7 +460,7 @@ export default function StaffTimetable({ navigation }) {
                 <MaterialIcons name="calendar-view-day" size={20} color="#003fb1" />
                 <Text style={styles.scheduleSectionTitle}>Today's Class Schedule</Text>
               </View>
-              <Text style={styles.scheduleDayBadge}>Wednesday</Text>
+              <Text style={styles.scheduleDayBadge}>{todayDayName}</Text>
             </View>
 
             <View style={styles.scheduleCardList}>
@@ -506,7 +525,9 @@ export default function StaffTimetable({ navigation }) {
                         })}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.viewLogLink}>View Log ›</Text>
+                        <Text style={styles.viewLogLink}>
+                          {item.attendance === "Attendance Marked" ? "Review ›" : "Mark ›"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -796,7 +817,7 @@ export default function StaffTimetable({ navigation }) {
                       )}
                     </View>
 
-                    {weeklySchedule.map((row, idx) => (
+                    {(liveWeeklyGrid || weeklySchedule).map((row, idx) => (
                       <View key={row.time} style={styles.tableBodyRow}>
                         <View style={styles.tableTimeCell}>
                           <Text style={styles.tableTimeText}>{row.time}</Text>

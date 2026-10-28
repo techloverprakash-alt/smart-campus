@@ -252,8 +252,8 @@ function StudentProfileCard({ user, profile }) {
 function AttendanceOverview({ onPress, summary }) {
   const overallPct = summary?.overall_percentage ?? 0;
   // Backend uses total_attended_hours / total_conducted_hours
-  const attended = summary?.total_attended_hours ?? 0;
-  const total = summary?.total_conducted_hours ?? 0;
+  const attended = summary?.total_attended_hours ?? summary?.present_days ?? summary?.present_sessions ?? 0;
+  const total = summary?.total_conducted_hours ?? summary?.total_days ?? summary?.total_sessions ?? 0;
   // Compute safety runway from subjects array
   const canMiss = summary?.subjects?.length
     ? Math.min(...summary.subjects.map((s) => s.max_absences_allowed || 0))

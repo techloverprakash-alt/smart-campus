@@ -247,7 +247,7 @@ def seed_academic_csvs(db: Session):
 
     # 10. Course Offerings (Table 17)
     offering_file = DB_CSV_DIR / "17_course_offerings.csv"
-    if offering_file.exists() and db.query(CourseOffering).count() == 0:
+    if offering_file.exists():
         with open(offering_file, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -260,12 +260,19 @@ def seed_academic_csvs(db: Session):
                     semester=parse_int(row.get("semester")),
                 )
                 db.merge(co)
+        # Ensure Staff 3 (Dr. Vigneshwaran K) also has teaching assignments
+        staff_3_offerings = [
+            CourseOffering(id=5, subject_id=1, section_id=3, staff_id=3, academic_year="2025-2026", semester=5),
+            CourseOffering(id=6, subject_id=2, section_id=3, staff_id=3, academic_year="2025-2026", semester=5),
+        ]
+        for co in staff_3_offerings:
+            db.merge(co)
         db.commit()
-        logger.info("Seeded 17_course_offerings.csv")
+        logger.info("Seeded 17_course_offerings.csv and staff teaching assignments")
 
     # 11. Timetable Entries (Table 18)
     tt_file = DB_CSV_DIR / "18_timetable_entries.csv"
-    if tt_file.exists() and db.query(TimetableEntry).count() == 0:
+    if tt_file.exists():
         with open(tt_file, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -279,9 +286,8 @@ def seed_academic_csvs(db: Session):
                     location_id=parse_int(row.get("location_id")),
                 )
                 db.merge(te)
-        db.commit()
 
-        # Add timetable entries for Tuesday through Friday so users have full schedules every weekday
+        # Add timetable entries for all weekdays for all active staff teaching assignments
         extra_entries = [
             # TUESDAY
             TimetableEntry(id=5, course_offering_id=1, day_of_week="TUESDAY", period_number=1, start_time="09:00:00", end_time="09:50:00", location_id=5),
@@ -301,6 +307,14 @@ def seed_academic_csvs(db: Session):
             TimetableEntry(id=16, course_offering_id=2, day_of_week="FRIDAY", period_number=1, start_time="09:00:00", end_time="09:50:00", location_id=5),
             TimetableEntry(id=17, course_offering_id=3, day_of_week="FRIDAY", period_number=2, start_time="09:50:00", end_time="10:40:00", location_id=6),
             TimetableEntry(id=18, course_offering_id=4, day_of_week="FRIDAY", period_number=4, start_time="11:45:00", end_time="12:35:00", location_id=7),
+            # Staff 3 entries (Section 3, CSE-A Sem 5)
+            TimetableEntry(id=19, course_offering_id=5, day_of_week="MONDAY", period_number=3, start_time="10:55:00", end_time="11:45:00", location_id=5),
+            TimetableEntry(id=20, course_offering_id=6, day_of_week="MONDAY", period_number=4, start_time="11:45:00", end_time="12:35:00", location_id=5),
+            TimetableEntry(id=21, course_offering_id=5, day_of_week="TUESDAY", period_number=3, start_time="10:55:00", end_time="11:45:00", location_id=5),
+            TimetableEntry(id=22, course_offering_id=6, day_of_week="WEDNESDAY", period_number=2, start_time="09:50:00", end_time="10:40:00", location_id=5),
+            TimetableEntry(id=23, course_offering_id=5, day_of_week="WEDNESDAY", period_number=3, start_time="10:55:00", end_time="11:45:00", location_id=5),
+            TimetableEntry(id=24, course_offering_id=6, day_of_week="THURSDAY", period_number=1, start_time="09:00:00", end_time="09:50:00", location_id=5),
+            TimetableEntry(id=25, course_offering_id=5, day_of_week="FRIDAY", period_number=2, start_time="09:50:00", end_time="10:40:00", location_id=5),
         ]
         for ent in extra_entries:
             db.merge(ent)
@@ -363,9 +377,17 @@ def _seed_cumulative_attendance_history(db: Session):
     dates = [base_date + datetime.timedelta(days=i * 3) for i in range(15)]
 
     # For students 1..10 in Section 1 (CSE-A):
-    # Subjects: CS8701 (entry 1) and CS8702 (entry 2)
+    # Subjects: CS8701 (entry 1) and CS8702 (entry 2) marked by Staff 1
+    # For students 11..20 in Section 2 (IT-A): marked by Staff 2 (entry 3, 4)
+    # For students in Section 3: marked by Staff 3 (entry 19, 20)
     for d_idx, d in enumerate(dates):
-        for entry_id, staff_id in [(1, 1), (2, 1)]:
+        for entry_id, staff_id, student_range in [
+            (1, 1, range(1, 11)),
+            (2, 1, range(1, 11)),
+            (3, 2, range(11, 21)),
+            (4, 2, range(11, 21)),
+            (19, 3, range(21, 23)),
+        ]:
             # Check if session exists
             existing_sess = db.query(AttendanceSession).filter_by(
                 timetable_entry_id=entry_id, attendance_date=d
@@ -387,8 +409,8 @@ def _seed_cumulative_attendance_history(db: Session):
             else:
                 session_id = existing_sess.id
 
-            # Create records for students 1..10
-            for stu_id in range(1, 11):
+            # Create records for students in range
+            for stu_id in student_range:
                 existing_rec = db.query(AttendanceRecord).filter_by(
                     session_id=session_id, student_id=stu_id
                 ).first()
