@@ -43,6 +43,22 @@ export default function StaffEditProfile({ navigation }) {
     profile?.experience || 'Deep Learning, Autonomous Vision, Distributed AI'
   );
 
+  /* =========================
+     INSTITUTIONAL CLEARANCE (EDITABLE)
+  ========================= */
+  const [facultyDesignation, setFacultyDesignation] = useState(
+    profile?.faculty_designation || profile?.designation || 'Assistant Professor (Sr. Gr.)'
+  );
+  const [departmentCode, setDepartmentCode] = useState(
+    profile?.department_code || 'AIDS • CSE Allied'
+  );
+  const [classAdvisory, setClassAdvisory] = useState(
+    profile?.class_advisory || 'III Year AI & DS (Sec A)'
+  );
+  const [portalStatus, setPortalStatus] = useState(
+    profile?.portal_status || 'Verified Faculty'
+  );
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -53,6 +69,12 @@ export default function StaffEditProfile({ navigation }) {
       if (profile.cabin_number) setCabin(profile.cabin_number);
       if (profile.qualifications) setQualification(profile.qualifications);
       if (profile.experience) setResearch(profile.experience);
+      if (profile.faculty_designation || profile.designation) {
+        setFacultyDesignation(profile.faculty_designation || profile.designation);
+      }
+      if (profile.department_code) setDepartmentCode(profile.department_code);
+      if (profile.class_advisory) setClassAdvisory(profile.class_advisory);
+      if (profile.portal_status) setPortalStatus(profile.portal_status);
     }
   }, [profile]);
 
@@ -69,6 +91,11 @@ export default function StaffEditProfile({ navigation }) {
         cabin_number: cabin.trim(),
         qualifications: qualification.trim(),
         experience: research.trim(),
+        faculty_designation: facultyDesignation.trim(),
+        designation: facultyDesignation.trim(),
+        department_code: departmentCode.trim(),
+        class_advisory: classAdvisory.trim(),
+        portal_status: portalStatus.trim(),
       };
 
       if (updateProfile) {
@@ -226,33 +253,70 @@ export default function StaffEditProfile({ navigation }) {
                 </View>
               </View>
 
-              {/* Institutional Clearance Card */}
+              {/* Institutional Clearance Card (Editable) */}
               <View style={styles.sectionCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderIconWrap}>
                     <MaterialIcons name="security" size={18} color="#003fb1" />
                   </View>
-                  <Text style={styles.cardHeaderTitle}>Institutional Clearance</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardHeaderTitle}>Institutional Clearance</Text>
+                  </View>
+                  <View style={styles.clearanceBadge}>
+                    <MaterialIcons name="edit" size={11} color="#003fb1" />
+                    <Text style={styles.clearanceBadgeText}>Editable</Text>
+                  </View>
                 </View>
 
                 <View style={styles.clearanceList}>
-                  <View style={styles.clearanceRow}>
+                  <View style={styles.clearanceFieldGroup}>
                     <Text style={styles.clearanceLabel}>Faculty Designation</Text>
-                    <Text style={styles.clearanceVal}>Assistant Professor (Sr. Gr.)</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={facultyDesignation}
+                      onChangeText={setFacultyDesignation}
+                      placeholder="e.g. Assistant Professor (Sr. Gr.)"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.clearanceRow}>
+
+                  <View style={styles.clearanceFieldGroup}>
                     <Text style={styles.clearanceLabel}>Department Code</Text>
-                    <Text style={styles.clearanceVal}>AIDS • CSE Allied</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={departmentCode}
+                      onChangeText={setDepartmentCode}
+                      placeholder="e.g. AIDS • CSE Allied"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.clearanceRow}>
+
+                  <View style={styles.clearanceFieldGroup}>
                     <Text style={styles.clearanceLabel}>Class Advisory</Text>
-                    <Text style={styles.clearanceVal}>III Year AI & DS (Sec A)</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={classAdvisory}
+                      onChangeText={setClassAdvisory}
+                      placeholder="e.g. III Year AI & DS (Sec A)"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.clearanceRow}>
+
+                  <View style={styles.clearanceFieldGroup}>
                     <Text style={styles.clearanceLabel}>Portal Status</Text>
-                    <View style={styles.verifiedBadge}>
-                      <MaterialIcons name="verified" size={13} color="#166534" />
-                      <Text style={styles.verifiedBadgeText}>Verified Faculty</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={portalStatus}
+                      onChangeText={setPortalStatus}
+                      placeholder="e.g. Verified Faculty"
+                      placeholderTextColor="#94a3b8"
+                    />
+                    <View style={styles.verifiedBadgeRow}>
+                      <View style={styles.verifiedBadge}>
+                        <MaterialIcons name="verified" size={13} color="#166534" />
+                        <Text style={styles.verifiedBadgeText}>{portalStatus || 'Verified Faculty'}</Text>
+                      </View>
+                      <Text style={styles.verifiedBadgeSub}>Live Status Stamp</Text>
                     </View>
                   </View>
                 </View>
@@ -651,25 +715,48 @@ const styles = StyleSheet.create({
   },
 
   /* Institutional Clearance */
-  clearanceList: {
-    gap: 10,
-  },
-  clearanceRow: {
+  clearanceBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
+    gap: 4,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  clearanceBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#003fb1',
+  },
+  clearanceList: {
+    gap: 12,
+  },
+  clearanceFieldGroup: {
+    gap: 4,
   },
   clearanceLabel: {
-    fontSize: 12.5,
+    fontSize: 12,
     color: '#64748b',
-  },
-  clearanceVal: {
-    fontSize: 12.5,
     fontWeight: '600',
+  },
+  clearanceInput: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
     color: '#0f172a',
+    fontWeight: '600',
+    outlineStyle: 'none',
+  },
+  verifiedBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -677,13 +764,18 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: '#dcfce7',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   verifiedBadgeText: {
     fontSize: 11.5,
     fontWeight: '700',
     color: '#166534',
+  },
+  verifiedBadgeSub: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
   },
 
   /* Form Elements */

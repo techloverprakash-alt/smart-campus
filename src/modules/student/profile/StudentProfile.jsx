@@ -39,6 +39,12 @@ export default function StudentProfile({ navigation }) {
   const [regulation, setRegulation] = useState('Anna University Regulation 2021');
   const [admissionType, setAdmissionType] = useState('Merit • TNEA Counselling');
 
+  // Institutional Clearance State
+  const [facultyDesignation, setFacultyDesignation] = useState('Assistant Professor (Sr. Gr.)');
+  const [departmentCode, setDepartmentCode] = useState('AIDS • CSE Allied');
+  const [classAdvisory, setClassAdvisory] = useState('III Year AI & DS (Sec A)');
+  const [portalStatus, setPortalStatus] = useState('Verified Faculty');
+
   // Academic Editor Modal State
   const [academicModalOpen, setAcademicModalOpen] = useState(false);
   const [isSavingAcademic, setIsSavingAcademic] = useState(false);
@@ -52,6 +58,10 @@ export default function StudentProfile({ navigation }) {
   const [editRollNo, setEditRollNo] = useState('22AD045');
   const [editDepartment, setEditDepartment] = useState('Artificial Intelligence & Data Science');
   const [editMentor, setEditMentor] = useState('Dr. R. Kavitha, M.E., Ph.D.');
+  const [editFacultyDesignation, setEditFacultyDesignation] = useState('Assistant Professor (Sr. Gr.)');
+  const [editDepartmentCode, setEditDepartmentCode] = useState('AIDS • CSE Allied');
+  const [editClassAdvisory, setEditClassAdvisory] = useState('III Year AI & DS (Sec A)');
+  const [editPortalStatus, setEditPortalStatus] = useState('Verified Faculty');
 
   // Toast State
   const [toastVisible, setToastVisible] = useState(false);
@@ -113,6 +123,23 @@ export default function StudentProfile({ navigation }) {
       setMentor(mName);
       setEditMentor(mName);
     }
+    if (p?.faculty_designation || p?.designation) {
+      const fd = p.faculty_designation || p.designation;
+      setFacultyDesignation(fd);
+      setEditFacultyDesignation(fd);
+    }
+    if (p?.department_code) {
+      setDepartmentCode(p.department_code);
+      setEditDepartmentCode(p.department_code);
+    }
+    if (p?.class_advisory) {
+      setClassAdvisory(p.class_advisory);
+      setEditClassAdvisory(p.class_advisory);
+    }
+    if (p?.portal_status) {
+      setPortalStatus(p.portal_status);
+      setEditPortalStatus(p.portal_status);
+    }
   };
 
   const showToast = (msg) => {
@@ -144,6 +171,10 @@ export default function StudentProfile({ navigation }) {
     setEditRollNo(rollNo);
     setEditDepartment(department);
     setEditMentor(mentor);
+    setEditFacultyDesignation(facultyDesignation);
+    setEditDepartmentCode(departmentCode);
+    setEditClassAdvisory(classAdvisory);
+    setEditPortalStatus(portalStatus);
     setAcademicModalOpen(true);
   };
 
@@ -159,6 +190,11 @@ export default function StudentProfile({ navigation }) {
         roll_number: editRollNo.trim(),
         department: editDepartment.trim(),
         mentor_name: editMentor.trim(),
+        faculty_designation: editFacultyDesignation.trim(),
+        designation: editFacultyDesignation.trim(),
+        department_code: editDepartmentCode.trim(),
+        class_advisory: editClassAdvisory.trim(),
+        portal_status: editPortalStatus.trim(),
       };
 
       if (updateProfile) {
@@ -176,9 +212,13 @@ export default function StudentProfile({ navigation }) {
       setRollNo(editRollNo.trim());
       setDepartment(editDepartment.trim());
       setMentor(editMentor.trim());
+      setFacultyDesignation(editFacultyDesignation.trim());
+      setDepartmentCode(editDepartmentCode.trim());
+      setClassAdvisory(editClassAdvisory.trim());
+      setPortalStatus(editPortalStatus.trim());
 
       setAcademicModalOpen(false);
-      showToast('Academic records updated & saved successfully!');
+      showToast('Profile & Institutional Clearance updated successfully!');
     } catch (e) {
       // Local fallback
       setCgpa(editCgpa.trim());
@@ -189,9 +229,13 @@ export default function StudentProfile({ navigation }) {
       setRollNo(editRollNo.trim());
       setDepartment(editDepartment.trim());
       setMentor(editMentor.trim());
+      setFacultyDesignation(editFacultyDesignation.trim());
+      setDepartmentCode(editDepartmentCode.trim());
+      setClassAdvisory(editClassAdvisory.trim());
+      setPortalStatus(editPortalStatus.trim());
 
       setAcademicModalOpen(false);
-      showToast('Academic records updated locally.');
+      showToast('Profile & Institutional Clearance updated locally.');
     } finally {
       setIsSavingAcademic(false);
     }
@@ -430,33 +474,43 @@ export default function StudentProfile({ navigation }) {
                 </View>
               </View>
 
-              {/* Card 3: Institutional Campus Access & Verification */}
+              {/* Card 3: Institutional Clearance Card (Editable) */}
               <View style={styles.sectionCard}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardHeaderIconWrap}>
-                    <MaterialIcons name="verified-user" size={18} color="#003fb1" />
+                <View style={styles.cardHeaderWithAction}>
+                  <View style={styles.cardHeaderLeft}>
+                    <View style={styles.cardHeaderIconWrap}>
+                      <MaterialIcons name="security" size={18} color="#003fb1" />
+                    </View>
+                    <Text style={styles.cardHeaderTitle}>Institutional Clearance</Text>
                   </View>
-                  <Text style={styles.cardHeaderTitle}>Campus Identity & Credentials</Text>
+                  <TouchableOpacity
+                    style={styles.cardHeaderBtn}
+                    onPress={openAcademicModal}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="edit" size={13} color="#003fb1" />
+                    <Text style={styles.cardHeaderBtnText}>Edit</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <View style={styles.verifyList}>
-                  <View style={styles.verifyRow}>
-                    <Text style={styles.verifyLabel}>Smart RFID Card</Text>
-                    <Text style={styles.verifyVal}>RFID-STU-2022-4045</Text>
+                <View style={styles.clearanceList}>
+                  <View style={styles.clearanceRow}>
+                    <Text style={styles.clearanceLabel}>Faculty Designation</Text>
+                    <Text style={styles.clearanceVal}>{facultyDesignation}</Text>
                   </View>
-                  <View style={styles.verifyRow}>
-                    <Text style={styles.verifyLabel}>Library Membership</Text>
-                    <Text style={styles.verifyVal}>LIB-884920 (Active)</Text>
+                  <View style={styles.clearanceRow}>
+                    <Text style={styles.clearanceLabel}>Department Code</Text>
+                    <Text style={styles.clearanceVal}>{departmentCode}</Text>
                   </View>
-                  <View style={styles.verifyRow}>
-                    <Text style={styles.verifyLabel}>Roll Number</Text>
-                    <Text style={styles.verifyVal}>{rollNo}</Text>
+                  <View style={styles.clearanceRow}>
+                    <Text style={styles.clearanceLabel}>Class Advisory</Text>
+                    <Text style={styles.clearanceVal}>{classAdvisory}</Text>
                   </View>
-                  <View style={styles.verifyRow}>
-                    <Text style={styles.verifyLabel}>Enrollment Status</Text>
-                    <View style={styles.statusPillActive}>
-                      <MaterialIcons name="check-circle" size={13} color="#166534" />
-                      <Text style={styles.statusPillActiveText}>Active & Bona Fide</Text>
+                  <View style={styles.clearanceRow}>
+                    <Text style={styles.clearanceLabel}>Portal Status</Text>
+                    <View style={styles.verifiedBadge}>
+                      <MaterialIcons name="verified" size={13} color="#166534" />
+                      <Text style={styles.verifiedBadgeText}>{portalStatus}</Text>
                     </View>
                   </View>
                 </View>
@@ -919,6 +973,62 @@ export default function StudentProfile({ navigation }) {
                     placeholderTextColor="#94a3b8"
                   />
                   <Text style={styles.modalHelp}>Proctor assigned to oversee academic progress</Text>
+                </View>
+
+                {/* Institutional Clearance Divider */}
+                <View style={styles.modalSectionDivider}>
+                  <MaterialIcons name="security" size={15} color="#003fb1" />
+                  <Text style={styles.modalSectionDividerText}>INSTITUTIONAL CLEARANCE</Text>
+                </View>
+
+                {/* Faculty Designation & Department Code */}
+                <View style={styles.modalRowTwo}>
+                  <View style={[styles.modalFormGroup, { flex: 1 }]}>
+                    <Text style={styles.modalLabel}>Faculty Designation</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={editFacultyDesignation}
+                      onChangeText={setEditFacultyDesignation}
+                      placeholder="e.g. Assistant Professor (Sr. Gr.)"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+
+                  <View style={[styles.modalFormGroup, { flex: 1 }]}>
+                    <Text style={styles.modalLabel}>Department Code</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={editDepartmentCode}
+                      onChangeText={setEditDepartmentCode}
+                      placeholder="e.g. AIDS • CSE Allied"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+                </View>
+
+                {/* Class Advisory & Portal Status */}
+                <View style={styles.modalRowTwo}>
+                  <View style={[styles.modalFormGroup, { flex: 1 }]}>
+                    <Text style={styles.modalLabel}>Class Advisory</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={editClassAdvisory}
+                      onChangeText={setEditClassAdvisory}
+                      placeholder="e.g. III Year AI & DS (Sec A)"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+
+                  <View style={[styles.modalFormGroup, { flex: 1 }]}>
+                    <Text style={styles.modalLabel}>Portal Status</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={editPortalStatus}
+                      onChangeText={setEditPortalStatus}
+                      placeholder="e.g. Verified Faculty"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
                 </View>
               </View>
             </ScrollView>
@@ -1474,7 +1584,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  /* Verification */
+  /* Verification & Institutional Clearance */
   verifyList: {
     gap: 10,
   },
@@ -1508,6 +1618,56 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '700',
     color: '#166534',
+  },
+  clearanceList: {
+    gap: 10,
+  },
+  clearanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8fafc',
+  },
+  clearanceLabel: {
+    fontSize: 12.5,
+    color: '#64748b',
+  },
+  clearanceVal: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  verifiedBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  modalSectionDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalSectionDividerText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#003fb1',
+    letterSpacing: 0.5,
   },
 
   /* KPI Grid */

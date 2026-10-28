@@ -65,6 +65,22 @@ export default function StudentEditProfile({ navigation }) {
     profile?.faculty_mentor?.full_name || profile?.mentor_name || 'Dr. R. Kavitha, M.E., Ph.D.'
   );
 
+  /* =========================
+     INSTITUTIONAL CLEARANCE (NOW EDITABLE)
+  ========================= */
+  const [facultyDesignation, setFacultyDesignation] = useState(
+    profile?.faculty_designation || profile?.designation || 'Assistant Professor (Sr. Gr.)'
+  );
+  const [departmentCode, setDepartmentCode] = useState(
+    profile?.department_code || 'AIDS • CSE Allied'
+  );
+  const [classAdvisory, setClassAdvisory] = useState(
+    profile?.class_advisory || 'III Year AI & DS (Sec A)'
+  );
+  const [portalStatus, setPortalStatus] = useState(
+    profile?.portal_status || 'Verified Faculty'
+  );
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -87,6 +103,12 @@ export default function StudentEditProfile({ navigation }) {
       if (profile.faculty_mentor?.full_name || profile.mentor_name) {
         setMentor(profile.faculty_mentor?.full_name || profile.mentor_name);
       }
+      if (profile.faculty_designation || profile.designation) {
+        setFacultyDesignation(profile.faculty_designation || profile.designation);
+      }
+      if (profile.department_code) setDepartmentCode(profile.department_code);
+      if (profile.class_advisory) setClassAdvisory(profile.class_advisory);
+      if (profile.portal_status) setPortalStatus(profile.portal_status);
     }
   }, [profile]);
 
@@ -111,6 +133,11 @@ export default function StudentEditProfile({ navigation }) {
         roll_number: rollNo.trim(),
         department: department.trim(),
         mentor_name: mentor.trim(),
+        faculty_designation: facultyDesignation.trim(),
+        designation: facultyDesignation.trim(),
+        department_code: departmentCode.trim(),
+        class_advisory: classAdvisory.trim(),
+        portal_status: portalStatus.trim(),
       };
 
       if (updateProfile) {
@@ -266,33 +293,70 @@ export default function StudentEditProfile({ navigation }) {
                 </View>
               </View>
 
-              {/* Institutional Enrollment Summary Card */}
+              {/* Institutional Clearance Card (Editable) */}
               <View style={styles.sectionCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderIconWrap}>
-                    <MaterialIcons name="school" size={18} color="#003fb1" />
+                    <MaterialIcons name="security" size={18} color="#003fb1" />
                   </View>
-                  <Text style={styles.cardHeaderTitle}>Enrollment Summary</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardHeaderTitle}>Institutional Clearance</Text>
+                  </View>
+                  <View style={styles.clearanceBadge}>
+                    <MaterialIcons name="edit" size={11} color="#003fb1" />
+                    <Text style={styles.clearanceBadgeText}>Editable</Text>
+                  </View>
                 </View>
 
-                <View style={styles.summaryList}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Program</Text>
-                    <Text style={styles.summaryVal}>B.Tech (Full-Time)</Text>
+                <View style={styles.clearanceList}>
+                  <View style={styles.clearanceFieldGroup}>
+                    <Text style={styles.clearanceLabel}>Faculty Designation</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={facultyDesignation}
+                      onChangeText={setFacultyDesignation}
+                      placeholder="e.g. Assistant Professor (Sr. Gr.)"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Curriculum</Text>
-                    <Text style={styles.summaryVal}>AU Regulation 2021</Text>
+
+                  <View style={styles.clearanceFieldGroup}>
+                    <Text style={styles.clearanceLabel}>Department Code</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={departmentCode}
+                      onChangeText={setDepartmentCode}
+                      placeholder="e.g. AIDS • CSE Allied"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Admission Quota</Text>
-                    <Text style={styles.summaryVal}>Merit • TNEA Counselling</Text>
+
+                  <View style={styles.clearanceFieldGroup}>
+                    <Text style={styles.clearanceLabel}>Class Advisory</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={classAdvisory}
+                      onChangeText={setClassAdvisory}
+                      placeholder="e.g. III Year AI & DS (Sec A)"
+                      placeholderTextColor="#94a3b8"
+                    />
                   </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Enrollment Status</Text>
-                    <View style={styles.verifiedBadge}>
-                      <MaterialIcons name="verified" size={13} color="#166534" />
-                      <Text style={styles.verifiedBadgeText}>Active & Enrolled</Text>
+
+                  <View style={styles.clearanceFieldGroup}>
+                    <Text style={styles.clearanceLabel}>Portal Status</Text>
+                    <TextInput
+                      style={styles.clearanceInput}
+                      value={portalStatus}
+                      onChangeText={setPortalStatus}
+                      placeholder="e.g. Verified Faculty"
+                      placeholderTextColor="#94a3b8"
+                    />
+                    <View style={styles.verifiedBadgeRow}>
+                      <View style={styles.verifiedBadge}>
+                        <MaterialIcons name="verified" size={13} color="#166534" />
+                        <Text style={styles.verifiedBadgeText}>{portalStatus || 'Verified Faculty'}</Text>
+                      </View>
+                      <Text style={styles.verifiedBadgeSub}>Live Status Stamp</Text>
                     </View>
                   </View>
                 </View>
@@ -783,26 +847,49 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  /* Summary List */
-  summaryList: {
-    gap: 10,
-  },
-  summaryRow: {
+  /* Institutional Clearance */
+  clearanceBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
+    gap: 4,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  summaryLabel: {
-    fontSize: 12.5,
+  clearanceBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#003fb1',
+  },
+  clearanceList: {
+    gap: 12,
+  },
+  clearanceFieldGroup: {
+    gap: 4,
+  },
+  clearanceLabel: {
+    fontSize: 12,
     color: '#64748b',
-  },
-  summaryVal: {
-    fontSize: 12.5,
     fontWeight: '600',
+  },
+  clearanceInput: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
     color: '#0f172a',
+    fontWeight: '600',
+    outlineStyle: 'none',
+  },
+  verifiedBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -810,13 +897,32 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: '#dcfce7',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   verifiedBadgeText: {
     fontSize: 11.5,
     fontWeight: '700',
     color: '#166534',
+  },
+  verifiedBadgeSub: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  editableBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  editableBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#003fb1',
   },
 
   /* Form Elements */
