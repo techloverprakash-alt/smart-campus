@@ -1,0 +1,10 @@
+id,name,location_type,parent_location_id,description,latitude,longitude
+1,Main Academic Block,BUILDING,,Primary CSE & IT academic building,11.2189,78.1674
+2,Administrative Block,BUILDING,,Admin and Registrar offices,11.2195,78.168
+3,Ground Floor - Academic,FLOOR,1,Ground floor lecture halls and labs,11.2189,78.1674
+4,First Floor - Academic,FLOOR,1,First floor IT wings and seminar halls,11.2189,78.1674
+5,Lecture Hall LH-101,ROOM,3,CSE-A Classroom (60 seater),11.219,78.1675
+6,Lecture Hall LH-201,ROOM,4,IT-A Classroom (60 seater),11.2191,78.1676
+7,AI & Cloud Computing Lab,LAB,3,High-performance computing lab,11.2188,78.1673
+8,Central Cafeteria,COMMON_AREA,,Student dining and refreshment hub,11.2201,78.1685
+9,Security & Custody Desk,OFFICE,2,Lost and found custody office at Admin Ground Floor,11.2195,78.168

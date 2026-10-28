@@ -1,0 +1,3 @@
+id,found_report_id,lost_report_id,claimed_by,status,reviewed_by
+1,1,1,4,APPROVED,1
+2,2,2,7,PENDING,1

@@ -405,7 +405,7 @@ function CampusBanner() {
         </Text>
 
         <Text style={styles.campusDescription}>
-          Info Institute of Technology, Kalapatti Road, Coimbatore.
+          Info Institute of Technology, Sarkarsamakulam, Kovilpalayam, Coimbatore.
         </Text>
       </View>
     </View>
@@ -416,7 +416,7 @@ function Footer() {
   return (
     <View style={styles.footer}>
       <Text style={styles.footerText}>
-        NEXUS Info IT v2.4 • Built with dedication by Gnana Prakash, Esakki Muthu & Abishek
+        NEXUS Info IT v2.4 • Built with dedication by Gnana Prakash, Kamesh,Chirst Noble & Abishek
       </Text>
     </View>
   );
@@ -791,17 +791,16 @@ export default function StudentDashboard({ navigation }) {
               contentContainerStyle={{ padding: 16, gap: 12 }}
             >
               <Text style={styles.aboutDesc}>
-                NEXUS is the next-generation Academic Governance & Student Campus Hub for Info Institute of Technology. Engineered with modern real-time tracking for attendance, verified curriculum lecture notes, and seamless institutional portals.
-              </Text>
+               NEXUS – Next-Generation Academic Governance & Student Campus Hub
+
+NEXUS is the next-generation Academic Governance & Student Campus Hub for the Institute of Technology. Engineered with modern real-time attendance tracking, verified curriculum lecture notes, and seamless institutional portals, NEXUS also features a **Found & Lost module** that enables students and staff to report lost belongings, post found items, and easily connect with their rightful owners, creating a safer and more connected campus community.              </Text>
 
               <View style={styles.creditsCard}>
                 <Text style={styles.creditsHeading}>Core Development Team</Text>
                 <Text style={styles.creditsText}>• Gnana Prakash V (AI & DS)</Text>
-                <Text style={styles.creditsText}>• Esakki Muthu M (AI & DS)</Text>
+                <Text style={styles.creditsText}>• Kamesh N (AI & DS)</Text>
+                 <Text style={styles.creditsText}>• Christ Noble S (AI & DS)</Text>
                 <Text style={styles.creditsText}>• Abishek R K (AI & DS)</Text>
-                <Text style={[styles.creditsHeading, { marginTop: 8 }]}>Faculty Mentors</Text>
-                <Text style={styles.creditsText}>• Dr. Arulprakash P, HOD AI & DS</Text>
-                <Text style={styles.creditsText}>• Mr. Vasanth V, Assistant Professor</Text>
               </View>
             </ScrollView>
           </View>

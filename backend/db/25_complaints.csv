@@ -1,0 +1,3 @@
+id,ticket_number,reported_by,location_id,category_id,room_identifier,description,priority,status,created_at,resolved_at
+1,CMP-2025-0001,4,5,1,LH-101,Split AC unit near podium is leaking water onto the floor.,HIGH,RESOLVED,2025-08-01 10:15:00,2025-08-02 16:10:00
+2,CMP-2025-0002,14,6,3,LH-201,Ceiling projector HDMI input flickering intermittently.,HIGH,IN_PROGRESS,2025-08-05 11:30:00,

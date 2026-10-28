@@ -1,0 +1,4 @@
+id,part_code,name,trade,stock,storage_bin
+1,SP-HVAC-01,AC Drain Hose 2m,HVAC,25,BIN-A12
+2,SP-ELEC-04,45uF Dual Run Capacitor,ELECTRICAL,18,BIN-B04
+3,SP-IT-09,10m 4K HDMI Fiber Cable,IT_AV,5,BIN-C01

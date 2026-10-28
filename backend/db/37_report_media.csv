@@ -1,0 +1,4 @@
+id,lost_report_id,found_report_id,media_id
+1,1,,8
+2,,1,9
+3,,2,10

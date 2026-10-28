@@ -1,0 +1,3 @@
+id,user_id,faculty_id,department_id,designation,cabin_number,mentor_capacity
+1,2,FAC-CS-001,1,Associate Professor,CS-B204,15
+2,3,FAC-IT-002,2,Assistant Professor,IT-C301,15

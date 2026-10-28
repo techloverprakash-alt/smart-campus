@@ -1,0 +1,3 @@
+id,reported_by,category_id,found_location_id,title,description,found_at,custody_desk,inventory_tag,storage_status
+1,14,1,8,Found AirPods in Black Silicone Case,Found white Apple earbuds inside a black protective case at Central Cafeteria.,2025-08-10 14:00:00,Admin Ground Floor Custody Desk,LF-2025-001,HANDED_OVER
+2,2,1,5,Found Casio ClassWiz Calculator,Found on the last bench of LH-101 after Distributed Systems lecture.,2025-08-12 11:00:00,Admin Ground Floor Custody Desk,LF-2025-002,IN_CUSTODY

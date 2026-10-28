@@ -1,0 +1,3 @@
+id,reporter_id,category_id,last_seen_location_id,title,brand_model,description,lost_at,status
+1,4,1,8,Lost Apple AirPods Pro (2nd Gen),Apple AirPods Pro Gen 2,"White charging case with a matte black silicone cover, left near Cafeteria table 4.",2025-08-10 12:30:00,RESOLVED
+2,7,1,5,Lost Casio Scientific Calculator,Casio fx-991EX,Black ClassWiz scientific calculator with roll number scratched on the back cover.,2025-08-12 10:00:00,MATCHED

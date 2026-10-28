@@ -1,0 +1,21 @@
+id,session_id,student_id,status,remarks
+1,1,1,PRESENT,
+2,1,2,PRESENT,
+3,1,3,PRESENT,
+4,1,4,PRESENT,
+5,1,5,ABSENT,Medical leave
+6,1,6,PRESENT,
+7,1,7,PRESENT,
+8,1,8,PRESENT,
+9,1,9,PRESENT,
+10,1,10,OD,Symposium participation
+11,2,11,PRESENT,
+12,2,12,PRESENT,
+13,2,13,PRESENT,
+14,2,14,PRESENT,
+15,2,15,ABSENT,Uninformed absence
+16,2,16,PRESENT,
+17,2,17,PRESENT,
+18,2,18,PRESENT,
+19,2,19,PRESENT,
+20,2,20,OD,Hackathon duty

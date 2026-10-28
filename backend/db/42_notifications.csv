@@ -1,0 +1,4 @@
+id,user_id,title,message,notification_type,is_read,created_at
+1,4,Complaint Resolved,Your ticket CMP-2025-0001 regarding LH-101 AC has been resolved.,COMPLAINT_UPDATE,True,2025-08-02 16:10:00
+2,4,Lost Item Match Found!,AI found a 92.5% match for your Lost Apple AirPods Pro.,LOST_FOUND_MATCH,True,2025-08-10 14:25:00
+3,8,Attendance Alert,You were marked ABSENT for CS8701 Distributed Systems on 2025-08-04.,ATTENDANCE_ALERT,False,2025-08-04 10:00:00
