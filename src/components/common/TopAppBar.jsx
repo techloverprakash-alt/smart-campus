@@ -27,11 +27,27 @@ const TopAppBar = ({
             <MaterialIcons name="menu" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
         )}
-        {profileImage && (
-          <TouchableOpacity onPress={onProfilePress} activeOpacity={0.8}>
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+        {profileImage ? (
+          <TouchableOpacity onPress={onProfilePress} activeOpacity={0.8} style={styles.profileWrapper}>
+            <Image
+              source={{ uri: profileImage }}
+              style={styles.profileImage}
+              onError={(e) => {
+                if (e?.target) e.target.src = '/info_logo.png';
+              }}
+            />
           </TouchableOpacity>
-        )}
+        ) : onProfilePress ? (
+          <TouchableOpacity
+            onPress={onProfilePress}
+            activeOpacity={0.8}
+            style={[styles.profileImage, styles.profileFallback]}
+          >
+            <MaterialIcons name="person" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        ) : (!title || title === 'NEXUS') ? (
+          <Image source={{ uri: '/info_logo.png' }} style={styles.profileImage} />
+        ) : null}
         <Text style={styles.title}>{title || 'NEXUS'}</Text>
       </View>
       <View style={styles.rightSection}>
@@ -79,6 +95,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    objectFit: 'cover',
+  },
+  profileWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  profileFallback: {
+    backgroundColor: '#e4ecff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconButton: {
     padding: 8,

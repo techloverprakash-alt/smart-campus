@@ -122,7 +122,7 @@ export default function AdminEditProfile({ navigation }) {
             <View style={styles.brandContainer}>
               <Image
                 source={{
-                  uri: "https://lh3.googleusercontent.com/aida/AEtjO1Wvn-7DlspBmymBZsPXM5ofH-gwObYUZX7235q1CvfulTuqnJHFo7-dKK9FtRU_nF9bJmgVlSl3vIe_BLaa3RBjW9icQRFjWupeEupGTt0BOl5iIocHT6vlnlyxA4S2OwCvcTdTEwhoTDbAzsOpRo5PqdfOvY89KN0Ri2ZllbuoLjY-RwWFBXSYB1pBPQBVoQDDG3Q2XjZXSSNyxh92nncG92zKb44jRGkR1tHS9neOiyzZGqYdhtgy71qS3NQuFQJrzqFr3ErYDA",
+                  uri: "/info_logo.png",
                 }}
                 style={styles.crest}
               />

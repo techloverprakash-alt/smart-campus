@@ -17,8 +17,7 @@ import BottomNavBar from '../../../components/common/BottomNavBar';
 import { useAuth } from '../../auth/context/AuthContext';
 import { getMyProfile } from '../../../services/api/profiles';
 
-const NEXUS_LOGO =
-  'https://lh3.googleusercontent.com/aida/AEtjO1Wvn-7DlspBmymBZsPXM5ofH-gwObYUZX7235q1CvfulTuqnJHFo7-dKK9FtRU_nF9bJmgVlSl3vIe_BLaa3RBjW9icQRFjWupeEupGTt0BOl5iIocHT6vlnlyxA4S2OwCvcTdTEwhoTDbAzsOpRo5PqdfOvY89KN0Ri2ZllbuoLjY-RwWFBXSYB1pBPQBVoQDDG3Q2XjZXSSNyxh92nncG92zKb44jRGkR1tHS9neOiyzZGqYdhtgy71qS3NQuFQJrzqFr3ErYDA';
+const NEXUS_LOGO = '/info_logo.png';
 
 const PROFILE_IMAGE =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCc4W7vI51fe3ETw2EQX4lwi44xHoVjxhajjHMOpT9y4iEJ2w8FkLsxEKbcnrl10ihCKljH5APzLmaGOBLlDkKSoWlXxQZMUZCZ5ZYFRWfdzsJ5rRxYgOgXDtLucM8yYOpUOWkVomMC1Am6Bw_lboIad4GF0jJFtugTgDmGFGcLEeziTnzKyhlD6Q8oqmQyp73E-3fTq8Ea4twUa7ikmr3uzfZZGX0jipb0oFQobqODLlnQqLmhRmD1';
@@ -50,7 +49,7 @@ export default function AdminProfile({ navigation }) {
   const adminPhone = profile?.phone || '+91 98450 11223';
   const adminRole = profile?.designation || (user?.role === 'ADMIN' ? 'Senior Administrator & Academic Governance' : 'Senior Administrator');
   const adminOffice = profile?.office_location || 'Office of Academic Governance • Suite 101';
-  const avatarUrl = profile?.avatar_url || user?.profile?.avatar_url || PROFILE_IMAGE;
+  const avatarUrl = profile?.avatar_url || profile?.avatar || user?.profile?.avatar_url || user?.avatar || PROFILE_IMAGE;
 
   const openEmail = () => {
     Linking.openURL(`mailto:${adminEmail}`);
