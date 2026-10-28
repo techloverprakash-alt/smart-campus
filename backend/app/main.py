@@ -21,8 +21,10 @@ import app.modules.auth.models  # Register Tables 1-7 (users, roles, profiles, r
 import app.modules.academic.models  # Register Tables 8-15 (departments, batches, sections, locations)
 import app.modules.attendance.models  # Register Tables 16-20 (subjects, offerings, timetable, attendance)
 import app.modules.materials.models  # Register Tables 21-23 (study_materials, announcements, announcement_targets)
+import app.modules.complaints.models  # Register Tables 24-33 (complaints, work_orders, spare_parts)
 import app.modules.core.models  # Register core models
 import app.modules.lost_and_found.models  # Register Tables 34-41 models
+import app.modules.notifications.models  # Register Tables 42-44 (notifications, broadcasts, deliveries)
 from app.modules.lost_and_found.models import ItemCategory
 from app.modules.core.models import Location
 from app.schemas import HealthResponse
