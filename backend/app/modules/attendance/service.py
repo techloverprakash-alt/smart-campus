@@ -317,6 +317,7 @@ class AttendanceService:
 
         room_name = entry.location.name if entry.location else "Room 302"
         section_name = entry.course_offering.section.name if entry.course_offering.section else "Class"
+        is_marked = bool(existing_session and existing_session.status in ("SUBMITTED", "APPROVED", "COMPLETED"))
 
         return {
             "session_id": session_id,
@@ -326,6 +327,9 @@ class AttendanceService:
             "course_name": entry.course_offering.subject.title,
             "section_name": section_name,
             "room_name": room_name,
+            "is_already_marked": is_marked,
+            "session_status": existing_session.status if existing_session else None,
+            "marked_at": str(existing_session.submitted_at) if existing_session and existing_session.submitted_at else None,
             "students": roster_items,
         }
 
@@ -365,6 +369,14 @@ class AttendanceService:
             )
             .first()
         )
+
+        role_str = current_user.role.name if hasattr(current_user.role, "name") else str(current_user.role or "")
+        is_admin = role_str.upper() == "ADMIN"
+        if session and session.status in ("SUBMITTED", "APPROVED", "COMPLETED") and not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Attendance for this class period has already been marked and completed on {target_date}. Duplicate submissions are locked."
+            )
 
         if not session:
             session = AttendanceSession(
@@ -431,7 +443,9 @@ class AttendanceService:
             d = datetime.datetime.strptime(target_date_str, "%Y-%m-%d").date()
             query = query.filter(AttendanceSession.attendance_date == d)
 
-        # If student is logged in, query their section's sessions and individual status
+        role_str = current_user.role.name if hasattr(current_user.role, "name") else str(current_user.role or "")
+        is_admin = role_str.upper() == "ADMIN"
+        is_staff = current_user.staff_profile is not None and not is_admin
         is_student = current_user.student_profile is not None
         student_id = current_user.student_profile.id if is_student else None
 
@@ -445,31 +459,35 @@ class AttendanceService:
                 .limit(limit)
                 .all()
             )
-        elif current_user.staff_profile:
-            sessions = query.filter(AttendanceSession.marked_by == current_user.staff_profile.id).limit(limit).all()
-
-        # If none or few, fetch all recent departmental sessions for review
-        if len(sessions) < limit:
-            remaining = limit - len(sessions)
-            all_sessions = (
-                self.db.query(AttendanceSession)
-                .order_by(AttendanceSession.attendance_date.desc(), AttendanceSession.id.desc())
-                .limit(remaining)
+        elif is_staff:
+            staff_id = current_user.staff_profile.id
+            sessions = (
+                query.filter(
+                    (AttendanceSession.marked_by == staff_id)
+                    | (AttendanceSession.timetable_entry.has(
+                        TimetableEntry.course_offering.has(
+                            CourseOffering.staff_id == staff_id
+                        )
+                    ))
+                )
+                .limit(limit)
                 .all()
             )
-            # Merge without duplicates
-            seen_ids = {s.id for s in sessions}
-            for s in all_sessions:
-                if s.id not in seen_ids:
-                    sessions.append(s)
-                    seen_ids.add(s.id)
+        else:
+            sessions = query.limit(limit).all()
 
         history_items = []
         for s in sessions:
             entry = s.timetable_entry
-            sub = entry.course_offering.subject if entry and entry.course_offering else None
+            offering = entry.course_offering if entry else None
+            sub = offering.subject if offering else None
+            sec = offering.section if offering else None
+            dept = sec.department if sec else None
+
             total_students = len(s.records)
             present_count = sum(1 for r in s.records if r.status in ("PRESENT", "OD"))
+            od_count = sum(1 for r in s.records if r.status == "OD")
+            absent_count = sum(1 for r in s.records if r.status == "ABSENT")
             marker_name = (
                 s.marker.user.full_name
                 if s.marker and s.marker.user and s.marker.user.full_name
@@ -478,13 +496,26 @@ class AttendanceService:
             period_num = entry.period_number if entry else 1
             code_str = sub.code if sub else "COURSE"
             title_str = sub.title if sub else "Class Session"
-            
+            sec_str = sec.name if sec else ""
+            dept_str = dept.name if dept else ""
+
             if is_student:
                 rec = next((r for r in s.records if r.student_id == student_id), None)
                 norm_status = rec.status if rec else "PRESENT"
             else:
                 raw_status = (s.status or "SUBMITTED").lower()
                 norm_status = "pending" if raw_status in ("submitted", "pending") else raw_status
+
+            records_list = [
+                {
+                    "student_id": r.student_id,
+                    "student_name": r.student.user.full_name if r.student and r.student.user else f"Student {r.student_id}",
+                    "roll_number": r.student.roll_number if r.student else "",
+                    "status": r.status,
+                    "remarks": r.remarks,
+                }
+                for r in s.records
+            ]
 
             history_items.append({
                 "id": s.id,
@@ -493,6 +524,8 @@ class AttendanceService:
                 "subject_code": code_str,
                 "course_name": title_str,
                 "subject_name": title_str,
+                "department_name": dept_str,
+                "section_name": sec_str,
                 "date": s.attendance_date.strftime("%b %d, %Y"),
                 "marking_date": str(s.attendance_date),
                 "attendance_date": str(s.attendance_date),
@@ -500,6 +533,8 @@ class AttendanceService:
                 "period_number": period_num,
                 "present": present_count,
                 "present_count": present_count,
+                "absent_count": absent_count,
+                "od_count": od_count,
                 "total": total_students if total_students > 0 else 40,
                 "total_students": total_students if total_students > 0 else 40,
                 "total_count": total_students if total_students > 0 else 40,
@@ -507,6 +542,7 @@ class AttendanceService:
                 "marked_by_name": marker_name,
                 "staff": marker_name,
                 "status": norm_status,
+                "records": records_list,
             })
 
         return {
@@ -794,4 +830,5 @@ class AttendanceService:
             "rows": matrix_rows,
             "weeklySchedule": frontend_grid,
             "weekly_grid": frontend_grid,
+            "grid": frontend_grid,
         }

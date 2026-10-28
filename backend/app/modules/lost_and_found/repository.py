@@ -1,11 +1,11 @@
 import datetime
 import json
-import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.modules.core.models import Location, Media, User
+from app.modules.academic.models import CampusLocation, MediaAttachment
+from app.modules.auth.models import User
 from app.modules.lost_and_found.models import (
     FoundReport,
     ItemCategory,
@@ -20,7 +20,7 @@ from app.modules.lost_and_found.models import (
 
 class LostAndFoundRepository:
     """
-    SQLAlchemy repository encapsulating all database interactions for the 8 Lost and Found tables.
+    SQLAlchemy repository encapsulating data access for Tables 34 through 41.
     """
     def __init__(self, db: Session):
         self.db = db
@@ -29,8 +29,12 @@ class LostAndFoundRepository:
     # Categories & Locations
     # =========================================================================
 
-    def get_category(self, category_id: str) -> Optional[ItemCategory]:
-        return self.db.query(ItemCategory).filter(ItemCategory.id == category_id).first()
+    def get_category(self, category_id: Union[int, str]) -> Optional[ItemCategory]:
+        try:
+            cid = int(category_id)
+            return self.db.query(ItemCategory).filter(ItemCategory.id == cid).first()
+        except (ValueError, TypeError):
+            return self.db.query(ItemCategory).filter(ItemCategory.name == str(category_id)).first()
 
     def get_category_by_name(self, name: str) -> Optional[ItemCategory]:
         return self.db.query(ItemCategory).filter(ItemCategory.name.ilike(name.strip())).first()
@@ -45,21 +49,25 @@ class LostAndFoundRepository:
         self.db.refresh(cat)
         return cat
 
-    def get_or_create_location(self, name: str, zone: Optional[str] = None) -> Location:
+    def list_locations(self) -> List[CampusLocation]:
+        return self.db.query(CampusLocation).order_by(CampusLocation.name.asc()).all()
+
+    def get_location(self, location_id: Union[int, str]) -> Optional[CampusLocation]:
+        try:
+            lid = int(location_id)
+            return self.db.query(CampusLocation).filter(CampusLocation.id == lid).first()
+        except (ValueError, TypeError):
+            return self.db.query(CampusLocation).filter(CampusLocation.name == str(location_id)).first()
+
+    def get_or_create_location(self, name: str, location_type: Optional[str] = None) -> CampusLocation:
         clean_name = name.strip()
-        loc = self.db.query(Location).filter(Location.name.ilike(clean_name)).first()
+        loc = self.db.query(CampusLocation).filter(CampusLocation.name.ilike(clean_name)).first()
         if not loc:
-            loc = Location(name=clean_name, zone=zone or clean_name)
+            loc = CampusLocation(name=clean_name, location_type=location_type or "OTHER")
             self.db.add(loc)
             self.db.commit()
             self.db.refresh(loc)
         return loc
-
-    def get_location(self, location_id: str) -> Optional[Location]:
-        return self.db.query(Location).filter(Location.id == location_id).first()
-
-    def list_locations(self) -> List[Location]:
-        return self.db.query(Location).order_by(Location.name.asc()).all()
 
     # =========================================================================
     # Lost Reports (Table 35)
@@ -67,11 +75,11 @@ class LostAndFoundRepository:
 
     def create_lost_report(
         self,
-        reporter_id: str,
-        category_id: str,
+        reporter_id: int,
+        category_id: int,
         title: str,
         description: str,
-        last_seen_location_id: Optional[str] = None,
+        last_seen_location_id: Optional[int] = None,
         brand_model: Optional[str] = None,
         lost_at: Optional[datetime.datetime] = None,
         status: str = "OPEN"
@@ -91,56 +99,72 @@ class LostAndFoundRepository:
         self.db.refresh(report)
         return report
 
-    def get_lost_report(self, report_id: str) -> Optional[LostReport]:
+    def get_lost_report(self, report_id: Union[int, str]) -> Optional[LostReport]:
+        try:
+            rid = int(report_id)
+        except (ValueError, TypeError):
+            return None
         return (
             self.db.query(LostReport)
             .options(
                 joinedload(LostReport.reporter),
                 joinedload(LostReport.category),
                 joinedload(LostReport.last_seen_location),
-                joinedload(LostReport.media).joinedload(ReportMedia.media_item)
+                joinedload(LostReport.media),
             )
-            .filter(LostReport.id == report_id)
+            .filter(LostReport.id == rid)
             .first()
         )
 
     def list_lost_reports(
         self,
-        category_id: Optional[str] = None,
-        location_id: Optional[str] = None,
+        reporter_id: Optional[Union[int, str]] = None,
+        category_id: Optional[Union[int, str]] = None,
+        location_id: Optional[Union[int, str]] = None,
         status: Optional[str] = None,
-        reporter_id: Optional[str] = None,
-        search: Optional[str] = None,
-        limit: int = 50,
-        offset: int = 0
+        search_query: Optional[str] = None,
     ) -> List[LostReport]:
-        q = (
+        query = (
             self.db.query(LostReport)
             .options(
                 joinedload(LostReport.reporter),
                 joinedload(LostReport.category),
                 joinedload(LostReport.last_seen_location),
-                joinedload(LostReport.media).joinedload(ReportMedia.media_item)
+                joinedload(LostReport.media),
             )
         )
-        if category_id:
-            q = q.filter(LostReport.category_id == category_id)
-        if location_id:
-            q = q.filter(LostReport.last_seen_location_id == location_id)
-        if status:
-            q = q.filter(LostReport.status == status)
-        if reporter_id:
-            q = q.filter(LostReport.reporter_id == reporter_id)
-        if search:
-            s = f"%{search.strip()}%"
-            q = q.filter(or_(LostReport.title.ilike(s), LostReport.description.ilike(s), LostReport.brand_model.ilike(s)))
-        return q.order_by(LostReport.created_at.desc()).offset(offset).limit(limit).all()
 
-    def update_lost_report(self, report_id: str, updates: Dict[str, Any]) -> Optional[LostReport]:
+        if reporter_id is not None:
+            try:
+                rid = int(reporter_id)
+                query = query.filter(LostReport.reporter_id == rid)
+            except ValueError:
+                pass
+        if category_id is not None:
+            try:
+                cid = int(category_id)
+                query = query.filter(LostReport.category_id == cid)
+            except ValueError:
+                pass
+        if location_id is not None:
+            try:
+                lid = int(location_id)
+                query = query.filter(LostReport.last_seen_location_id == lid)
+            except ValueError:
+                pass
+        if status:
+            query = query.filter(LostReport.status.ilike(status))
+        if search_query:
+            term = f"%{search_query.strip()}%"
+            query = query.filter(or_(LostReport.title.ilike(term), LostReport.description.ilike(term)))
+
+        return query.order_by(LostReport.created_at.desc()).all()
+
+    def update_lost_report(self, report_id: Union[int, str], **kwargs) -> Optional[LostReport]:
         report = self.get_lost_report(report_id)
         if not report:
             return None
-        for k, v in updates.items():
+        for k, v in kwargs.items():
             if hasattr(report, k) and v is not None:
                 setattr(report, k, v)
         report.updated_at = datetime.datetime.utcnow()
@@ -148,7 +172,7 @@ class LostAndFoundRepository:
         self.db.refresh(report)
         return report
 
-    def delete_lost_report(self, report_id: str) -> bool:
+    def delete_lost_report(self, report_id: Union[int, str]) -> bool:
         report = self.get_lost_report(report_id)
         if not report:
             return False
@@ -162,15 +186,15 @@ class LostAndFoundRepository:
 
     def create_found_report(
         self,
-        reported_by: str,
-        category_id: str,
+        reported_by: int,
+        category_id: int,
         title: str,
         description: str,
         custody_desk: str,
         inventory_tag: str,
-        found_location_id: Optional[str] = None,
+        found_location_id: Optional[int] = None,
         found_at: Optional[datetime.datetime] = None,
-        storage_status: str = "INTAKE_PENDING"
+        storage_status: str = "IN_CUSTODY"
     ) -> FoundReport:
         report = FoundReport(
             reported_by=reported_by,
@@ -188,59 +212,72 @@ class LostAndFoundRepository:
         self.db.refresh(report)
         return report
 
-    def get_found_report(self, report_id: str) -> Optional[FoundReport]:
+    def get_found_report(self, report_id: Union[int, str]) -> Optional[FoundReport]:
+        try:
+            rid = int(report_id)
+        except (ValueError, TypeError):
+            return None
         return (
             self.db.query(FoundReport)
             .options(
                 joinedload(FoundReport.finder),
                 joinedload(FoundReport.category),
                 joinedload(FoundReport.found_location),
-                joinedload(FoundReport.media).joinedload(ReportMedia.media_item)
+                joinedload(FoundReport.media),
             )
-            .filter(FoundReport.id == report_id)
+            .filter(FoundReport.id == rid)
             .first()
         )
 
-    def get_found_by_tag(self, inventory_tag: str) -> Optional[FoundReport]:
-        return self.db.query(FoundReport).filter(FoundReport.inventory_tag == inventory_tag).first()
-
     def list_found_reports(
         self,
-        category_id: Optional[str] = None,
-        location_id: Optional[str] = None,
+        reported_by: Optional[Union[int, str]] = None,
+        category_id: Optional[Union[int, str]] = None,
+        location_id: Optional[Union[int, str]] = None,
         storage_status: Optional[str] = None,
-        reported_by: Optional[str] = None,
-        search: Optional[str] = None,
-        limit: int = 50,
-        offset: int = 0
+        search_query: Optional[str] = None,
     ) -> List[FoundReport]:
-        q = (
+        query = (
             self.db.query(FoundReport)
             .options(
                 joinedload(FoundReport.finder),
                 joinedload(FoundReport.category),
                 joinedload(FoundReport.found_location),
-                joinedload(FoundReport.media).joinedload(ReportMedia.media_item)
+                joinedload(FoundReport.media),
             )
         )
-        if category_id:
-            q = q.filter(FoundReport.category_id == category_id)
-        if location_id:
-            q = q.filter(FoundReport.found_location_id == location_id)
-        if storage_status:
-            q = q.filter(FoundReport.storage_status == storage_status)
-        if reported_by:
-            q = q.filter(FoundReport.reported_by == reported_by)
-        if search:
-            s = f"%{search.strip()}%"
-            q = q.filter(or_(FoundReport.title.ilike(s), FoundReport.description.ilike(s), FoundReport.inventory_tag.ilike(s)))
-        return q.order_by(FoundReport.created_at.desc()).offset(offset).limit(limit).all()
 
-    def update_found_report(self, report_id: str, updates: Dict[str, Any]) -> Optional[FoundReport]:
+        if reported_by is not None:
+            try:
+                rb = int(reported_by)
+                query = query.filter(FoundReport.reported_by == rb)
+            except ValueError:
+                pass
+        if category_id is not None:
+            try:
+                cid = int(category_id)
+                query = query.filter(FoundReport.category_id == cid)
+            except ValueError:
+                pass
+        if location_id is not None:
+            try:
+                lid = int(location_id)
+                query = query.filter(FoundReport.found_location_id == lid)
+            except ValueError:
+                pass
+        if storage_status:
+            query = query.filter(FoundReport.storage_status.ilike(storage_status))
+        if search_query:
+            term = f"%{search_query.strip()}%"
+            query = query.filter(or_(FoundReport.title.ilike(term), FoundReport.description.ilike(term)))
+
+        return query.order_by(FoundReport.created_at.desc()).all()
+
+    def update_found_report(self, report_id: Union[int, str], **kwargs) -> Optional[FoundReport]:
         report = self.get_found_report(report_id)
         if not report:
             return None
-        for k, v in updates.items():
+        for k, v in kwargs.items():
             if hasattr(report, k) and v is not None:
                 setattr(report, k, v)
         report.updated_at = datetime.datetime.utcnow()
@@ -249,119 +286,138 @@ class LostAndFoundRepository:
         return report
 
     # =========================================================================
-    # Media Attachments (Table 37)
+    # Report Media (Table 37)
     # =========================================================================
 
     def attach_media(
         self,
         media_url: str,
-        file_path: Optional[str] = None,
-        lost_report_id: Optional[str] = None,
-        found_report_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        lost_report_id: Optional[int] = None,
+        found_report_id: Optional[int] = None,
+        media_id: Optional[int] = None,
     ) -> ReportMedia:
-        media_rec = Media(
-            file_name=media_url.split("/")[-1],
-            file_path=file_path or media_url,
-            file_url=media_url,
-            uploaded_by=user_id
-        )
-        self.db.add(media_rec)
-        self.db.flush()
-
-        rep_media = ReportMedia(
+        rm = ReportMedia(
             lost_report_id=lost_report_id,
             found_report_id=found_report_id,
-            media_id=media_rec.id,
+            media_id=media_id,
             media_url=media_url
         )
-        self.db.add(rep_media)
+        self.db.add(rm)
         self.db.commit()
-        self.db.refresh(rep_media)
-        return rep_media
+        self.db.refresh(rm)
+        return rm
 
     # =========================================================================
     # Item Matches (Table 38)
     # =========================================================================
 
-    def upsert_match(
+    def create_or_update_match(
         self,
-        lost_report_id: str,
-        found_report_id: str,
+        lost_report_id: int,
+        found_report_id: int,
         combined_score: float,
         text_similarity: Optional[float] = None,
         image_similarity: Optional[float] = None,
-        criteria: Optional[List[Dict[str, Any]]] = None,
+        criteria_json: Optional[str] = None,
         status: str = "CANDIDATE"
     ) -> ItemMatch:
-        match = (
-            self.db.query(ItemMatch)
-            .filter(
-                ItemMatch.lost_report_id == lost_report_id,
-                ItemMatch.found_report_id == found_report_id
-            )
-            .first()
-        )
-        crit_str = json.dumps(criteria or [])
+        match = self.db.query(ItemMatch).filter(
+            ItemMatch.lost_report_id == lost_report_id,
+            ItemMatch.found_report_id == found_report_id
+        ).first()
+
         if match:
             match.combined_score = combined_score
             match.text_similarity = text_similarity
             match.image_similarity = image_similarity
-            match.criteria_json = crit_str
+            if criteria_json:
+                match.criteria_json = criteria_json
             match.status = status
         else:
             match = ItemMatch(
                 lost_report_id=lost_report_id,
                 found_report_id=found_report_id,
-                combined_score=combined_score,
                 text_similarity=text_similarity,
                 image_similarity=image_similarity,
-                criteria_json=crit_str,
+                combined_score=combined_score,
+                criteria_json=criteria_json,
                 status=status
             )
             self.db.add(match)
+
         self.db.commit()
         self.db.refresh(match)
         return match
 
-    def get_match(self, match_id: str) -> Optional[ItemMatch]:
+    def get_match(self, match_id: Union[int, str]) -> Optional[ItemMatch]:
+        try:
+            mid = int(match_id)
+        except (ValueError, TypeError):
+            return None
         return (
             self.db.query(ItemMatch)
             .options(
-                joinedload(ItemMatch.lost_report),
-                joinedload(ItemMatch.found_report),
-                joinedload(ItemMatch.verifications)
+                joinedload(ItemMatch.lost_report).joinedload(LostReport.reporter),
+                joinedload(ItemMatch.found_report).joinedload(FoundReport.finder),
+                joinedload(ItemMatch.verifications),
             )
-            .filter(ItemMatch.id == match_id)
+            .filter(ItemMatch.id == mid)
             .first()
         )
 
     def list_matches(
         self,
-        lost_report_id: Optional[str] = None,
-        found_report_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        lost_report_id: Optional[Union[int, str]] = None,
+        found_report_id: Optional[Union[int, str]] = None,
         status: Optional[str] = None,
-        limit: int = 50
+        user_id: Optional[Union[int, str]] = None
     ) -> List[ItemMatch]:
-        q = (
+        query = (
             self.db.query(ItemMatch)
+            .join(ItemMatch.lost_report)
+            .join(ItemMatch.found_report)
             .options(
-                joinedload(ItemMatch.lost_report),
-                joinedload(ItemMatch.found_report),
-                joinedload(ItemMatch.verifications)
+                joinedload(ItemMatch.lost_report).joinedload(LostReport.reporter),
+                joinedload(ItemMatch.found_report).joinedload(FoundReport.finder),
+                joinedload(ItemMatch.verifications),
             )
         )
-        if lost_report_id:
-            q = q.filter(ItemMatch.lost_report_id == lost_report_id)
-        if found_report_id:
-            q = q.filter(ItemMatch.found_report_id == found_report_id)
-        if user_id:
-            q = q.join(LostReport, ItemMatch.lost_report_id == LostReport.id).join(FoundReport, ItemMatch.found_report_id == FoundReport.id)
-            q = q.filter(or_(LostReport.reporter_id == user_id, FoundReport.reported_by == user_id))
+
+        if lost_report_id is not None:
+            try:
+                l_id = int(lost_report_id)
+                query = query.filter(ItemMatch.lost_report_id == l_id)
+            except ValueError:
+                pass
+        if found_report_id is not None:
+            try:
+                f_id = int(found_report_id)
+                query = query.filter(ItemMatch.found_report_id == f_id)
+            except ValueError:
+                pass
         if status:
-            q = q.filter(ItemMatch.status == status)
-        return q.order_by(ItemMatch.combined_score.desc()).limit(limit).all()
+            query = query.filter(ItemMatch.status.ilike(status))
+        if user_id is not None:
+            try:
+                uid = int(user_id)
+                query = query.filter(
+                    or_(
+                        LostReport.reporter_id == uid,
+                        FoundReport.reported_by == uid
+                    )
+                )
+            except ValueError:
+                pass
+
+        return query.order_by(ItemMatch.combined_score.desc()).all()
+
+    def update_match_status(self, match_id: Union[int, str], status: str) -> Optional[ItemMatch]:
+        match = self.get_match(match_id)
+        if match:
+            match.status = status
+            self.db.commit()
+            self.db.refresh(match)
+        return match
 
     # =========================================================================
     # Match Verifications (Table 39)
@@ -369,15 +425,15 @@ class LostAndFoundRepository:
 
     def create_verification(
         self,
-        match_id: str,
+        match_id: int,
         challenge_question: str,
         owner_response: Optional[str] = None,
         officer_notes: Optional[str] = None,
-        concordance_score: Optional[float] = 100.0,
-        verified_by: Optional[str] = None,
-        status: str = "VERIFIED"
+        concordance_score: Optional[float] = None,
+        verified_by: Optional[int] = None,
+        status: str = "APPROVED"
     ) -> MatchVerification:
-        ver = MatchVerification(
+        v = MatchVerification(
             match_id=match_id,
             challenge_question=challenge_question,
             owner_response=owner_response,
@@ -386,15 +442,10 @@ class LostAndFoundRepository:
             verified_by=verified_by,
             status=status
         )
-        self.db.add(ver)
-        # Update match status to HANDOVER_READY if verified
-        if status == "VERIFIED":
-            match = self.get_match(match_id)
-            if match:
-                match.status = "HANDOVER_READY"
+        self.db.add(v)
         self.db.commit()
-        self.db.refresh(ver)
-        return ver
+        self.db.refresh(v)
+        return v
 
     # =========================================================================
     # Item Claims (Table 40)
@@ -402,9 +453,9 @@ class LostAndFoundRepository:
 
     def create_claim(
         self,
-        found_report_id: str,
-        claimed_by: str,
-        lost_report_id: Optional[str] = None,
+        found_report_id: int,
+        claimed_by: int,
+        lost_report_id: Optional[int] = None,
         status: str = "PENDING"
     ) -> ItemClaim:
         claim = ItemClaim(
@@ -418,57 +469,85 @@ class LostAndFoundRepository:
         self.db.refresh(claim)
         return claim
 
-    def get_claim(self, claim_id: str) -> Optional[ItemClaim]:
+    def get_claim(self, claim_id: Union[int, str]) -> Optional[ItemClaim]:
+        try:
+            cid = int(claim_id)
+        except (ValueError, TypeError):
+            return None
         return (
             self.db.query(ItemClaim)
             .options(
-                joinedload(ItemClaim.claimant),
                 joinedload(ItemClaim.found_report),
                 joinedload(ItemClaim.lost_report),
-                joinedload(ItemClaim.handover)
+                joinedload(ItemClaim.claimant),
+                joinedload(ItemClaim.reviewer),
+                joinedload(ItemClaim.handover),
             )
-            .filter(ItemClaim.id == claim_id)
+            .filter(ItemClaim.id == cid)
             .first()
         )
 
     def list_claims(
         self,
-        found_report_id: Optional[str] = None,
-        claimed_by: Optional[str] = None,
+        found_report_id: Optional[Union[int, str]] = None,
+        claimed_by: Optional[Union[int, str]] = None,
         status: Optional[str] = None
     ) -> List[ItemClaim]:
-        q = (
+        query = (
             self.db.query(ItemClaim)
             .options(
-                joinedload(ItemClaim.claimant),
                 joinedload(ItemClaim.found_report),
-                joinedload(ItemClaim.lost_report)
+                joinedload(ItemClaim.lost_report),
+                joinedload(ItemClaim.claimant),
+                joinedload(ItemClaim.reviewer),
+                joinedload(ItemClaim.handover),
             )
         )
-        if found_report_id:
-            q = q.filter(ItemClaim.found_report_id == found_report_id)
-        if claimed_by:
-            q = q.filter(ItemClaim.claimed_by == claimed_by)
+        if found_report_id is not None:
+            try:
+                fid = int(found_report_id)
+                query = query.filter(ItemClaim.found_report_id == fid)
+            except ValueError:
+                pass
+        if claimed_by is not None:
+            try:
+                cb = int(claimed_by)
+                query = query.filter(ItemClaim.claimed_by == cb)
+            except ValueError:
+                pass
         if status:
-            q = q.filter(ItemClaim.status == status)
-        return q.order_by(ItemClaim.created_at.desc()).all()
+            query = query.filter(ItemClaim.status.ilike(status))
 
-    def review_claim(self, claim_id: str, new_status: str, reviewer_id: str) -> Optional[ItemClaim]:
+        return query.order_by(ItemClaim.created_at.desc()).all()
+
+    def update_claim(
+        self,
+        claim_id: Union[int, str],
+        status: str,
+        reviewed_by: Optional[int] = None
+    ) -> Optional[ItemClaim]:
         claim = self.get_claim(claim_id)
         if not claim:
             return None
-        claim.status = new_status
-        claim.reviewed_by = reviewer_id
+        claim.status = status
+        if reviewed_by:
+            claim.reviewed_by = reviewed_by
         claim.updated_at = datetime.datetime.utcnow()
-        if new_status == "APPROVED":
-            # Update associated reports to CLAIMED
-            if claim.found_report:
-                claim.found_report.storage_status = "LOCKED"
-            if claim.lost_report:
-                claim.lost_report.status = "CLAIMED"
         self.db.commit()
         self.db.refresh(claim)
         return claim
+
+    def cancel_conflicting_pending_claims(self, found_report_id: int, approved_claim_id: int):
+        """When a claim is approved, any other pending claims on the same found item are rejected."""
+        self.db.query(ItemClaim).filter(
+            ItemClaim.found_report_id == found_report_id,
+            ItemClaim.id != approved_claim_id,
+            ItemClaim.status == "PENDING"
+        ).update(
+            {"status": "REJECTED", "updated_at": datetime.datetime.utcnow()},
+            synchronize_session=False
+        )
+        self.db.commit()
 
     # =========================================================================
     # Item Handovers (Table 41)
@@ -476,10 +555,10 @@ class LostAndFoundRepository:
 
     def create_handover(
         self,
-        claim_id: str,
-        received_by: str,
-        handed_over_by: Optional[str] = None,
-        handover_location_id: Optional[str] = None,
+        claim_id: int,
+        received_by: int,
+        handed_over_by: Optional[int] = None,
+        handover_location_id: Optional[int] = None,
         pickup_pass_tag: Optional[str] = None
     ) -> ItemHandover:
         handover = ItemHandover(
@@ -487,30 +566,27 @@ class LostAndFoundRepository:
             handed_over_by=handed_over_by,
             received_by=received_by,
             handover_location_id=handover_location_id,
-            pickup_pass_tag=pickup_pass_tag or f"#DISC-{uuid.uuid4().hex[:4].upper()}"
+            handed_over_at=datetime.datetime.utcnow(),
+            pickup_pass_tag=pickup_pass_tag or f"PASS-{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         )
         self.db.add(handover)
-        # Update claim and reports status to RELEASED/CLOSED
-        claim = self.get_claim(claim_id)
-        if claim:
-            claim.status = "APPROVED"
-            if claim.found_report:
-                claim.found_report.storage_status = "RELEASED"
-            if claim.lost_report:
-                claim.lost_report.status = "CLOSED"
         self.db.commit()
         self.db.refresh(handover)
         return handover
 
-    def get_handover(self, handover_id: str) -> Optional[ItemHandover]:
+    def get_handover(self, handover_id: Union[int, str]) -> Optional[ItemHandover]:
+        try:
+            hid = int(handover_id)
+        except (ValueError, TypeError):
+            return None
         return (
             self.db.query(ItemHandover)
             .options(
                 joinedload(ItemHandover.claim),
                 joinedload(ItemHandover.officer),
                 joinedload(ItemHandover.receiver),
-                joinedload(ItemHandover.location)
+                joinedload(ItemHandover.location),
             )
-            .filter(ItemHandover.id == handover_id)
+            .filter(ItemHandover.id == hid)
             .first()
         )

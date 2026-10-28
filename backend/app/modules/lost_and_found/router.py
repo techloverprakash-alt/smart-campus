@@ -1,12 +1,13 @@
 import json
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.access.permissions import check_ownership_or_admin, get_current_user, require_role
 from app.database import get_db
 from app.infrastructure.storage import storage_adapter
-from app.modules.core.models import User
+from app.modules.academic.models import CampusLocation, MediaAttachment
+from app.modules.auth.models import User
 from app.modules.lost_and_found.models import (
     FoundReport,
     ItemCategory,
@@ -15,6 +16,7 @@ from app.modules.lost_and_found.models import (
     ItemMatch,
     LostReport,
     MatchVerification,
+    ReportMedia,
 )
 from app.modules.lost_and_found.repository import LostAndFoundRepository
 from app.modules.lost_and_found.schemas import (
@@ -46,7 +48,15 @@ router = APIRouter(prefix="", tags=["Lost and Found System"])
 
 def format_lost_report(r: LostReport) -> LostReportOut:
     media_list = [
-        ReportMediaOut(id=m.id, media_url=m.media_url) for m in (r.media or [])
+        ReportMediaOut(
+            id=m.id,
+            lost_report_id=m.lost_report_id,
+            found_report_id=m.found_report_id,
+            media_id=m.media_id,
+            media_url=m.media_url,
+            created_at=m.created_at,
+        )
+        for m in (r.media or [])
     ]
     primary_img = media_list[0].media_url if media_list else None
     return LostReportOut(
@@ -71,7 +81,15 @@ def format_lost_report(r: LostReport) -> LostReportOut:
 
 def format_found_report(r: FoundReport) -> FoundReportOut:
     media_list = [
-        ReportMediaOut(id=m.id, media_url=m.media_url) for m in (r.media or [])
+        ReportMediaOut(
+            id=m.id,
+            lost_report_id=m.lost_report_id,
+            found_report_id=m.found_report_id,
+            media_id=m.media_id,
+            media_url=m.media_url,
+            created_at=m.created_at,
+        )
+        for m in (r.media or [])
     ]
     primary_img = media_list[0].media_url if media_list else None
     return FoundReportOut(
@@ -99,11 +117,16 @@ def format_match(m: ItemMatch) -> ItemMatchOut:
     crit_list = []
     if m.criteria_json:
         try:
-            crit_list = json.loads(m.criteria_json)
+            parsed = json.loads(m.criteria_json)
+            if isinstance(parsed, dict):
+                for k, v in parsed.items():
+                    crit_list.append({"rule": k, "value": v})
+            elif isinstance(parsed, list):
+                crit_list = parsed
         except Exception:
-            crit_list = []
+            pass
 
-    ver_list = [
+    verif_outs = [
         MatchVerificationOut(
             id=v.id,
             match_id=v.match_id,
@@ -111,9 +134,11 @@ def format_match(m: ItemMatch) -> ItemMatchOut:
             owner_response=v.owner_response,
             officer_notes=v.officer_notes,
             concordance_score=v.concordance_score,
+            verified_by=v.verified_by,
             status=v.status,
-            created_at=v.created_at
-        ) for v in (m.verifications or [])
+            created_at=v.created_at,
+        )
+        for v in (m.verifications or [])
     ]
 
     return ItemMatchOut(
@@ -128,18 +153,49 @@ def format_match(m: ItemMatch) -> ItemMatchOut:
         criteria_json=m.criteria_json,
         criteria_list=crit_list,
         status=m.status,
-        verifications=ver_list,
-        created_at=m.created_at
+        verifications=verif_outs,
+        created_at=m.created_at,
+    )
+
+
+def format_claim(c: ItemClaim) -> ItemClaimOut:
+    return ItemClaimOut(
+        id=c.id,
+        found_report_id=c.found_report_id,
+        lost_report_id=c.lost_report_id,
+        claimed_by=c.claimed_by,
+        claimant_name=c.claimant.full_name if c.claimant else None,
+        status=c.status,
+        reviewed_by=c.reviewed_by,
+        found_report=format_found_report(c.found_report) if c.found_report else None,
+        lost_report=format_lost_report(c.lost_report) if c.lost_report else None,
+        created_at=c.created_at,
+        updated_at=c.updated_at,
+    )
+
+
+def format_handover(h: ItemHandover) -> ItemHandoverOut:
+    return ItemHandoverOut(
+        id=h.id,
+        claim_id=h.claim_id,
+        handed_over_by=h.handed_over_by,
+        officer_name=h.officer.full_name if h.officer else None,
+        received_by=h.received_by,
+        receiver_name=h.receiver.full_name if h.receiver else None,
+        handover_location_id=h.handover_location_id,
+        location_name=h.location.name if h.location else None,
+        handed_over_at=h.handed_over_at,
+        pickup_pass_tag=h.pickup_pass_tag,
     )
 
 
 # =============================================================================
-# Categories & Locations (Tables 34 & Supporting)
+# Categories & Locations (Tables 34 & 14)
 # =============================================================================
 
 @router.get("/categories", response_model=StandardResponse[List[CategoryOut]])
 def list_categories(db: Session = Depends(get_db)):
-    """List all available item categories."""
+    """List standard Lost and Found item categories."""
     repo = LostAndFoundRepository(db)
     cats = repo.list_categories()
     return StandardResponse(data=[CategoryOut.model_validate(c) for c in cats])
@@ -149,23 +205,33 @@ def list_categories(db: Session = Depends(get_db)):
 def create_category(
     payload: CategoryCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "OFFICER", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
 ):
-    """Admin / Officer: add a new item category."""
+    """Add a new item category (Admin / Staff)."""
     repo = LostAndFoundRepository(db)
     existing = repo.get_category_by_name(payload.name)
     if existing:
-        raise HTTPException(status_code=400, detail=f"Category '{payload.name}' already exists.")
+        raise HTTPException(status_code=400, detail="Category already exists.")
     cat = repo.create_category(payload.name, payload.description)
     return StandardResponse(data=CategoryOut.model_validate(cat), message="Category created.")
 
 
 @router.get("/locations", response_model=StandardResponse[List[LocationOut]])
 def list_locations(db: Session = Depends(get_db)):
-    """List campus locations and zones."""
+    """List campus locations and zones for report geolocation."""
     repo = LostAndFoundRepository(db)
     locs = repo.list_locations()
-    return StandardResponse(data=[LocationOut.model_validate(l) for l in locs])
+    out = [
+        LocationOut(
+            id=l.id,
+            name=l.name,
+            location_type=l.location_type,
+            building=getattr(l, "description", None),
+            zone=l.location_type,
+        )
+        for l in locs
+    ]
+    return StandardResponse(data=out)
 
 
 # =============================================================================
@@ -178,78 +244,76 @@ def create_lost_report(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Submit a new lost item report."""
+    """Submit a new lost item report with Jina CLIP v2 embedding."""
     service = LostAndFoundService(db)
     report = service.submit_lost_report(payload, reporter_id=user.id)
-    return StandardResponse(data=format_lost_report(report), message="Lost report registered.")
+    return StandardResponse(data=format_lost_report(report), message="Lost report logged successfully.")
 
 
 @router.get("/lost", response_model=StandardResponse[List[LostReportOut]])
 def list_lost_reports(
-    category_id: Optional[str] = Query(None),
-    location_id: Optional[str] = Query(None),
+    reporter_id: Optional[Union[int, str]] = Query(None),
+    category_id: Optional[Union[int, str]] = Query(None),
+    location_id: Optional[Union[int, str]] = Query(None),
     status: Optional[str] = Query(None),
-    reporter_id: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Browse lost item reports."""
+    """List missing item reports with optional filters."""
     repo = LostAndFoundRepository(db)
     reports = repo.list_lost_reports(
+        reporter_id=reporter_id,
         category_id=category_id,
         location_id=location_id,
         status=status,
-        reporter_id=reporter_id,
-        search=search,
-        limit=limit,
-        offset=offset
+        search_query=search,
     )
     return StandardResponse(data=[format_lost_report(r) for r in reports])
 
 
-@router.get("/lost/{id}", response_model=StandardResponse[LostReportOut])
-def get_lost_report(id: str, db: Session = Depends(get_db)):
-    """Retrieve details of a single lost report."""
+@router.get("/lost/{report_id}", response_model=StandardResponse[LostReportOut])
+def get_lost_report(report_id: Union[int, str], db: Session = Depends(get_db)):
+    """Fetch lost report by ID."""
     repo = LostAndFoundRepository(db)
-    report = repo.get_lost_report(id)
+    report = repo.get_lost_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Lost report not found.")
     return StandardResponse(data=format_lost_report(report))
 
 
-@router.patch("/lost/{id}", response_model=StandardResponse[LostReportOut])
+@router.patch("/lost/{report_id}", response_model=StandardResponse[LostReportOut])
 def update_lost_report(
-    id: str,
+    report_id: Union[int, str],
     payload: LostReportUpdate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Update details of a lost report (Owner or Admin)."""
+    """Update details or status of an existing lost report."""
     repo = LostAndFoundRepository(db)
-    report = repo.get_lost_report(id)
+    report = repo.get_lost_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Lost report not found.")
     check_ownership_or_admin(report.reporter_id, user)
-    updated = repo.update_lost_report(id, payload.model_dump(exclude_unset=True))
+
+    updated = repo.update_lost_report(report_id, **payload.model_dump(exclude_unset=True))
     return StandardResponse(data=format_lost_report(updated), message="Report updated.")
 
 
-@router.delete("/lost/{id}", response_model=StandardResponse[dict])
+@router.delete("/lost/{report_id}", response_model=StandardResponse[dict])
 def delete_lost_report(
-    id: str,
+    report_id: Union[int, str],
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Delete or withdraw a lost report (Owner or Admin)."""
+    """Withdraw or delete a lost report."""
     repo = LostAndFoundRepository(db)
-    report = repo.get_lost_report(id)
+    report = repo.get_lost_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Lost report not found.")
     check_ownership_or_admin(report.reporter_id, user)
-    repo.delete_lost_report(id)
-    return StandardResponse(data={"deleted_id": id}, message="Report removed.")
+
+    repo.delete_lost_report(report_id)
+    return StandardResponse(data={"deleted_id": report_id}, message="Report deleted.")
 
 
 # =============================================================================
@@ -262,7 +326,7 @@ def create_found_report(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Record a found item intake and custody deposit."""
+    """Register discovered property with Jina CLIP v2 embedding."""
     service = LostAndFoundService(db)
     report = service.submit_found_report(payload, reported_by=user.id)
     return StandardResponse(data=format_found_report(report), message="Found item intake logged.")
@@ -270,76 +334,71 @@ def create_found_report(
 
 @router.get("/found", response_model=StandardResponse[List[FoundReportOut]])
 def list_found_reports(
-    category_id: Optional[str] = Query(None),
-    location_id: Optional[str] = Query(None),
+    reported_by: Optional[Union[int, str]] = Query(None),
+    category_id: Optional[Union[int, str]] = Query(None),
+    location_id: Optional[Union[int, str]] = Query(None),
     storage_status: Optional[str] = Query(None),
-    reported_by: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Browse found items custody registry."""
+    """List found property in campus custody."""
     repo = LostAndFoundRepository(db)
     reports = repo.list_found_reports(
+        reported_by=reported_by,
         category_id=category_id,
         location_id=location_id,
         storage_status=storage_status,
-        reported_by=reported_by,
-        search=search,
-        limit=limit,
-        offset=offset
+        search_query=search,
     )
     return StandardResponse(data=[format_found_report(r) for r in reports])
 
 
-@router.get("/found/{id}", response_model=StandardResponse[FoundReportOut])
-def get_found_report(id: str, db: Session = Depends(get_db)):
-    """Retrieve details of a found item report."""
+@router.get("/found/{report_id}", response_model=StandardResponse[FoundReportOut])
+def get_found_report(report_id: Union[int, str], db: Session = Depends(get_db)):
+    """Fetch found item report by ID."""
     repo = LostAndFoundRepository(db)
-    report = repo.get_found_report(id)
+    report = repo.get_found_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Found report not found.")
     return StandardResponse(data=format_found_report(report))
 
 
-@router.patch("/found/{id}", response_model=StandardResponse[FoundReportOut])
-def update_found_report(
-    id: str,
+@router.patch("/found/{report_id}/custody", response_model=StandardResponse[FoundReportOut])
+def update_found_custody(
+    report_id: Union[int, str],
     payload: FoundReportUpdate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "OFFICER", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
 ):
-    """Update custody status or desk location for a found item."""
+    """Update found item physical custody or vault state (Admin / Staff)."""
     repo = LostAndFoundRepository(db)
-    report = repo.get_found_report(id)
+    report = repo.get_found_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Found report not found.")
-    updated = repo.update_found_report(id, payload.model_dump(exclude_unset=True))
-    return StandardResponse(data=format_found_report(updated), message="Found item record updated.")
+
+    updated = repo.update_found_report(report_id, **payload.model_dump(exclude_unset=True))
+    return StandardResponse(data=format_found_report(updated), message="Custody updated.")
 
 
 # =============================================================================
-# AI Matches & Triage (Table 38 & 39)
+# AI Similarity Candidate Matches (Table 38)
 # =============================================================================
 
 @router.get("/matches", response_model=StandardResponse[List[ItemMatchOut]])
 def list_matches(
-    lost_report_id: Optional[str] = Query(None),
-    found_report_id: Optional[str] = Query(None),
-    user_id: Optional[str] = Query(None),
+    lost_report_id: Optional[Union[int, str]] = Query(None),
+    found_report_id: Optional[Union[int, str]] = Query(None),
     status: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db)
+    user_id: Optional[Union[int, str]] = Query(None),
+    db: Session = Depends(get_db),
 ):
-    """Retrieve candidate AI similarity matches pairing lost and found reports."""
+    """Retrieve AI-ranked candidate matches."""
     repo = LostAndFoundRepository(db)
     matches = repo.list_matches(
         lost_report_id=lost_report_id,
         found_report_id=found_report_id,
-        user_id=user_id,
         status=status,
-        limit=limit
+        user_id=user_id,
     )
     return StandardResponse(data=[format_match(m) for m in matches])
 
@@ -347,63 +406,82 @@ def list_matches(
 @router.post("/matches/trigger", response_model=StandardResponse[List[ItemMatchOut]])
 def trigger_matching(
     payload: RunMatchingRequest,
-    db: Session = Depends(get_db)
-):
-    """Manually invoke matching evaluation for a specific lost or found report."""
-    service = LostAndFoundService(db)
-    results = []
-    if payload.lost_report_id:
-        results = service.evaluate_matches_for_lost(payload.lost_report_id)
-    elif payload.found_report_id:
-        results = service.evaluate_matches_for_found(payload.found_report_id)
-    else:
-        raise HTTPException(status_code=400, detail="Provide lost_report_id or found_report_id.")
-    return StandardResponse(data=[format_match(m) for m in results], message=f"Evaluated {len(results)} match candidate(s).")
-
-
-@router.post("/matches/{id}/dismiss", response_model=StandardResponse[dict])
-def dismiss_match(
-    id: str,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "OFFICER", "STAFF"]))
-):
-    """Dismiss a false match candidate."""
-    repo = LostAndFoundRepository(db)
-    match = repo.get_match(id)
-    if not match:
-        raise HTTPException(status_code=404, detail="Match candidate not found.")
-    match.status = "DISMISSED"
-    db.commit()
-    return StandardResponse(data={"match_id": id, "status": "DISMISSED"}, message="Match candidate dismissed.")
-
-
-@router.post("/matches/{id}/verify", response_model=StandardResponse[MatchVerificationOut])
-def verify_match_challenge(
-    id: str,
-    payload: VerificationCreate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Record double-blind ownership verification challenge and concordance score."""
+    """Force run AI multimodal matching triage with Jina CLIP v2."""
     service = LostAndFoundService(db)
-    ver = service.record_verification(match_id=id, data=payload, officer_id=user.id)
-    return StandardResponse(
-        data=MatchVerificationOut(
-            id=ver.id,
-            match_id=ver.match_id,
-            challenge_question=ver.challenge_question,
-            owner_response=ver.owner_response,
-            officer_notes=ver.officer_notes,
-            concordance_score=ver.concordance_score,
-            status=ver.status,
-            created_at=ver.created_at
-        ),
-        message="Verification challenge recorded."
-    )
+    results = []
+    if payload.lost_report_id:
+        try:
+            lid = int(payload.lost_report_id)
+            results = service.evaluate_matches_for_lost(lid, top_k=payload.top_k)
+        except ValueError:
+            pass
+    elif payload.found_report_id:
+        try:
+            fid = int(payload.found_report_id)
+            results = service.evaluate_matches_for_found(fid, top_k=payload.top_k)
+        except ValueError:
+            pass
+    else:
+        # Evaluate for all open lost reports
+        repo = LostAndFoundRepository(db)
+        for lr in repo.list_lost_reports(status="OPEN"):
+            results.extend(service.evaluate_matches_for_lost(lr.id, top_k=payload.top_k))
+
+    return StandardResponse(data=[format_match(m) for m in results], message=f"Generated {len(results)} match candidates.")
+
+
+@router.post("/matches/{match_id}/dismiss", response_model=StandardResponse[dict])
+def dismiss_match(
+    match_id: Union[int, str],
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+):
+    """Dismiss a candidate match (Admin / Staff)."""
+    repo = LostAndFoundRepository(db)
+    updated = repo.update_match_status(match_id, "DISMISSED")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Match not found.")
+    return StandardResponse(data={"match_id": match_id, "status": "DISMISSED"}, message="Match dismissed.")
 
 
 # =============================================================================
-# Claims & Custody Handovers (Tables 40 & 41)
+# Double-Blind Match Verification (Table 39)
+# =============================================================================
+
+@router.post("/matches/{match_id}/verify", response_model=StandardResponse[MatchVerificationOut])
+def verify_match_challenge(
+    match_id: Union[int, str],
+    payload: VerificationCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+):
+    """Verify ownership challenge details (Admin / Staff)."""
+    service = LostAndFoundService(db)
+    try:
+        mid = int(match_id)
+        v = service.verify_match(mid, payload, verified_by=user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    out = MatchVerificationOut(
+        id=v.id,
+        match_id=v.match_id,
+        challenge_question=v.challenge_question,
+        owner_response=v.owner_response,
+        officer_notes=v.officer_notes,
+        concordance_score=v.concordance_score,
+        verified_by=v.verified_by,
+        status=v.status,
+        created_at=v.created_at,
+    )
+    return StandardResponse(data=out, message="Match verification recorded.")
+
+
+# =============================================================================
+# Ownership Claims (Table 40)
 # =============================================================================
 
 @router.post("/claims", response_model=StandardResponse[ItemClaimOut], status_code=status.HTTP_201_CREATED)
@@ -412,149 +490,109 @@ def submit_claim(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Student / User submits a claim on a found item."""
+    """Submit a formal ownership claim for a found item."""
     service = LostAndFoundService(db)
-    claim = service.process_claim(payload, claimed_by=user.id)
-    return StandardResponse(
-        data=ItemClaimOut(
-            id=claim.id,
-            found_report_id=claim.found_report_id,
-            lost_report_id=claim.lost_report_id,
-            claimed_by=claim.claimed_by,
-            claimant_name=user.full_name,
-            status=claim.status,
-            reviewed_by=claim.reviewed_by,
-            created_at=claim.created_at,
-            updated_at=claim.updated_at
-        ),
-        message="Item claim submitted."
-    )
+    try:
+        claim = service.submit_claim(payload, claimed_by=user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return StandardResponse(data=format_claim(claim), message="Ownership claim submitted.")
 
 
 @router.get("/claims", response_model=StandardResponse[List[ItemClaimOut]])
 def list_claims(
-    found_report_id: Optional[str] = Query(None),
+    found_report_id: Optional[Union[int, str]] = Query(None),
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """View active claims."""
+    """List item claims. Students see their own; Admins see all."""
     repo = LostAndFoundRepository(db)
-    claimed_by = user.id if user.role not in ("ADMIN", "OFFICER", "STAFF") else None
+    claimed_by = None if user.primary_role in ("ADMIN", "STAFF") else user.id
     claims = repo.list_claims(found_report_id=found_report_id, claimed_by=claimed_by, status=status)
-    return StandardResponse(
-        data=[
-            ItemClaimOut(
-                id=c.id,
-                found_report_id=c.found_report_id,
-                lost_report_id=c.lost_report_id,
-                claimed_by=c.claimed_by,
-                claimant_name=c.claimant.full_name if c.claimant else None,
-                status=c.status,
-                reviewed_by=c.reviewed_by,
-                created_at=c.created_at,
-                updated_at=c.updated_at
-            ) for c in claims
-        ]
-    )
+    return StandardResponse(data=[format_claim(c) for c in claims])
 
 
-@router.patch("/claims/{id}/review", response_model=StandardResponse[ItemClaimOut])
+@router.patch("/claims/{claim_id}/review", response_model=StandardResponse[ItemClaimOut])
 def review_claim(
-    id: str,
+    claim_id: Union[int, str],
     payload: ClaimReview,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "OFFICER", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
 ):
-    """Officer / Admin: approve or reject an item claim."""
-    repo = LostAndFoundRepository(db)
-    claim = repo.review_claim(id, new_status=payload.status, reviewer_id=user.id)
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found.")
-    return StandardResponse(
-        data=ItemClaimOut(
-            id=claim.id,
-            found_report_id=claim.found_report_id,
-            lost_report_id=claim.lost_report_id,
-            claimed_by=claim.claimed_by,
-            claimant_name=claim.claimant.full_name if claim.claimant else None,
-            status=claim.status,
-            reviewed_by=claim.reviewed_by,
-            created_at=claim.created_at,
-            updated_at=claim.updated_at
-        ),
-        message=f"Claim {payload.status.lower()}."
-    )
-
-
-@router.post("/handovers", response_model=StandardResponse[ItemHandoverOut], status_code=status.HTTP_201_CREATED)
-def complete_handover(
-    payload: HandoverCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "OFFICER", "STAFF"]))
-):
-    """Officer: finalize physical item handover and issue digital pickup pass."""
+    """Approve or reject a claim with conflict handling (Admin / Staff)."""
     service = LostAndFoundService(db)
     try:
-        handover = service.complete_handover(payload, officer_id=user.id)
+        cid = int(claim_id)
+        claim = service.review_claim(cid, status=payload.status, reviewed_by=user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-    return StandardResponse(
-        data=ItemHandoverOut(
-            id=handover.id,
-            claim_id=handover.claim_id,
-            handed_over_by=handover.handed_over_by,
-            officer_name=user.full_name,
-            received_by=handover.received_by,
-            receiver_name=handover.receiver.full_name if handover.receiver else None,
-            handover_location_id=handover.handover_location_id,
-            location_name=handover.location.name if handover.location else None,
-            handed_over_at=handover.handed_over_at,
-            pickup_pass_tag=handover.pickup_pass_tag
-        ),
-        message="Handover release finalized. Digital pickup pass issued."
-    )
-
-
-@router.get("/handovers/{id}", response_model=StandardResponse[ItemHandoverOut])
-def get_handover(id: str, db: Session = Depends(get_db)):
-    """Retrieve handover details and digital pickup pass."""
-    repo = LostAndFoundRepository(db)
-    h = repo.get_handover(id)
-    if not h:
-        raise HTTPException(status_code=404, detail="Handover record not found.")
-    return StandardResponse(
-        data=ItemHandoverOut(
-            id=h.id,
-            claim_id=h.claim_id,
-            handed_over_by=h.handed_over_by,
-            officer_name=h.officer.full_name if h.officer else None,
-            received_by=h.received_by,
-            receiver_name=h.receiver.full_name if h.receiver else None,
-            handover_location_id=h.handover_location_id,
-            location_name=h.location.name if h.location else None,
-            handed_over_at=h.handed_over_at,
-            pickup_pass_tag=h.pickup_pass_tag
-        )
-    )
+    return StandardResponse(data=format_claim(claim), message=f"Claim #{claim_id} set to {payload.status}.")
 
 
 # =============================================================================
-# Media Upload Endpoint
+# Physical Handover Receipts (Table 41)
 # =============================================================================
 
+@router.post("/handovers", response_model=StandardResponse[ItemHandoverOut], status_code=status.HTTP_201_CREATED)
+def create_handover(
+    payload: HandoverCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+):
+    """Execute physical return and generate digital pickup receipt (Admin / Staff)."""
+    service = LostAndFoundService(db)
+    try:
+        handover = service.execute_handover(payload, handed_over_by=user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return StandardResponse(data=format_handover(handover), message="Handover finalized.")
+
+
+# =============================================================================
+# Media Upload (Table 37 / Table 15)
+# =============================================================================
+
+@router.post("/upload", response_model=StandardResponse[dict])
 @router.post("/media/upload", response_model=StandardResponse[dict])
 async def upload_media_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Upload an item photograph; returns persistent file URL."""
+    """Upload item photo; stores file and creates MediaAttachment metadata."""
     if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are permitted.")
+
     destination, file_url = await storage_adapter.save_upload(file)
+
+    # Record MediaAttachment in Table 15
+    try:
+        file_size = None
+        p = storage_adapter.upload_dir / (file_url.split("/")[-1])
+        if p.exists():
+            file_size = p.stat().st_size
+
+        ma = MediaAttachment(
+            storage_key=file_url,
+            original_filename=file.filename or "uploaded_photo.jpg",
+            mime_type=file.content_type or "image/jpeg",
+            file_size=file_size,
+            uploaded_by=user.id
+        )
+        db.add(ma)
+        db.commit()
+        db.refresh(ma)
+        media_id = ma.id
+    except Exception:
+        media_id = None
+
     return StandardResponse(
-        data={"file_url": file_url, "file_path": destination, "file_name": file.filename},
+        data={
+            "file_url": file_url,
+            "file_path": destination,
+            "file_name": file.filename,
+            "media_id": media_id
+        },
         message="Media uploaded successfully."
     )

@@ -57,6 +57,9 @@ class SessionRosterResponse(BaseModel):
     course_name: str
     section_name: str
     room_name: str
+    is_already_marked: bool = False
+    session_status: Optional[str] = None
+    marked_at: Optional[str] = None
     students: List[StudentRosterItem] = []
 
 
@@ -93,6 +96,11 @@ class AttendanceHistoryItem(BaseModel):
     marked_by_name: Optional[str] = None
     staff: Optional[str] = None
     status: str = "pending"
+    department_name: Optional[str] = None
+    section_name: Optional[str] = None
+    absent_count: Optional[int] = 0
+    od_count: Optional[int] = 0
+    records: List[Dict[str, Any]] = []
 
 
 class AttendanceHistoryResponse(BaseModel):
@@ -142,3 +150,4 @@ class WeeklyTimetableResponse(BaseModel):
     rows: List[List[Any]] = []
     weeklySchedule: Optional[List[Dict[str, Any]]] = []
     weekly_grid: Optional[List[Dict[str, Any]]] = []
+    grid: Optional[List[Dict[str, Any]]] = []

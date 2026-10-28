@@ -9,14 +9,14 @@ import {
   StudentLostFound,
 } from '../../modules/student';
 import {
-  StaffDashboard, MarkAttendance, AttendanceReview, StaffTimetable,
+  StaffDashboard, MarkAttendance, AttendanceReview, StaffAttendanceHistory, StaffTimetable,
   StaffNotes, StaffProfile, StaffEditProfile,
   StaffLostFound,
 } from '../../modules/staff';
 import {
   AdminDashboard, CampusAdminControlCenter, ReportManagement, AdminTimetable, AdminStaffOnboardingScreen,
   MentorProctorAllocationScreen, EnrollStudent, EnrollmentSuccess, AdminProfile, AdminEditProfile,
-  AdminLostFoundManagement,
+  AdminLostFoundManagement, AdminAttendanceReview,
 } from '../../modules/admin';
 import { StudentFacultyDashboard, CampusServiceDashboard } from '../../modules/services';
 
@@ -55,7 +55,8 @@ export const ROUTES = [
   { name: 'StaffDashboard', path: '/staff', component: StaffDashboard, role: 'STAFF' },
   { name: 'StaffLostFound', path: '/staff/lost-found', component: StaffLostFound, role: 'STAFF' },
   { name: 'MarkAttendance', path: '/staff/attendance', component: MarkAttendance, role: 'STAFF' },
-  { name: 'AttendanceReview', path: '/staff/attendance/review', component: AttendanceReview, role: 'STAFF' },
+  { name: 'StaffAttendanceHistory', path: '/staff/attendance/history', component: StaffAttendanceHistory, role: 'STAFF' },
+  { name: 'AttendanceReview', path: '/staff/attendance/review', component: StaffAttendanceHistory, role: 'STAFF' },
   { name: 'StaffTimetable', path: '/staff/timetable', component: StaffTimetable, role: 'STAFF' },
   { name: 'StaffNotes', path: '/staff/notes', component: StaffNotes, role: 'STAFF' },
   { name: 'StaffProfile', path: '/staff/profile', component: StaffProfile, role: 'STAFF' },
@@ -63,6 +64,8 @@ export const ROUTES = [
 
   // Admin
   { name: 'AdminDashboard', path: '/admin', component: AdminDashboard, role: 'ADMIN' },
+  { name: 'AdminAttendanceReview', path: '/admin/attendance/review', component: AdminAttendanceReview, role: 'ADMIN' },
+  { name: 'AttendanceReviewAdmin', path: '/admin/attendance', component: AdminAttendanceReview, role: 'ADMIN' },
   { name: 'AdminLostFoundManagement', path: '/admin/lost-found', component: AdminLostFoundManagement, role: 'ADMIN' },
   { name: 'CampusAdminControlCenter', path: '/admin/control-center', component: CampusAdminControlCenter, role: 'ADMIN' },
   { name: 'ReportManagement', path: '/admin/reports', component: ReportManagement, role: 'ADMIN' },

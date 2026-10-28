@@ -1,35 +1,53 @@
 import sys
+from pathlib import Path
+
+# Add backend directory to sys.path
+backend_dir = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(backend_dir))
+
 from tests.test_lost_and_found import (
-    override_get_db,
-    setup_test_db,
-    test_list_categories,
-    test_create_category_role_restricted,
-    test_submit_lost_report,
-    test_submit_found_report,
-    test_ai_matching_and_triage,
-    test_match_double_blind_verification,
-    test_claim_lifecycle_and_handover,
-    test_ownership_authorization_restriction
+    setup_database,
+    test_seeded_csv_data,
+    test_get_categories,
+    test_get_locations,
+    test_list_lost_reports,
+    test_list_found_reports,
+    test_list_matches,
+    test_create_lost_report,
+    test_create_found_report,
+    test_trigger_matching,
+    test_verify_match,
+    test_claim_conflict_resolution,
+    test_handover_requires_approved_claim,
+    test_successful_handover,
+    test_rbac_security
 )
 
-def run_all_tests():
-    print("=" * 70)
-    print("RUNNING LOST AND FOUND SYSTEM TEST SUITE (TABLES 34-41)")
-    print("=" * 70)
 
-    # Initialize in-memory database
-    gen = setup_test_db()
+def run_all_tests():
+    print("=" * 75)
+    print("RUNNING LOST AND FOUND SYSTEM TEST SUITE (TABLES 34-41)")
+    print("=" * 75)
+
+    # Initialize in-memory test database fixture
+    gen = setup_database()
     next(gen)
 
     tests = [
-        ("test_list_categories", test_list_categories),
-        ("test_create_category_role_restricted", test_create_category_role_restricted),
-        ("test_submit_lost_report", test_submit_lost_report),
-        ("test_submit_found_report", test_submit_found_report),
-        ("test_ai_matching_and_triage", test_ai_matching_and_triage),
-        ("test_match_double_blind_verification", test_match_double_blind_verification),
-        ("test_claim_lifecycle_and_handover", test_claim_lifecycle_and_handover),
-        ("test_ownership_authorization_restriction", test_ownership_authorization_restriction),
+        ("test_seeded_csv_data", test_seeded_csv_data),
+        ("test_get_categories", test_get_categories),
+        ("test_get_locations", test_get_locations),
+        ("test_list_lost_reports", test_list_lost_reports),
+        ("test_list_found_reports", test_list_found_reports),
+        ("test_list_matches", test_list_matches),
+        ("test_create_lost_report", test_create_lost_report),
+        ("test_create_found_report", test_create_found_report),
+        ("test_trigger_matching", test_trigger_matching),
+        ("test_verify_match", test_verify_match),
+        ("test_claim_conflict_resolution", test_claim_conflict_resolution),
+        ("test_handover_requires_approved_claim", test_handover_requires_approved_claim),
+        ("test_successful_handover", test_successful_handover),
+        ("test_rbac_security", test_rbac_security),
     ]
 
     passed = 0
@@ -51,12 +69,12 @@ def run_all_tests():
     except StopIteration:
         pass
 
-    print("=" * 70)
-    print(f"RESULTS: {passed} PASSED, {failed} FAILED")
-    print("=" * 70)
+    print("=" * 75)
+    print(f"SUMMARY: {passed} passed, {failed} failed out of {len(tests)} tests.")
+    print("=" * 75)
+    return failed == 0
 
-    if failed > 0:
-        sys.exit(1)
 
 if __name__ == "__main__":
-    run_all_tests()
+    success = run_all_tests()
+    sys.exit(0 if success else 1)
