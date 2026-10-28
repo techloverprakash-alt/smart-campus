@@ -10,36 +10,48 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from '@/ui';
-import { BlurView } from '@/ui';
 import { MaterialIcons } from '@/ui';
-import { LinearGradient } from '@/ui';
 import { useAuth } from "../../auth/context/AuthContext";
 import { updateMyProfile } from "../../../services/api/profiles";
+
+const FALLBACK_AVATAR =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCc4W7vI51fe3ETw2EQX4lwi44xHoVjxhajjHMOpT9y4iEJ2w8FkLsxEKbcnrl10ihCKljH5APzLmaGOBLlDkKSoWlXxQZMUZCZ5ZYFRWfdzsJ5rRxYgOgXDtLucM8yYOpUOWkVomMC1Am6Bw_lboIad4GF0jJFtugTgDmGFGcLEeziTnzKyhlD6Q8oqmQyp73E-3fTq8Ea4twUa7ikmr3uzfZZGX0jipb0oFQobqODLlnQqLmhRmD1";
 
 export default function AdminEditProfile({ navigation }) {
   const { user, profile, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState(
-    profile?.full_name || user?.profile?.full_name || "Dr. Rajesh Sharma"
+    profile?.full_name || profile?.name || user?.profile?.full_name || user?.name || "Dr. K. Arulmozhi"
   );
   const [email, setEmail] = useState(
-    profile?.email || user?.email || "r.sharma@infotech.edu.in"
+    profile?.email || user?.email || "dean.academic@infotech.edu.in"
   );
   const [phone, setPhone] = useState(
-    profile?.phone || "+91 98450 11223"
+    profile?.phone || user?.phone || "+91 98422 55667"
   );
   const [office, setOffice] = useState(
-    profile?.office_location || "Suite 101, Executive Wing, Admin Block"
+    profile?.office_location || "Office of Academic Governance • Suite 101, Executive Wing"
   );
-  const [hours, setHours] = useState("Mon - Thu: 03:00 PM - 05:00 PM");
+  const [designation, setDesignation] = useState(
+    profile?.designation || "Academic Dean & Controller of Examinations"
+  );
+  const [hours, setHours] = useState("Mon - Fri: 09:30 AM - 04:30 PM");
   const [degree, setDegree] = useState(
-    "Ph.D. in High-Performance Computing"
+    "Ph.D. in High-Performance Computing (IIT Madras)"
   );
   const [researchAreas, setResearchAreas] = useState(
-    "Distributed Systems, Autonomous Curriculum Governance, Educational Analytics"
+    "Distributed Systems, Autonomous Curriculum Governance, Educational Analytics, Accreditation Standards"
   );
   const [saving, setSaving] = useState(false);
+
+  const avatarUrl =
+    profile?.avatar_url ||
+    profile?.avatar ||
+    user?.profile?.avatar_url ||
+    user?.avatar ||
+    FALLBACK_AVATAR;
 
   const handleSave = async () => {
     try {
@@ -56,7 +68,7 @@ export default function AdminEditProfile({ navigation }) {
       Alert.alert("Success", "Admin profile updates saved successfully.", [
         {
           text: "OK",
-          onPress: () => navigation?.goBack(),
+          onPress: () => navigation?.navigate("AdminProfile"),
         },
       ]);
     } catch (err) {
@@ -64,7 +76,7 @@ export default function AdminEditProfile({ navigation }) {
       Alert.alert("Notice", "Profile updated locally.", [
         {
           text: "OK",
-          onPress: () => navigation?.goBack(),
+          onPress: () => navigation?.navigate("AdminProfile"),
         },
       ]);
     } finally {
@@ -73,15 +85,12 @@ export default function AdminEditProfile({ navigation }) {
   };
 
   const handleCancel = () => {
-    Alert.alert("Cancel", "Discard changes?", [
+    Alert.alert("Discard Changes", "Are you sure you want to discard your edits?", [
+      { text: "Keep Editing", style: "cancel" },
       {
-        text: "No",
-        style: "cancel",
-      },
-      {
-        text: "Yes",
+        text: "Discard",
         style: "destructive",
-        onPress: () => navigation?.goBack(),
+        onPress: () => navigation?.navigate("AdminProfile"),
       },
     ]);
   };
@@ -95,1196 +104,549 @@ export default function AdminEditProfile({ navigation }) {
   };
 
   const handleChangePhoto = () => {
-    Alert.alert("Change Photo", "Upload New Photograph");
-  };
-
-  const handleRemovePhoto = () => {
-    Alert.alert("Remove", "Remove profile photograph");
+    Alert.alert("Upload Photograph", "Select a new high-resolution executive portrait.");
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#faf8ff"
-      />
-
-      <View style={styles.container}>
-
-        {/* ================= HEADER ================= */}
-        <BlurView
-          intensity={85}
-          tint="light"
-          style={styles.header}
-        >
-          <View style={styles.headerInner}>
-
-            <View style={styles.brandContainer}>
-              <Image
-                source={{
-                  uri: "/info_logo.png",
-                }}
-                style={styles.crest}
-              />
-
-              <View>
-                <Text style={styles.nexusText}>NEXUS</Text>
-                <Text style={styles.governanceText}>
-                  Academic Governance
-                </Text>
-              </View>
-            </View>
-          </View>
-        </BlurView>
-
-        {/* ================= MAIN CONTENT ================= */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-
-          {/* ================= STICKY SUB NAV ================= */}
-          <View style={styles.subNavigation}>
-
-            <View style={styles.subNavLeft}>
-
+      <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.laptopContainer}>
+          {/* Top Breadcrumb & Action Toolbar */}
+          <View style={styles.topToolbar}>
+            <View style={styles.breadcrumbWrap}>
               <TouchableOpacity
-                style={styles.backButton}
+                style={styles.backBtn}
                 onPress={handleBack}
-                accessibilityLabel="Navigate Back"
+                activeOpacity={0.7}
               >
-                <MaterialIcons
-                  name="arrow-back"
-                  size={20}
-                  color="#191b23"
-                />
+                <MaterialIcons name="arrow-back" size={18} color="#003fb1" />
+                <Text style={styles.backBtnText}>Profile</Text>
               </TouchableOpacity>
-
-              <View style={styles.subNavTextContainer}>
-                <Text style={styles.subNavTitle}>
-                  Edit Admin Profile
-                </Text>
-
-                <Text style={styles.subNavSubtitle}>
-                  Executive Council • NEXUS Core
-                </Text>
-              </View>
-
+              <Text style={styles.breadcrumbDivider}>/</Text>
+              <Text style={styles.breadcrumbCurrent}>Edit Administrative Profile</Text>
             </View>
 
-            <TouchableOpacity
-              style={styles.topSaveButton}
-              onPress={handleSave}
-            >
-              <MaterialIcons
-                name="check"
-                size={18}
-                color="#ffffff"
-              />
-
-              <Text style={styles.topSaveText}>
-                Save
-              </Text>
-            </TouchableOpacity>
-
-          </View>
-
-          <View style={styles.content}>
-
-            {/* ================= AVATAR SECTION ================= */}
-            <View style={styles.avatarCard}>
-
-              <View style={styles.avatarWrapper}>
-
-                <View style={styles.avatarContainer}>
-                  <Image
-                    source={{
-                      uri: profile?.avatar_url || user?.profile?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuCc4W7vI51fe3ETw2EQX4lwi44xHoVjxhajjHMOpT9y4iEJ2w8FkLsxEKbcnrl10ihCKljH5APzLmaGOBLlDkKSoWlXxQZMUZCZ5ZYFRWfdzsJ5rRxYgOgXDtLucM8yYOpUOWkVomMC1Am6Bw_lboIad4GF0jJFtugTgDmGFGcLEeziTnzKyhlD6Q8oqmQyp73E-3fTq8Ea4twUa7ikmr3uzfZZGX0jipb0oFQobqODLlnQqLmhRmD1",
-                    }}
-                    style={styles.avatar}
-                  />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.cameraButton}
-                  onPress={handleChangePhoto}
-                  accessibilityLabel="Upload New Photograph"
-                >
-                  <MaterialIcons
-                    name="photo-camera"
-                    size={18}
-                    color="#ffffff"
-                  />
-                </TouchableOpacity>
-
-              </View>
-
-              <Text style={styles.profileName}>
-                {fullName}
-              </Text>
-
-              <View style={styles.badgesContainer}>
-
-                <View style={styles.adminBadge}>
-                  <MaterialIcons
-                    name="badge"
-                    size={14}
-                    color="#00174d"
-                  />
-
-                  <Text style={styles.adminBadgeText}>
-                    {profile?.id ? `ADM-${String(profile.id).slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
-                  </Text>
-                </View>
-
-                <View style={styles.departmentBadge}>
-                  <Text style={styles.departmentBadgeText}>
-                    {profile?.department?.name || "Academic Administration"}
-                  </Text>
-                </View>
-
-              </View>
-
-              <View style={styles.photoActions}>
-
-                <TouchableOpacity onPress={handleChangePhoto}>
-                  <Text style={styles.changePhoto}>
-                    Change Photo
-                  </Text>
-                </TouchableOpacity>
-
-                <Text style={styles.separator}>
-                  •
-                </Text>
-
-                <TouchableOpacity onPress={handleRemovePhoto}>
-                  <Text style={styles.removePhoto}>
-                    Remove
-                  </Text>
-                </TouchableOpacity>
-
-              </View>
-
-              <View style={styles.photoInfo}>
-
-                <MaterialIcons
-                  name="info"
-                  size={16}
-                  color="#585f6c"
-                />
-
-                <Text style={styles.photoInfoText}>
-                  JPG, PNG or WEBP up to 5MB. Must be formal attire.
-                </Text>
-
-              </View>
-
-            </View>
-
-            {/* ================= SECTION 1 ================= */}
-            <View style={styles.card}>
-
-              <View style={styles.sectionHeader}>
-
-                <View style={styles.sectionTitleContainer}>
-
-                  <MaterialIcons
-                    name="assured-workload"
-                    size={20}
-                    color="#852b00"
-                  />
-
-                  <Text style={styles.sectionTitle}>
-                    Institutional & Appointment Records
-                  </Text>
-
-                </View>
-
-              </View>
-
-              <View style={styles.fieldsContainer}>
-
-                {/* Admin ID */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Admin ID / Executive Code
-                  </Text>
-
-                  <View style={styles.disabledInputContainer}>
-
-                    <TextInput
-                      value={profile?.id ? `ADM-${String(profile.id).slice(0, 8).toUpperCase()}` : "ADM-2020-001"}
-                      editable={false}
-                      style={styles.disabledInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Designation */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Designation
-                  </Text>
-
-                  <View style={styles.disabledInputContainer}>
-
-                    <TextInput
-                      value={profile?.designation || "Dean of Academic Affairs & Chief Controller"}
-                      editable={false}
-                      style={styles.disabledInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Administrative Cadre */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Administrative Cadre
-                  </Text>
-
-                  <View style={styles.disabledInputContainer}>
-
-                    <TextInput
-                      value={profile?.department?.name || "Executive Council / Academic Board"}
-                      editable={false}
-                      style={styles.disabledInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Date of Appointment */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Date of Appointment
-                  </Text>
-
-                  <View style={styles.disabledInputContainer}>
-
-                    <TextInput
-                      value="01-08-2015"
-                      editable={false}
-                      style={styles.disabledInput}
-                    />
-
-                  </View>
-
-                </View>
-
-              </View>
-
-            </View>
-
-            {/* ================= SECTION 2 ================= */}
-            <View style={styles.card}>
-
-              <View style={styles.sectionHeader}>
-
-                <View style={styles.sectionTitleContainer}>
-
-                  <MaterialIcons
-                    name="edit-note"
-                    size={20}
-                    color="#003fb1"
-                  />
-
-                  <Text style={styles.sectionTitle}>
-                    Contact & Office Details
-                  </Text>
-
-                </View>
-
-                <View style={styles.editableBadge}>
-
-                  <MaterialIcons
-                    name="tune"
-                    size={14}
-                    color="#00174d"
-                  />
-
-                  <Text style={styles.editableText}>
-                    Editable
-                  </Text>
-
-                </View>
-
-              </View>
-
-              <View style={styles.fieldsContainer}>
-
-                {/* Full Name */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Full Name (Institutional Honorifics)
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="person"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={fullName}
-                      onChangeText={setFullName}
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Official Email */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Official University Email
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="mail"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={email}
-                      onChangeText={setEmail}
-                      keyboardType="email-address"
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Contact Number */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Executive Direct Line
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="call"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={phone}
-                      onChangeText={setPhone}
-                      keyboardType="phone-pad"
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Executive Office */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Executive Office / Chamber
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="domain"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={office}
-                      onChangeText={setOffice}
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Consultation Hours */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Consultation / Open Door Hours
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="schedule"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={hours}
-                      onChangeText={setHours}
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Highest Degree */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Highest Degree / Doctorate
-                  </Text>
-
-                  <View style={styles.editableInputContainer}>
-
-                    <MaterialIcons
-                      name="school"
-                      size={18}
-                      color="#003fb1"
-                    />
-
-                    <TextInput
-                      value={degree}
-                      onChangeText={setDegree}
-                      style={styles.editableInput}
-                    />
-
-                  </View>
-
-                </View>
-
-                {/* Research Areas */}
-                <View style={styles.fieldContainer}>
-
-                  <Text style={styles.label}>
-                    Key Research & Executive Areas
-                  </Text>
-
-                  <View
-                    style={[
-                      styles.editableInputContainer,
-                      styles.textAreaContainer,
-                    ]}
-                  >
-
-                    <MaterialIcons
-                      name="psychology"
-                      size={18}
-                      color="#003fb1"
-                      style={styles.textAreaIcon}
-                    />
-
-                    <TextInput
-                      value={researchAreas}
-                      onChangeText={setResearchAreas}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                      style={[
-                        styles.editableInput,
-                        styles.textArea,
-                      ]}
-                    />
-
-                  </View>
-
-                </View>
-
-              </View>
-
-            </View>
-
-            {/* ================= ACTION BUTTONS ================= */}
-            <View style={styles.actionButtonsContainer}>
-
+            <View style={styles.topActionGroup}>
               <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSave}
-              >
-
-                <MaterialIcons
-                  name="check-circle"
-                  size={20}
-                  color="#ffffff"
-                />
-
-                <Text style={styles.saveButtonText}>
-                  Save Admin Profile Updates
-                </Text>
-
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.cancelButton}
+                style={styles.actionBtnSecondary}
                 onPress={handleCancel}
+                disabled={saving}
+                activeOpacity={0.8}
               >
-
-                <MaterialIcons
-                  name="close"
-                  size={20}
-                  color="#434654"
-                />
-
-                <Text style={styles.cancelButtonText}>
-                  Cancel / Discard Changes
-                </Text>
-
+                <MaterialIcons name="close" size={18} color="#475569" />
+                <Text style={styles.actionBtnSecondaryText}>Cancel</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtnPrimary, saving && { opacity: 0.7 }]}
+                onPress={handleSave}
+                disabled={saving}
+                activeOpacity={0.8}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <MaterialIcons name="check" size={18} color="#ffffff" />
+                    <Text style={styles.actionBtnPrimaryText}>Save Changes</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
 
+          {/* Photo & Identity Quick Card */}
+          <View style={styles.avatarCard}>
+            <View style={styles.avatarRow}>
+              <View style={styles.avatarWrapper}>
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.avatarImage}
+                  onError={(e) => {
+                    if (e?.target) e.target.src = "/info_logo.png";
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.cameraBtn}
+                  onPress={handleChangePhoto}
+                  activeOpacity={0.8}
+                  title="Change photo"
+                >
+                  <MaterialIcons name="photo-camera" size={16} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.avatarInfo}>
+                <View style={styles.roleTag}>
+                  <MaterialIcons name="admin-panel-settings" size={14} color="#003fb1" />
+                  <Text style={styles.roleTagText}>ADMINISTRATIVE GOVERNANCE</Text>
+                </View>
+                <Text style={styles.avatarName}>{fullName}</Text>
+                <Text style={styles.avatarSub}>{designation}</Text>
+              </View>
+
+              <View style={styles.avatarActions}>
+                <TouchableOpacity
+                  style={styles.changePhotoBtn}
+                  onPress={handleChangePhoto}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="upload" size={16} color="#003fb1" />
+                  <Text style={styles.changePhotoBtnText}>Update Photo</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Form Cards in 2-Column Laptop Grid */}
+          <View style={styles.formGrid}>
+            {/* Column 1: Personal & Official Identity */}
+            <View style={styles.formCol}>
+              <View style={styles.formCard}>
+                <View style={styles.cardHeader}>
+                  <MaterialIcons name="person" size={20} color="#003fb1" />
+                  <Text style={styles.cardTitle}>Executive Identity & Designation</Text>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Full Legal / Academic Name *</Text>
+                  <TextInput
+                    value={fullName}
+                    onChangeText={setFullName}
+                    placeholder="Enter full name"
+                    style={styles.input}
+                  />
+                  <Text style={styles.fieldHint}>Displayed across official certificates and audit reports</Text>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Institutional Designation *</Text>
+                  <TextInput
+                    value={designation}
+                    onChangeText={setDesignation}
+                    placeholder="Academic Dean & Controller of Examinations"
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Executive Chamber / Office Location *</Text>
+                  <TextInput
+                    value={office}
+                    onChangeText={setOffice}
+                    placeholder="Office location"
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Official Consultation Hours</Text>
+                  <TextInput
+                    value={hours}
+                    onChangeText={setHours}
+                    placeholder="Mon - Fri: 09:30 AM - 04:30 PM"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
             </View>
 
+            {/* Column 2: Contact Channels & Academic Portfolio */}
+            <View style={styles.formCol}>
+              <View style={styles.formCard}>
+                <View style={styles.cardHeader}>
+                  <MaterialIcons name="contact-phone" size={20} color="#003fb1" />
+                  <Text style={styles.cardTitle}>Official Contact Channels</Text>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Official University Email *</Text>
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholder="name@infotech.edu.in"
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Direct Telephony / Contact Number *</Text>
+                  <TextInput
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                    placeholder="+91 98422 55667"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formCard}>
+                <View style={styles.cardHeader}>
+                  <MaterialIcons name="school" size={20} color="#003fb1" />
+                  <Text style={styles.cardTitle}>Academic Leadership & Credentials</Text>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Highest Academic Qualification</Text>
+                  <TextInput
+                    value={degree}
+                    onChangeText={setDegree}
+                    placeholder="Ph.D. in High-Performance Computing"
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Specialized Research & Governance Areas</Text>
+                  <TextInput
+                    value={researchAreas}
+                    onChangeText={setResearchAreas}
+                    multiline
+                    numberOfLines={3}
+                    style={[styles.input, styles.textArea]}
+                  />
+                </View>
+              </View>
+            </View>
           </View>
 
-          {/* Bottom spacing */}
-          <View style={{ height: 80 }} />
-
-        </ScrollView>
-
-        {/* ================= BOTTOM NAVIGATION ================= */}
-        <BlurView
-          intensity={90}
-          tint="light"
-          className="bottom-nav" style={styles.bottomNavigation}
-        >
-
-          <View style={styles.bottomNavInner}>
-
-            {/* Home */}
+          {/* Bottom Action Footer */}
+          <View style={styles.bottomBar}>
             <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => navigation?.navigate("AdminDashboard")}
+              style={styles.footerCancelBtn}
+              onPress={handleCancel}
+              disabled={saving}
+              activeOpacity={0.8}
             >
-
-              <MaterialIcons
-                name="dashboard"
-                size={24}
-                color="#434654"
-              />
-
-              <Text style={styles.navText}>
-                Home
-              </Text>
-
+              <Text style={styles.footerCancelText}>Discard Changes</Text>
             </TouchableOpacity>
 
-            {/* Reports - intentionally empty as original HTML */}
-            <View style={styles.navItem} />
-
-            {/* Profile */}
             <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => navigation?.navigate("AdminProfile")}
+              style={[styles.footerSaveBtn, saving && { opacity: 0.7 }]}
+              onPress={handleSave}
+              disabled={saving}
+              activeOpacity={0.8}
             >
-
-              <MaterialIcons
-                name="person"
-                size={24}
-                color="#1a56db"
-              />
-
-              <Text style={styles.activeNavText}>
-                Profile
-              </Text>
-
+              {saving ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <MaterialIcons name="check-circle" size={18} color="#ffffff" />
+                  <Text style={styles.footerSaveText}>Save Admin Profile</Text>
+                </>
+              )}
             </TouchableOpacity>
-
           </View>
-
-        </BlurView>
-
-      </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#faf8ff",
+    backgroundColor: "#f8fafc",
   },
-
-  container: {
-    flex: 1,
-    backgroundColor: "#faf8ff",
-  },
-
-  /* ================= HEADER ================= */
-
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 64,
-    zIndex: 50,
-    backgroundColor: "rgba(250,248,255,0.85)",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.04)",
-  },
-
-  headerInner: {
-    height: 64,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  brandContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  crest: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    resizeMode: "contain",
-    backgroundColor: "#ffffff",
-    padding: 2,
-  },
-
-  nexusText: {
-    color: "#1a56db",
-    fontSize: 20,
-    fontWeight: "600",
-    letterSpacing: -0.4,
-    lineHeight: 22,
-  },
-
-  governanceText: {
-    color: "#434654",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-
-  notificationDot: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#ba1a1a",
-    borderWidth: 2,
-    borderColor: "#faf8ff",
-  },
-
-  /* ================= MAIN ================= */
-
   scrollView: {
     flex: 1,
-    backgroundColor: "#faf8ff",
+    backgroundColor: "#f8fafc",
   },
-
   scrollContent: {
-    paddingTop: 64,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
-
-  /* ================= SUB NAVIGATION ================= */
-
-  subNavigation: {
-    minHeight: 72,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(250,248,255,0.90)",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.04)",
-    zIndex: 40,
-  },
-
-  subNavLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#ededf8",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-
-  subNavTextContainer: {
-    flex: 1,
-  },
-
-  subNavTitle: {
-    color: "#191b23",
-    fontSize: 20,
-    fontWeight: "600",
-    lineHeight: 28,
-  },
-
-  subNavSubtitle: {
-    color: "#434654",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-
-  topSaveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 40,
-    borderRadius: 8,
-    backgroundColor: "#003fb1",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginLeft: 8,
-  },
-
-  topSaveText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
-  },
-
-  /* ================= CONTENT ================= */
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
-    gap: 24,
-  },
-
-  /* ================= AVATAR CARD ================= */
-
-  avatarCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-
-  avatarWrapper: {
-    position: "relative",
-    marginBottom: 12,
-  },
-
-  avatarContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: "hidden",
-    backgroundColor: "#ededf8",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-
-  avatar: {
+  laptopContainer: {
     width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    maxWidth: 1200,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 20,
   },
 
-  cameraButton: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#003fb1",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-
-  profileName: {
-    color: "#191b23",
-    fontSize: 20,
-    fontWeight: "600",
-    lineHeight: 28,
-    textAlign: "center",
-    marginBottom: 4,
-  },
-
-  badgesContainer: {
+  /* Top Toolbar */
+  topToolbar: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginBottom: 12,
-  },
-
-  adminBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: "#dbe1ff",
-  },
-
-  adminBadgeText: {
-    color: "#00174d",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-
-  departmentBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: "#dce2f3",
-  },
-
-  departmentBadgeText: {
-    color: "#5e6572",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-
-  photoActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-
-  changePhoto: {
-    color: "#003fb1",
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-
-  separator: {
-    color: "#c3c5d7",
-    fontSize: 14,
-  },
-
-  removePhoto: {
-    color: "#ba1a1a",
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-
-  photoInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: "#f3f3fe",
-  },
-
-  photoInfoText: {
-    color: "#434654",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-    textAlign: "center",
-    flexShrink: 1,
-  },
-
-  /* ================= CARDS ================= */
-
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 12,
   },
-
-  sectionTitleContainer: {
+  breadcrumbWrap: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flex: 1,
   },
-
-  sectionTitle: {
-    color: "#191b23",
-    fontSize: 20,
-    fontWeight: "600",
-    lineHeight: 28,
-    flexShrink: 1,
-  },
-
-  editableBadge: {
+  backBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "#dbe1ff",
-    marginLeft: 8,
-  },
-
-  editableText: {
-    color: "#00174d",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-
-  fieldsContainer: {
-    gap: 14,
-  },
-
-  fieldContainer: {
-    flexDirection: "column",
-  },
-
-  label: {
-    color: "#434654",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-    marginBottom: 4,
-  },
-
-  /* ================= DISABLED INPUT ================= */
-
-  disabledInputContainer: {
-    minHeight: 44,
-    borderRadius: 8,
-    backgroundColor: "#f3f3fe",
-    flexDirection: "row",
-    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
     paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#e0e7ff",
   },
-
-  disabledInput: {
-    flex: 1,
-    color: "#434654",
+  backBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#003fb1",
+  },
+  breadcrumbDivider: {
     fontSize: 14,
-    fontWeight: "400",
-    lineHeight: 20,
-    paddingVertical: 0,
+    color: "#94a3b8",
   },
-
-  /* ================= EDITABLE INPUT ================= */
-
-  editableInputContainer: {
-    minHeight: 44,
+  breadcrumbCurrent: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#334155",
+  },
+  topActionGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  actionBtnSecondary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 8,
     backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+  },
+  actionBtnSecondaryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  actionBtnPrimary: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    gap: 12,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    backgroundColor: "#003fb1",
+    shadowColor: "#003fb1",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionBtnPrimaryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+
+  /* Photo Card */
+  avatarCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 20,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
-
-  editableInput: {
-    flex: 1,
-    color: "#191b23",
-    fontSize: 14,
-    fontWeight: "400",
-    lineHeight: 20,
-    paddingVertical: 0,
-  },
-
-  textAreaContainer: {
-    alignItems: "flex-start",
-    minHeight: 88,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-
-  textAreaIcon: {
-    marginTop: 2,
-  },
-
-  textArea: {
-    minHeight: 68,
-    textAlignVertical: "top",
-  },
-
-  /* ================= ACTION BUTTONS ================= */
-
-  actionButtonsContainer: {
-    paddingTop: 8,
-    marginBottom: 16,
-    gap: 10,
-  },
-
-  saveButton: {
-    width: "100%",
-    minHeight: 44,
-    borderRadius: 8,
-    backgroundColor: "#003fb1",
+  avatarRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    gap: 20,
+    flexWrap: "wrap",
   },
-
-  saveButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
+  avatarWrapper: {
+    position: "relative",
   },
-
-  cancelButton: {
-    width: "100%",
-    minHeight: 44,
-    borderRadius: 8,
-    backgroundColor: "#f3f3fe",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#f1f5f9",
+    objectFit: "cover",
   },
-
-  cancelButtonText: {
-    color: "#434654",
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
-  },
-
-  /* ================= BOTTOM NAV ================= */
-
-  bottomNavigation: {
+  cameraBtn: {
     position: "absolute",
     bottom: 0,
-    left: 0,
     right: 0,
-    height: 64,
-    zIndex: 50,
-    backgroundColor: "rgba(250,248,255,0.90)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
-  },
-
-  bottomNavInner: {
-    height: 64,
-    paddingHorizontal: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-  },
-
-  navItem: {
-    width: 64,
-    height: 48,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#003fb1",
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
+    borderWidth: 2,
+    borderColor: "#ffffff",
   },
-
-  navText: {
-    color: "#434654",
+  avatarInfo: {
+    flex: 1,
+    minWidth: 240,
+    gap: 4,
+  },
+  roleTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  roleTagText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#003fb1",
+    letterSpacing: 0.5,
+  },
+  avatarName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  avatarSub: {
+    fontSize: 13,
+    color: "#64748b",
+  },
+  avatarActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  changePhotoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+  changePhotoBtnText: {
     fontSize: 12,
     fontWeight: "600",
-    lineHeight: 16,
+    color: "#003fb1",
   },
 
-  activeNavText: {
-    color: "#1a56db",
+  /* Form Grid */
+  formGrid: {
+    flexDirection: "row",
+    gap: 20,
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  formCol: {
+    flex: 1,
+    minWidth: 320,
+    gap: 20,
+  },
+  formCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 20,
+    gap: 16,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+    paddingBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+
+  /* Field Groups */
+  fieldGroup: {
+    gap: 6,
+  },
+  fieldLabel: {
     fontSize: 12,
     fontWeight: "600",
-    lineHeight: 16,
+    color: "#334155",
+  },
+  input: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13.5,
+    color: "#0f172a",
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+
+  /* Bottom Action Footer */
+  bottomBar: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#ffffff",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  footerCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    backgroundColor: "#f1f5f9",
+  },
+  footerCancelText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  footerSaveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: "#003fb1",
+  },
+  footerSaveText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
   },
 });
