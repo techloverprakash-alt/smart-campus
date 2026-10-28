@@ -4,10 +4,13 @@ import { MaterialIcons } from '@/ui';
 import Colors from '../../../constants/colors';
 import Typography from '../../../constants/typography';
 import { useAuth } from '../context/AuthContext';
+import AuthLoadingOverlay from '../components/AuthLoadingOverlay';
 
 const LoginPage = ({ navigation }) => {
   const { loginAs } = useAuth();
   const [selectedRole, setSelectedRole] = useState('student');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('Establishing secure session...');
 
   const handleContactAdmin = () => {
     Linking.openURL('https://forms.gle/7P3vJnbaiFs8qHVJA').catch((err) =>
@@ -39,15 +42,27 @@ const LoginPage = ({ navigation }) => {
   };
 
   const handleQuickInspect = () => {
-    if (selectedRole === 'services') {
-      loginAs('SERVICES');
-      navigation.navigate('CampusServiceDashboard');
-      return;
-    }
-    const roleKey = selectedRole.toUpperCase();
-    loginAs(roleKey);
-    const target = roleKey === 'STUDENT' ? 'StudentDashboard' : roleKey === 'STAFF' ? 'StaffDashboard' : 'AdminDashboard';
-    navigation.navigate(target);
+    if (isLoading) return;
+    setIsLoading(true);
+    const roleLabel = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+    setLoadingStatus(`Syncing ${roleLabel} Environment...`);
+
+    setTimeout(() => {
+      setLoadingStatus(`Launching ${roleLabel} Dashboard...`);
+    }, 600);
+
+    setTimeout(() => {
+      if (selectedRole === 'services') {
+        loginAs('SERVICES');
+        navigation.navigate('CampusServiceDashboard');
+      } else {
+        const roleKey = selectedRole.toUpperCase();
+        loginAs(roleKey);
+        const target = roleKey === 'STUDENT' ? 'StudentDashboard' : roleKey === 'STAFF' ? 'StaffDashboard' : 'AdminDashboard';
+        navigation.navigate(target);
+      }
+      setTimeout(() => setIsLoading(false), 500);
+    }, 1250);
   };
 
   return (
@@ -116,7 +131,7 @@ const LoginPage = ({ navigation }) => {
               </View>
 
               {/* Navigate Button */}
-              <TouchableOpacity style={styles.continueButton} onPress={handleNavigate} activeOpacity={0.8}>
+              <TouchableOpacity style={[styles.continueButton, isLoading && { opacity: 0.7 }]} onPress={handleNavigate} activeOpacity={0.8} disabled={isLoading}>
                 <Text style={styles.continueButtonText}>Continue to Login</Text>
                 <MaterialIcons name="arrow-forward" size={20} color={Colors.onPrimary} />
               </TouchableOpacity>
@@ -162,6 +177,38 @@ const LoginPage = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      {/* ================= CINEMATIC LOADING OVERLAY ================= */}
+      {isLoading && (
+        <div className="campus-morph-overlay" role="dialog" aria-modal="true" aria-label="Loading Portal">
+          <div className="campus-morph-backdrop" />
+          <div className="campus-morph-card">
+            {/* Glowing Logo Crest with Dual Orbital Rings */}
+            <div className="campus-morph-crest-box">
+              <div className="campus-morph-orbital-ring outer" />
+              <div className="campus-morph-orbital-ring inner" />
+              <div className="campus-morph-crest">
+                <img src="/info_logo.png" alt="Info Institute of Technology" />
+              </div>
+            </div>
+
+            {/* Badges & Titles */}
+            <div className="campus-morph-badge">SECURE INSTITUTIONAL GATEWAY</div>
+            <h2 className="campus-morph-title">NEXUS Portal</h2>
+            <p className="campus-morph-sub">Info Institute of Technology</p>
+
+            {/* High-Tech Glowing Progress Bar */}
+            <div className="campus-morph-progress-track">
+              <div className="campus-morph-progress-bar" />
+            </div>
+
+            {/* Dynamic Status Indicator */}
+            <div className="campus-morph-status">
+              <span className="campus-morph-dot" />
+              <span className="campus-morph-status-text">{loadingStatus}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </SafeAreaView>
   );
 };

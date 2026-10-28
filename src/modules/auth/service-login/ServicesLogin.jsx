@@ -4,6 +4,7 @@ import { MaterialIcons } from '@/ui';
 import Colors from '../../../constants/colors';
 import Typography from '../../../constants/typography';
 import { useAuth } from '../context/AuthContext';
+import AuthLoadingOverlay from '../components/AuthLoadingOverlay';
 
 const ServicesLogin = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -201,6 +202,7 @@ const ServicesLogin = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      <AuthLoadingOverlay visible={loading} role="Campus Services" />
     </SafeAreaView>
   );
 };
