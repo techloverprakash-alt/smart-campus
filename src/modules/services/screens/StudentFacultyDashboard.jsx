@@ -70,7 +70,6 @@ const navGroups = [
   {
     title: 'Workspace',
     links: [
-      { id: 'Overview / Dashboard', label: 'Overview', icon: LayoutDashboard },
       { id: 'Report Infrastructure Issue', label: 'Report Issue', icon: Wrench },
       { id: 'Lost & Found Claims', label: 'Lost & Found', icon: PackageSearch },
       { id: 'Match Suggestions & Verification', label: 'Match & AI Triage', icon: Sparkles },
