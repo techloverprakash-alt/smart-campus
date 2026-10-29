@@ -58,14 +58,7 @@ const ServicesLogin = ({ navigation }) => {
           <Text style={styles.backButtonText}>Roles</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.campusHubButton}
-          onPress={() => navigation.navigate('CommonPortal')}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="public" size={16} color="#003fb1" />
-          <Text style={styles.campusHubButtonText}>Campus Hub</Text>
-        </TouchableOpacity>
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
@@ -167,38 +160,7 @@ const ServicesLogin = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
 
-            {/* Quick Demo Options */}
-            <View style={styles.demoSection}>
-              <Text style={styles.demoHeading}>Instant Demo Sign-in:</Text>
-              <View style={styles.demoButtonsRow}>
-                <TouchableOpacity
-                  style={styles.demoBtn}
-                  onPress={() => handleLogin('SERVICES')}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="support-agent" size={16} color="#003fb1" />
-                  <Text style={styles.demoBtnText}>Services Desk</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.demoBtn}
-                  onPress={() => handleLogin('STUDENT')}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="school" size={16} color="#003fb1" />
-                  <Text style={styles.demoBtnText}>Student View</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.demoBtn}
-                  onPress={() => handleLogin('STAFF')}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="badge" size={16} color="#003fb1" />
-                  <Text style={styles.demoBtnText}>Faculty View</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            
           </View>
         </View>
       </ScrollView>

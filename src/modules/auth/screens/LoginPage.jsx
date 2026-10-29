@@ -41,30 +41,7 @@ const LoginPage = ({ navigation }) => {
     }
   };
 
-  const handleQuickInspect = () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    const roleLabel = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
-    setLoadingStatus(`Syncing ${roleLabel} Environment...`);
-
-    setTimeout(() => {
-      setLoadingStatus(`Launching ${roleLabel} Dashboard...`);
-    }, 600);
-
-    setTimeout(() => {
-      if (selectedRole === 'services') {
-        loginAs('SERVICES');
-        navigation.navigate('CampusServiceDashboard');
-      } else {
-        const roleKey = selectedRole.toUpperCase();
-        loginAs(roleKey);
-        const target = roleKey === 'STUDENT' ? 'StudentDashboard' : roleKey === 'STAFF' ? 'StaffDashboard' : 'AdminDashboard';
-        navigation.navigate(target);
-      }
-      setTimeout(() => setIsLoading(false), 500);
-    }, 1250);
-  };
-
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top App Header with Campus Hub Navigation */}
@@ -74,14 +51,7 @@ const LoginPage = ({ navigation }) => {
           <Text style={styles.topNavPortal}>Portal</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.campusHubBtn}
-          onPress={() => navigation.navigate('CommonPortal')}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="public" size={18} color="#003fb1" />
-          <Text style={styles.campusHubBtnText}>Campus Hub</Text>
-        </TouchableOpacity>
+
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -136,11 +106,7 @@ const LoginPage = ({ navigation }) => {
                 <MaterialIcons name="arrow-forward" size={20} color={Colors.onPrimary} />
               </TouchableOpacity>
 
-              {/* Instant Inspect (No Backend/Database Required) */}
-              <TouchableOpacity style={styles.inspectButton} onPress={handleQuickInspect} activeOpacity={0.8}>
-                <MaterialIcons name="visibility" size={18} color="#003fb1" />
-                <Text style={styles.inspectButtonText}>Instant Inspect ({selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Dashboard)</Text>
-              </TouchableOpacity>
+
 
               {/* Campus Hub Quick Access Box */}
               <TouchableOpacity

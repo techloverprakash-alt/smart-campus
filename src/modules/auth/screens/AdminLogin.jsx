@@ -53,14 +53,7 @@ const AdminLogin = ({ navigation }) => {
           <Text style={styles.backButtonText}>Roles</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.campusHubButton}
-          onPress={() => navigation.navigate('CommonPortal', { role: 'admin' })}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="public" size={16} color="#8d8f94ff" />
-          <Text style={styles.campusHubButtonText}>Campus Hub</Text>
-        </TouchableOpacity>
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
@@ -198,21 +191,7 @@ const AdminLogin = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
-            {/* Quick Demo Credentials Row */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-              <Text style={{ fontSize: 11, color: Colors.onSurfaceVariant, fontWeight: '500' }}>Demo fill:</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setUsername('ADM001');
-                  setPassword('Admin@123');
-                  setError('');
-                }}
-                style={{ backgroundColor: '#eef2ff', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: '#dbe1ff' }}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#003fb1' }}>ADM001</Text>
-              </TouchableOpacity>
-            </View>
+            
 
             {/* Quick Access to Common Hub */}
             <TouchableOpacity
