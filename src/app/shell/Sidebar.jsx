@@ -34,7 +34,7 @@ const NAV = {
     { label: 'Profile', icon: 'person', screen: 'AdminProfile', also: ['AdminEditProfile'] },
   ],
 };
-const ROLE_LABEL = { STUDENT: 'Student portal', STAFF: 'Faculty portal', ADMIN: 'Admin console' };
+const ROLE_LABEL = { STUDENT: 'Student portal', STAFF: 'Faculty portal', ADMIN: 'Admin console', SERVICES: 'Campus Services' };
 
 export function Sidebar({ role, active }) {
   const { navigation } = useRouter();
@@ -58,7 +58,7 @@ export function Sidebar({ role, active }) {
       <div className="sidebar-role">{ROLE_LABEL[role]}</div>
 
       <nav className="sidebar-nav">
-        {NAV[role].map((item) => {
+        {(NAV[role] || []).map((item) => {
           const isActive = active === item.screen || item.also?.includes(active);
           return (
             <button
