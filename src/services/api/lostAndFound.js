@@ -60,3 +60,7 @@ export const uploadMediaAsset = (file, uploadedBy = 'default_user') => {
   formData.append('uploaded_by', uploadedBy);
   return api.upload('/lost-found/upload', formData);
 };
+
+// ── Notifications & Discovery Alerts ────────────────────────────────────────
+export const getMyNotifications = (params = {}) => api.get('/lost-found/notifications', params);
+export const markNotificationAsRead = (id) => api.patch(`/lost-found/notifications/${id}/read`);

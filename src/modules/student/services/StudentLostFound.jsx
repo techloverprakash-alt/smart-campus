@@ -5,7 +5,7 @@ import {
   PackageSearch, Plus, MapPin, Tag, Calendar, Clock,
   Sparkles, CheckCircle2, AlertTriangle, ShieldCheck,
   RefreshCw, Trash2, ArrowLeft, Camera, Search, Filter,
-  FileCheck, X, Eye, Hand, Users, ShieldAlert, Check
+  FileCheck, X, Eye, Hand, Users, ShieldAlert, Check, Bell
 } from 'lucide-react';
 import {
   getLostReports,
@@ -20,7 +20,8 @@ import {
   uploadMediaAsset,
   sendFoundRequest,
   requestHumanVerification,
-  searchSimilarFoundItems
+  searchSimilarFoundItems,
+  getMyNotifications
 } from '../../../services/api/lostAndFound';
 
 export default function StudentLostFound() {
@@ -40,6 +41,7 @@ export default function StudentLostFound() {
   const [allLostItems, setAllLostItems] = useState([]);
   const [allFoundItems, setAllFoundItems] = useState([]);
   const [myMatches, setMyMatches] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [similarFoundResults, setSimilarFoundResults] = useState([]);
@@ -104,12 +106,13 @@ export default function StudentLostFound() {
   const loadData = async () => {
     try {
       setRefreshing(true);
-      const [catsRes, locsRes, lostRes, foundRes, matchRes] = await Promise.all([
+      const [catsRes, locsRes, lostRes, foundRes, matchRes, notifsRes] = await Promise.all([
         getCategories().catch(() => []),
         getLocations().catch(() => []),
         getLostReports().catch(() => []), // Visible to all users
         getFoundReports().catch(() => []), // Visible to all users
-        getMatches({ user_id: studentId }).catch(() => []) // Filtered to matches involving this student
+        getMatches({ user_id: studentId }).catch(() => []), // Filtered to matches involving this student
+        getMyNotifications().catch(() => [])
       ]);
 
       const catList = Array.isArray(catsRes) ? catsRes : catsRes?.data || [];
@@ -117,12 +120,14 @@ export default function StudentLostFound() {
       const lostList = Array.isArray(lostRes) ? lostRes : lostRes?.data || [];
       const foundList = Array.isArray(foundRes) ? foundRes : foundRes?.data || [];
       const matchList = Array.isArray(matchRes) ? matchRes : matchRes?.data || [];
+      const notifList = Array.isArray(notifsRes) ? notifsRes : notifsRes?.data || [];
 
       setCategories(catList);
       setLocations(locList);
       setAllLostItems(lostList);
       setAllFoundItems(foundList);
       setMyMatches(matchList);
+      setNotifications(notifList.filter(n => !n.is_read));
 
       if (catList.length > 0 && !lostForm.category_id) {
         setLostForm((prev) => ({ ...prev, category_id: catList[0].id }));
@@ -433,18 +438,57 @@ export default function StudentLostFound() {
       {/* Feedback Banner */}
       {feedback.text && (
         <div
-          className={`mb-4 rounded-xl p-3 text-xs font-semibold shadow-xs flex items-center justify-between ${
-            feedback.type === 'error'
+          className={`mb-4 rounded-xl p-3 text-xs font-semibold shadow-xs flex items-center justify-between ${feedback.type === 'error'
               ? 'bg-rose-50 text-rose-800 border border-rose-200'
               : feedback.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-              : 'bg-blue-50 text-blue-800 border border-blue-200'
-          }`}
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : 'bg-blue-50 text-blue-800 border border-blue-200'
+            }`}
         >
           <span>{feedback.text}</span>
           <button onClick={() => setFeedback({ text: '', type: 'info' })} className="text-slate-400 hover:text-slate-600">
             <X size={14} />
           </button>
+        </div>
+      )}
+
+      {/* Discovery Alert / Notification Banner */}
+      {notifications.length > 0 && (
+        <div className="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50/90 p-4 shadow-sm animate-fade-in flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
+              <Bell size={20} className="animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-900">
+                  {notifications[0].title}
+                </span>
+                <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-extrabold text-amber-900">
+                  Discovery Alert
+                </span>
+              </div>
+              <p className="text-xs font-medium text-slate-800 mt-0.5 leading-relaxed">
+                {notifications[0].message}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button
+              onClick={() => setActiveTab('matches')}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition-colors"
+            >
+              <Sparkles size={13} />
+              Review & Verify &rarr;
+            </button>
+            <button
+              onClick={() => setNotifications([])}
+              className="rounded-lg p-1.5 text-amber-700 hover:bg-amber-100 transition-colors"
+              title="Dismiss notification banner"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
 
@@ -492,11 +536,10 @@ export default function StudentLostFound() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('lost')}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'lost'
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${activeTab === 'lost'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
+              }`}
           >
             <Tag size={14} />
             Lost Items ({allLostItems.length})
@@ -504,11 +547,10 @@ export default function StudentLostFound() {
 
           <button
             onClick={() => setActiveTab('found')}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'found'
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${activeTab === 'found'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
+              }`}
           >
             <CheckCircle2 size={14} />
             Found In Custody ({allFoundItems.length})
@@ -516,11 +558,10 @@ export default function StudentLostFound() {
 
           <button
             onClick={() => setActiveTab('matches')}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'matches'
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${activeTab === 'matches'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
+              }`}
           >
             <Sparkles size={14} className={myMatches.length > 0 ? 'text-amber-300' : ''} />
             Requests & Verifications ({myMatches.length})
@@ -532,17 +573,15 @@ export default function StudentLostFound() {
           <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold">
             <button
               onClick={() => setLostScope('all')}
-              className={`rounded-lg px-3 py-1 transition-all ${
-                lostScope === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`rounded-lg px-3 py-1 transition-all ${lostScope === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               All Campus Lost ({allLostItems.length})
             </button>
             <button
               onClick={() => setLostScope('mine')}
-              className={`rounded-lg px-3 py-1 transition-all ${
-                lostScope === 'mine' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`rounded-lg px-3 py-1 transition-all ${lostScope === 'mine' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               My Reports ({myLostItems.length})
             </button>
@@ -553,17 +592,15 @@ export default function StudentLostFound() {
           <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold">
             <button
               onClick={() => setFoundScope('all')}
-              className={`rounded-lg px-3 py-1 transition-all ${
-                foundScope === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`rounded-lg px-3 py-1 transition-all ${foundScope === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               All Custody Registry ({allFoundItems.length})
             </button>
             <button
               onClick={() => setFoundScope('mine')}
-              className={`rounded-lg px-3 py-1 transition-all ${
-                foundScope === 'mine' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`rounded-lg px-3 py-1 transition-all ${foundScope === 'mine' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               My Deposits ({myFoundItems.length})
             </button>
@@ -670,15 +707,14 @@ export default function StudentLostFound() {
                             </span>
                           )}
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              item.status === 'OPEN'
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.status === 'OPEN'
                                 ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                 : item.status === 'VERIFICATION_PENDING'
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                : item.status === 'RESOLVED'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : item.status === 'RESOLVED'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-slate-100 text-slate-600'
+                              }`}
                           >
                             {item.status === 'VERIFICATION_PENDING' ? 'Verification Pending' : item.status}
                           </span>
@@ -830,19 +866,18 @@ export default function StudentLostFound() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-extrabold ${
-                            isFoundRequest
+                          <span className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-extrabold ${isFoundRequest
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                               : isHumanVerification
-                              ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                              : 'bg-amber-50 text-amber-800 border-amber-200'
-                          }`}>
+                                ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                            }`}>
                             <Sparkles size={12} />
                             {isFoundRequest
                               ? 'Found Request Received from Peer Finder'
                               : isHumanVerification
-                              ? 'Human Verification Queued with Campus Admin'
-                              : `${conf}% AI Similarity Match`}
+                                ? 'Human Verification Queued with Campus Admin'
+                                : `${conf}% AI Similarity Match`}
                           </span>
                           <span className="text-xs font-semibold text-slate-400">Match #{m.id}</span>
                         </div>

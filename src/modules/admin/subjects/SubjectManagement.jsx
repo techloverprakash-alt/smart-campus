@@ -583,10 +583,12 @@ export default function SubjectManagement({ navigation, route }) {
                   >
                     {/* Subject info */}
                     <View style={[{ flex: 2.2 }, styles.rowAlignCenter]}>
-                      <View>
+                      <View style={{ flex: 1 }}>
                         <View style={styles.subjectRowHeader}>
                           <Text style={styles.offeringCode}>{off.subject_code}</Text>
-                          <Text style={styles.offeringCredits}>{off.credits} Cr</Text>
+                          <View style={styles.offeringCreditsBadge}>
+                            <Text style={styles.offeringCreditsText}>{off.credits || 3} Cr</Text>
+                          </View>
                         </View>
                         <Text style={styles.offeringTitle} numberOfLines={1}>
                           {off.subject_title}
@@ -666,6 +668,10 @@ export default function SubjectManagement({ navigation, route }) {
         onRequestClose={() => setShowAddSubjectModal(false)}
       >
         <View style={styles.modalOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowAddSubjectModal(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -677,7 +683,7 @@ export default function SubjectManagement({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 460 }}>
+            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Subject Code *</Text>
                 <TextInput
@@ -739,7 +745,12 @@ export default function SubjectManagement({ navigation, route }) {
 
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Academic Department</Text>
-                <View style={styles.departmentSelectWrap}>
+                <ScrollView
+                  style={styles.deptOptionsScroll}
+                  contentContainerStyle={styles.deptOptionsContent}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                >
                   {metadata.departments?.map((d) => (
                     <TouchableOpacity
                       key={d.id}
@@ -759,7 +770,7 @@ export default function SubjectManagement({ navigation, route }) {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
             </ScrollView>
 
@@ -796,6 +807,10 @@ export default function SubjectManagement({ navigation, route }) {
         onRequestClose={() => setShowAssignModal(false)}
       >
         <View style={styles.modalOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowAssignModal(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -807,11 +822,16 @@ export default function SubjectManagement({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 500 }}>
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
               {/* Select Subject */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>1. Select Subject / Course *</Text>
-                <View style={styles.selectOptionsWrap}>
+                <ScrollView
+                  style={styles.selectOptionsScroll}
+                  contentContainerStyle={styles.selectOptionsContent}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                >
                   {metadata.subjects?.map((sub) => (
                     <TouchableOpacity
                       key={sub.id}
@@ -821,7 +841,7 @@ export default function SubjectManagement({ navigation, route }) {
                       ]}
                       onPress={() => setAssignSubId(String(sub.id))}
                     >
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <View style={styles.selectCardTopRow}>
                         <Text style={styles.selectCardCode}>{sub.code}</Text>
                         <Text style={styles.selectCardCredits}>{sub.credits} Credits</Text>
                       </View>
@@ -830,13 +850,18 @@ export default function SubjectManagement({ navigation, route }) {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
 
               {/* Select Faculty Staff */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>2. Assign Faculty Member *</Text>
-                <View style={styles.selectOptionsWrap}>
+                <ScrollView
+                  style={styles.selectOptionsScroll}
+                  contentContainerStyle={styles.selectOptionsContent}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                >
                   {metadata.staff?.map((st) => (
                     <TouchableOpacity
                       key={st.id}
@@ -854,13 +879,18 @@ export default function SubjectManagement({ navigation, route }) {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
 
               {/* Select Cohort Section (Shows Student Count) */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>3. Target Class Section & Students *</Text>
-                <View style={styles.selectOptionsWrap}>
+                <ScrollView
+                  style={styles.selectOptionsScroll}
+                  contentContainerStyle={styles.selectOptionsContent}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                >
                   {metadata.sections?.map((sec) => (
                     <TouchableOpacity
                       key={sec.id}
@@ -870,7 +900,7 @@ export default function SubjectManagement({ navigation, route }) {
                       ]}
                       onPress={() => setAssignSectionId(String(sec.id))}
                     >
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={styles.selectCardTopRow}>
                         <Text style={styles.selectCardName}>
                           {sec.name} ({sec.department_name || 'CSE'})
                         </Text>
@@ -886,7 +916,7 @@ export default function SubjectManagement({ navigation, route }) {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
 
               {/* Term & Year */}
@@ -1291,12 +1321,27 @@ const styles = StyleSheet.create({
   subjectRowHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   offeringCode: {
     fontSize: 13,
     fontWeight: '700',
     color: C.primary,
+    flexShrink: 0,
+  },
+  offeringCreditsBadge: {
+    backgroundColor: C.surfaceLow,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#e2e4ef',
+    marginLeft: 8,
+    flexShrink: 0,
+  },
+  offeringCreditsText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.muted,
   },
   offeringCredits: {
     fontSize: 11,
@@ -1377,19 +1422,38 @@ const styles = StyleSheet.create({
   },
   // Modals
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100vw',
+    maxWidth: '100vw',
+    minWidth: '100vw',
+    height: '100vh',
+    maxHeight: '100vh',
+    minHeight: '100vh',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    zIndex: 9999,
+    margin: 0,
+    marginLeft: 0,
+    marginRight: 0,
   },
   modalContent: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     width: '100%',
     maxWidth: 540,
+    maxHeight: '90vh',
     padding: 24,
-    boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
+    zIndex: 1,
+    position: 'relative',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1452,8 +1516,16 @@ const styles = StyleSheet.create({
     color: C.primary,
     fontWeight: '700',
   },
-  departmentSelectWrap: {
-    flexDirection: 'column',
+  deptOptionsScroll: {
+    maxHeight: 140,
+    overflowY: 'auto',
+    borderWidth: 1,
+    borderColor: '#e8e8f2',
+    borderRadius: 8,
+    backgroundColor: '#fafafc',
+  },
+  deptOptionsContent: {
+    padding: 6,
     gap: 6,
   },
   deptOptionPill: {
@@ -1462,7 +1534,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e8e8f2',
-    backgroundColor: C.surfaceLow,
+    backgroundColor: '#ffffff',
   },
   deptOptionPillActive: {
     backgroundColor: C.primaryContainer,
@@ -1476,21 +1548,34 @@ const styles = StyleSheet.create({
     color: C.primary,
     fontWeight: '700',
   },
-  selectOptionsWrap: {
-    flexDirection: 'column',
+  selectOptionsScroll: {
+    maxHeight: 150,
+    overflowY: 'auto',
+    borderWidth: 1,
+    borderColor: '#e8e8f2',
+    borderRadius: 8,
+    backgroundColor: '#fafafc',
+  },
+  selectOptionsContent: {
+    padding: 6,
     gap: 6,
-    maxHeight: 140,
   },
   selectCardOption: {
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e8e8f2',
-    backgroundColor: C.surfaceLow,
+    backgroundColor: '#ffffff',
   },
   selectCardOptionActive: {
     backgroundColor: C.primaryContainer,
     borderColor: C.primary,
+  },
+  selectCardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
   },
   selectCardCode: {
     fontSize: 12,
@@ -1500,6 +1585,7 @@ const styles = StyleSheet.create({
   selectCardCredits: {
     fontSize: 11,
     color: C.muted,
+    fontWeight: '600',
   },
   selectCardTitle: {
     fontSize: 12,
