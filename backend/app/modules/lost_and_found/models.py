@@ -54,6 +54,7 @@ class LostReport(Base):
     description = Column(Text, nullable=False)
     lost_at = Column(DateTime, nullable=True)
     status = Column(String(32), default="OPEN", nullable=False, index=True)  # OPEN, MATCHED, RESOLVED, CLOSED
+    embedding_json = Column(Text, nullable=True)  # JSON representation of 1024-dim embedding
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
@@ -86,6 +87,7 @@ class FoundReport(Base):
     custody_desk = Column(String(128), nullable=False)  # e.g., 'Admin Ground Floor Custody Desk'
     inventory_tag = Column(String(64), unique=True, nullable=False, index=True)  # e.g., 'LF-2025-001'
     storage_status = Column(String(32), default="IN_CUSTODY", nullable=False, index=True)  # INTAKE_PENDING, IN_CUSTODY, HANDED_OVER, RELEASED
+    embedding_json = Column(Text, nullable=True)  # JSON representation of 1024-dim embedding
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
@@ -240,3 +242,30 @@ class ItemHandover(Base):
 
     def __repr__(self):
         return f"<ItemHandover id={self.id} claim={self.claim_id}>"
+
+
+class ItemEmbedding(Base):
+    """
+    Table: item_embeddings
+    Persists 1024-dimensional multimodal embeddings in PostgreSQL for both Lost and Found reports.
+    Provides backup vector storage alongside Qdrant Cloud.
+    """
+    __tablename__ = "item_embeddings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    report_type = Column(String(16), nullable=False, index=True)  # 'LOST' or 'FOUND'
+    lost_report_id = Column(Integer, ForeignKey("lost_reports.id", ondelete="CASCADE"), nullable=True, index=True)
+    found_report_id = Column(Integer, ForeignKey("found_reports.id", ondelete="CASCADE"), nullable=True, index=True)
+    modality = Column(String(16), default="text", nullable=False)  # 'text' or 'image'
+    model_name = Column(String(64), default="jina-clip-v2", nullable=False)
+    vector_dim = Column(Integer, default=1024, nullable=False)
+    vector_json = Column(Text, nullable=False)
+    qdrant_point_id = Column(String(64), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    lost_report = relationship("LostReport", backref="embeddings")
+    found_report = relationship("FoundReport", backref="embeddings")
+
+    def __repr__(self):
+        return f"<ItemEmbedding id={self.id} type={self.report_type} lost={self.lost_report_id} found={self.found_report_id}>"

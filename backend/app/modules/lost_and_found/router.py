@@ -36,6 +36,7 @@ from app.modules.lost_and_found.schemas import (
     LostReportCreate,
     LostReportOut,
     LostReportUpdate,
+    MatchVerificationDetailedOut,
     MatchVerificationOut,
     MoveToVerificationRequest,
     ReportMediaOut,
@@ -43,6 +44,7 @@ from app.modules.lost_and_found.schemas import (
     SimilarFoundItemOut,
     StandardResponse,
     VerificationCreate,
+    VerificationReview,
 )
 from app.modules.lost_and_found.service import LostAndFoundService
 
@@ -116,7 +118,7 @@ def format_found_report(r: FoundReport) -> FoundReportOut:
     )
 
 
-def format_match(m: ItemMatch) -> ItemMatchOut:
+def format_match(m: ItemMatch, current_user: Optional[User] = None) -> ItemMatchOut:
     crit_list = []
     if m.criteria_json:
         try:
@@ -144,16 +146,34 @@ def format_match(m: ItemMatch) -> ItemMatchOut:
         for v in (m.verifications or [])
     ]
 
+    lost_out = format_lost_report(m.lost_report) if m.lost_report else None
+    found_out = format_found_report(m.found_report) if m.found_report else None
+
+    # Privacy Rule: The finder must not see match scores or private owner contact details.
+    # Scores are only exposed to the lost item owner or authorized administrators/HOD.
+    combined_score = m.combined_score
+    text_sim = m.text_similarity
+    img_sim = m.image_similarity
+    if current_user and m.lost_report and current_user.id != m.lost_report.reporter_id:
+        is_privileged = getattr(current_user, "is_hod", False) or (current_user.primary_role == "ADMIN")
+        if not is_privileged:
+            combined_score = 0.0
+            text_sim = None
+            img_sim = None
+            crit_list = []
+            if lost_out:
+                lost_out.reporter_name = "Campus Member"
+
     return ItemMatchOut(
         id=m.id,
         lost_report_id=m.lost_report_id,
         found_report_id=m.found_report_id,
-        lost_report=format_lost_report(m.lost_report) if m.lost_report else None,
-        found_report=format_found_report(m.found_report) if m.found_report else None,
-        text_similarity=m.text_similarity,
-        image_similarity=m.image_similarity,
-        combined_score=m.combined_score,
-        criteria_json=m.criteria_json,
+        lost_report=lost_out,
+        found_report=found_out,
+        text_similarity=text_sim,
+        image_similarity=img_sim,
+        combined_score=combined_score,
+        criteria_json=m.criteria_json if (not current_user or current_user.primary_role == "ADMIN" or (m.lost_report and current_user.id == m.lost_report.reporter_id)) else None,
         criteria_list=crit_list,
         status=m.status,
         verifications=verif_outs,
@@ -189,6 +209,24 @@ def format_handover(h: ItemHandover) -> ItemHandoverOut:
         location_name=h.location.name if h.location else None,
         handed_over_at=h.handed_over_at,
         pickup_pass_tag=h.pickup_pass_tag,
+    )
+
+
+def format_verification_detailed(v: MatchVerification) -> MatchVerificationDetailedOut:
+    m_out = format_match(v.match) if v.match else None
+    v_name = v.verifier.full_name if v.verifier else None
+    return MatchVerificationDetailedOut(
+        id=v.id,
+        match_id=v.match_id,
+        challenge_question=v.challenge_question,
+        owner_response=v.owner_response,
+        officer_notes=v.officer_notes,
+        concordance_score=v.concordance_score,
+        verified_by=v.verified_by,
+        verifier_name=v_name,
+        status=v.status,
+        created_at=v.created_at,
+        match=m_out,
     )
 
 
@@ -470,7 +508,7 @@ def list_matches(
         status=status,
         user_id=effective_user_id,
     )
-    return StandardResponse(data=[format_match(m) for m in matches])
+    return StandardResponse(data=[format_match(m, current_user=user) for m in matches])
 
 
 @router.post("/matches/{match_id}/request-human-verification", response_model=StandardResponse[MatchVerificationOut])
@@ -563,9 +601,9 @@ def verify_match_challenge(
     match_id: Union[int, str],
     payload: VerificationCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
 ):
-    """Verify ownership challenge details (Admin / Staff)."""
+    """Verify ownership challenge details (Admin / Staff / HOD)."""
     service = LostAndFoundService(db)
     try:
         mid = int(match_id)
@@ -585,6 +623,66 @@ def verify_match_challenge(
         created_at=v.created_at,
     )
     return StandardResponse(data=out, message="Match verification recorded.")
+
+
+@router.get("/verifications", response_model=StandardResponse[List[MatchVerificationDetailedOut]])
+def list_verifications(
+    status: Optional[str] = Query(None),
+    match_id: Optional[Union[int, str]] = Query(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
+):
+    """
+    List human verification challenge queue for HOD and administration review.
+    Displays pending challenge responses submitted by owners for physical custody authorization.
+    """
+    repo = LostAndFoundRepository(db)
+    records = repo.list_verifications(status=status, match_id=match_id)
+    return StandardResponse(data=[format_verification_detailed(v) for v in records])
+
+
+@router.get("/verifications/{verification_id}", response_model=StandardResponse[MatchVerificationDetailedOut])
+def get_verification_item(
+    verification_id: Union[int, str],
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
+):
+    """Get full verification challenge details including lost and found metadata."""
+    repo = LostAndFoundRepository(db)
+    v = repo.get_verification(verification_id)
+    if not v:
+        raise HTTPException(status_code=404, detail="Verification record not found.")
+    return StandardResponse(data=format_verification_detailed(v))
+
+
+@router.patch("/verifications/{verification_id}/review", response_model=StandardResponse[MatchVerificationDetailedOut])
+def review_verification_endpoint(
+    verification_id: Union[int, str],
+    payload: VerificationReview,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
+):
+    """
+    Approve or reject physical verification challenge (HOD / Admin).
+    When approved: Marks match, lost report, and found report as VERIFIED, authorizes handover,
+    auto-approves claim, and dispatches custody desk release alerts to owner and finder.
+    """
+    service = LostAndFoundService(db)
+    try:
+        vid = int(verification_id)
+        v = service.review_verification(
+            verification_id=vid,
+            status=payload.status,
+            officer_notes=payload.officer_notes,
+            concordance_score=payload.concordance_score,
+            verified_by=user.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return StandardResponse(
+        data=format_verification_detailed(v),
+        message=f"Verification challenge #{verification_id} {payload.status.lower()} successfully."
+    )
 
 
 # =============================================================================
@@ -625,9 +723,9 @@ def review_claim(
     claim_id: Union[int, str],
     payload: ClaimReview,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
 ):
-    """Approve or reject a claim with conflict handling (Admin / Staff)."""
+    """Approve or reject a claim with conflict handling (Admin / Staff / HOD)."""
     service = LostAndFoundService(db)
     try:
         cid = int(claim_id)
@@ -645,7 +743,7 @@ def review_claim(
 def create_handover(
     payload: HandoverCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role(["ADMIN", "STAFF"]))
+    user: User = Depends(require_role(["ADMIN", "STAFF", "HOD"]))
 ):
     """Execute physical return and generate digital pickup receipt (Admin / Staff)."""
     service = LostAndFoundService(db)

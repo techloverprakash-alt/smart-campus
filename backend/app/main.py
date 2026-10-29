@@ -11,6 +11,7 @@ from app.modules.lost_and_found.router import router as lost_and_found_router
 from app.modules.auth.router import auth_router, profile_router
 from app.modules.attendance.router import attendance_router, timetable_router
 from app.modules.materials.router import materials_router, announcements_router
+from app.modules.academic.router import academic_router
 from app.modules.reports.router import reports_router
 from app.modules.complaints.router import control_center_router
 from app.modules.academic.seeder import seed_academic_csvs
@@ -42,25 +43,18 @@ logger = logging.getLogger("smart_campus")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager:
-    1. Initializes relational database tables (Tables 34-41: item_categories, lost_reports, found_reports,
-       report_media, item_matches, match_verifications, item_claims, item_handovers).
-    2. Seeds standard campus categories and zones if table is empty.
-    3. Loads the MobileCLIP model once into memory on startup (CUDA/CPU).
-    4. Connects to local Qdrant container and ensures the collection exists.
-    5. Cleans up resources on shutdown.
-    """
-    logger.info("=== Starting Smart Campus Automated Matching Service ===")
+    print("=== LIFESPAN: START ===")
     
     # 1. Initialize relational database tables
     try:
+        print("=== LIFESPAN: 1. Base.metadata.create_all ===")
         Base.metadata.create_all(bind=db_engine)
-        logger.info("Relational database tables (Lost & Found Tables 34-41) initialized.")
+        print("=== LIFESPAN: 1. DONE ===")
     except Exception as e:
         logger.error(f"Failed to initialize database tables: {e}", exc_info=True)
 
     # 2. Seed initial categories and campus locations if empty
+    print("=== LIFESPAN: 2. Seeding ===")
     db = SessionLocal()
     try:
         # Seed default auth data (Roles, 23 Users, Profiles, Refresh Tokens)
@@ -92,23 +86,31 @@ async def lifespan(app: FastAPI):
         db.rollback()
     finally:
         db.close()
+    print("=== LIFESPAN: 2. DONE ===")
 
-    # 3. Initialize Embedding Service (Loads MobileCLIP once)
+    # 3. Initialize Embedding Service
     try:
+        print("=== LIFESPAN: 3. Embedding initialize ===")
         embedding_service.initialize()
-        logger.info(f"Embedding service initialized. Device: {embedding_service.device}, Dimension: {embedding_service.embedding_dim}")
     except Exception as e:
         logger.error(f"Failed to initialize embedding service: {e}", exc_info=True)
 
-    # 4. Initialize Qdrant Collection
-    try:
-        qdrant_service.ensure_collection(
-            collection_name=settings.qdrant_collection_name,
-            vector_dim=embedding_service.embedding_dim
-        )
-        logger.info(f"Qdrant collection '{settings.qdrant_collection_name}' ready on {settings.qdrant_host}")
-    except Exception as e:
-        logger.error(f"Failed to initialize Qdrant collection: {e}", exc_info=True)
+    # 4. Initialize Qdrant Collection in background without blocking ASGI startup
+    import asyncio
+    async def _init_qdrant_bg():
+        try:
+            await asyncio.to_thread(
+                qdrant_service.ensure_collection,
+                settings.qdrant_collection_name,
+                embedding_service.embedding_dim
+            )
+        except Exception as e:
+            pass
+
+    asyncio.create_task(_init_qdrant_bg())
+    print("=== LIFESPAN: YIELDING ===")
+    yield
+    print("=== LIFESPAN: SHUTDOWN ===")
 
     yield
 
@@ -157,6 +159,8 @@ app.include_router(announcements_router, prefix="/api/v1", tags=["Announcements 
 app.include_router(announcements_router, prefix="/api", tags=["Announcements"])
 app.include_router(reports_router, prefix="/api/v1/reports", tags=["Institutional Reports (v1)"])
 app.include_router(reports_router, prefix="/api/reports", tags=["Institutional Reports"])
+app.include_router(academic_router, prefix="/api/v1/academic", tags=["Academic & Course Allocation (v1)"])
+app.include_router(academic_router, prefix="/api/academic", tags=["Academic & Course Allocation"])
 app.include_router(control_center_router, prefix="/api/v1/admin/control-center", tags=["Admin Control Center (v1)"])
 app.include_router(control_center_router, prefix="/api/admin/control-center", tags=["Admin Control Center"])
 app.include_router(engine_router)

@@ -37,7 +37,7 @@ class QdrantVectorService:
             self.client = QdrantClient(
                 url=self.endpoint,
                 api_key=self.api_key,
-                timeout=15.0,
+                timeout=2.0,
                 check_compatibility=False
             )
         return self.client

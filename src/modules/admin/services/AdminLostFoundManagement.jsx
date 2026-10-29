@@ -4,7 +4,7 @@ import { useRouter } from '../../../router';
 import {
   Shield, Check, CheckCircle2, AlertTriangle, ArrowLeft,
   Search, SlidersHorizontal, MapPin, Clock, Eye, Trash2, Send,
-  FileCheck, ShieldCheck, ChevronDown, User, QrCode, X, Phone, Lock,
+  FileCheck, ShieldCheck, ShieldAlert, ChevronDown, User, QrCode, X, Phone, Lock,
   Camera, Zap, RefreshCw, ExternalLink, ThumbsUp, Bell, AlertCircle,
   PackageSearch, Tag, CheckSquare, Layers
 } from 'lucide-react';
@@ -19,7 +19,9 @@ import {
   dismissMatch,
   reviewClaim,
   createHandover,
-  updateFoundCustody
+  updateFoundCustody,
+  getVerifications,
+  reviewVerification
 } from '../../../services/api/lostAndFound';
 
 export default function AdminLostFoundManagement() {
@@ -30,7 +32,8 @@ export default function AdminLostFoundManagement() {
   const adminName = profile?.name || profile?.full_name || user?.name || 'Campus Administrator';
 
   // State
-  const [activeTab, setActiveTab] = useState('matches'); // 'matches' | 'custody' | 'claims' | 'lost_all'
+  const [activeTab, setActiveTab] = useState('verifications'); // 'verifications' | 'matches' | 'custody' | 'claims' | 'lost_all'
+  const [verifications, setVerifications] = useState([]);
   const [matches, setMatches] = useState([]);
   const [foundItems, setFoundItems] = useState([]);
   const [lostItems, setLostItems] = useState([]);
@@ -42,7 +45,12 @@ export default function AdminLostFoundManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [feedback, setFeedback] = useState({ text: '', type: 'info' });
 
-  // Verification Modal State
+  // Human Verification Review Modal State
+  const [reviewingVerification, setReviewingVerification] = useState(null);
+  const [verificationReviewNotes, setVerificationReviewNotes] = useState('');
+  const [verificationReviewScore, setVerificationReviewScore] = useState(95);
+
+  // Verification Modal State (Direct Match Manual Verification)
   const [verifyingMatch, setVerifyingMatch] = useState(null);
   const [verifyForm, setVerifyForm] = useState({
     challenge_question: 'Confirm specific unique mark or internal identifier.',
@@ -71,13 +79,14 @@ export default function AdminLostFoundManagement() {
   const loadData = async () => {
     try {
       setRefreshing(true);
-      const [matchesRes, foundRes, lostRes, claimsRes, locsRes, catsRes] = await Promise.all([
+      const [matchesRes, foundRes, lostRes, claimsRes, locsRes, catsRes, verifRes] = await Promise.all([
         getMatches().catch(() => []),
         getFoundReports().catch(() => []),
         getLostReports().catch(() => []),
         getClaims().catch(() => []),
         getLocations().catch(() => []),
-        getCategories().catch(() => [])
+        getCategories().catch(() => []),
+        getVerifications().catch(() => [])
       ]);
 
       const matchList = Array.isArray(matchesRes) ? matchesRes : matchesRes?.data || [];
@@ -86,6 +95,7 @@ export default function AdminLostFoundManagement() {
       const claimsList = Array.isArray(claimsRes) ? claimsRes : claimsRes?.data || [];
       const locList = Array.isArray(locsRes) ? locsRes : locsRes?.data || [];
       const catList = Array.isArray(catsRes) ? catsRes : catsRes?.data || [];
+      const verifList = Array.isArray(verifRes) ? verifRes : verifRes?.data || [];
 
       setMatches(matchList);
       setFoundItems(foundList);
@@ -93,6 +103,7 @@ export default function AdminLostFoundManagement() {
       setClaims(claimsList);
       setLocations(locList);
       setCategories(catList);
+      setVerifications(verifList);
 
       if (locList.length > 0 && !handoverForm.handover_location_id) {
         setHandoverForm((prev) => ({ ...prev, handover_location_id: locList[0].id }));
@@ -108,6 +119,28 @@ export default function AdminLostFoundManagement() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Review Human Verification Challenge (Approve Handover / Reject)
+  const handleReviewVerificationAction = async (status) => {
+    if (!reviewingVerification) return;
+    try {
+      setLoading(true);
+      await reviewVerification(reviewingVerification.id, {
+        status,
+        officer_notes: verificationReviewNotes || `Challenge physically verified and ${status.toLowerCase()} by ${adminName}`,
+        concordance_score: status === 'APPROVED' ? parseFloat(verificationReviewScore) || 95.0 : 40.0
+      });
+
+      notify(`Verification challenge #${reviewingVerification.id} marked ${status}! Handover updated.`, 'success');
+      setReviewingVerification(null);
+      setVerificationReviewNotes('');
+      await loadData();
+    } catch (err) {
+      notify('Verification review error: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Submit Manual Verification for a Match
   const handleVerifyMatch = async (e) => {
@@ -217,10 +250,10 @@ export default function AdminLostFoundManagement() {
           </div>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl flex items-center gap-3">
             <ShieldCheck className="text-blue-600" size={32} />
-            Campus Lost & Found Verification Center
+            HOD & Custody Verification Center
           </h1>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-            Administrator: <span className="font-semibold text-slate-700">{adminName} ({adminId})</span> • Manual verification authority for cross-modal similarity candidate matches.
+            Head of Department / Custody Officer: <span className="font-semibold text-slate-700">{adminName} ({adminId})</span> • Authority for physical inspection, ownership confirmation, and custody release.
           </p>
         </div>
 
@@ -252,55 +285,77 @@ export default function AdminLostFoundManagement() {
       )}
 
       {/* Metric Counters */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-6">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-xs">
+          <span className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
+            <ShieldAlert size={14} className="text-amber-600" /> Human Queue
+          </span>
+          <p className="mt-2 text-2xl font-black text-amber-950">
+            {verifications.filter((v) => v.status === 'PENDING').length}
+          </p>
+          <p className="text-[11px] text-amber-700 font-medium">Pending handover authorization</p>
+        </div>
+
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">AI Matches Pending</span>
+          <span className="text-xs font-semibold text-slate-500">AI Matches</span>
           <p className="mt-2 text-2xl font-black text-slate-900">
             {matches.filter((m) => m.status === 'CANDIDATE' || m.status === 'PENDING_VERIFICATION').length}
           </p>
-          <p className="text-[11px] text-amber-600 font-medium">Awaiting manual challenge review</p>
+          <p className="text-[11px] text-blue-600 font-medium">Algorithmic candidates</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <span className="text-xs font-semibold text-slate-500">Active Claims</span>
           <p className="mt-2 text-2xl font-black text-slate-900">
-            {claims.filter((c) => c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW').length}
+            {claims.filter((c) => c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW' || c.status === 'APPROVED').length}
           </p>
-          <p className="text-[11px] text-blue-600 font-medium">Ownership claims filed</p>
+          <p className="text-[11px] text-emerald-600 font-medium">Claims & handovers</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Custody Desk Inventory</span>
+          <span className="text-xs font-semibold text-slate-500">Custody Inventory</span>
           <p className="mt-2 text-2xl font-black text-slate-900">
             {foundItems.filter((f) => f.storage_status === 'IN_CUSTODY' || f.storage_status === 'LOGGED').length}
           </p>
-          <p className="text-[11px] text-emerald-600 font-medium">Items secured in lockers/desks</p>
+          <p className="text-[11px] text-slate-500 font-medium">Items in custody desks</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Campus Missing Reports</span>
+          <span className="text-xs font-semibold text-slate-500">Missing Articles</span>
           <p className="mt-2 text-2xl font-black text-slate-900">{lostItems.length}</p>
-          <p className="text-[11px] text-slate-400">Total reported missing articles</p>
+          <p className="text-[11px] text-slate-400">Total reported lost</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('verifications')}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 ${
+            activeTab === 'verifications'
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <ShieldAlert size={14} />
+          Human Verification Queue ({verifications.filter((v) => v.status === 'PENDING').length})
+        </button>
+
         <button
           onClick={() => setActiveTab('matches')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 ${
             activeTab === 'matches'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <Zap size={14} />
-          AI Candidate Verification ({matches.length})
+          AI Candidate Triage ({matches.length})
         </button>
 
         <button
           onClick={() => setActiveTab('claims')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 ${
             activeTab === 'claims'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -312,19 +367,19 @@ export default function AdminLostFoundManagement() {
 
         <button
           onClick={() => setActiveTab('custody')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 ${
             activeTab === 'custody'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <ShieldCheck size={14} />
-          Found Custody Registry ({foundItems.length})
+          Custody Registry ({foundItems.length})
         </button>
 
         <button
           onClick={() => setActiveTab('lost_all')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 ${
             activeTab === 'lost_all'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -334,6 +389,183 @@ export default function AdminLostFoundManagement() {
           All Lost Reports ({lostItems.length})
         </button>
       </div>
+
+      {/* TAB 0: HUMAN VERIFICATIONS QUEUE (PRIORITY DESK) */}
+      {activeTab === 'verifications' && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 flex items-start gap-3">
+            <ShieldAlert className="text-amber-600 mt-0.5 shrink-0" size={20} />
+            <div>
+              <p className="font-bold text-sm text-amber-900">Head of Department (HOD) Physical Verification Queue:</p>
+              <p className="text-amber-800 mt-1 leading-relaxed">
+                AI algorithms suggest up to three qualifying candidates, but only the Head of Department (HOD) can confirm the physical item and its rightful owner.
+                Review the owner's identifying challenge response against the physical item in custody. Approving marks both records VERIFIED and authorizes student collection at the custody desk.
+              </p>
+            </div>
+          </div>
+
+          {verifications.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <ShieldCheck className="mx-auto text-slate-300" size={48} />
+              <h3 className="mt-3 text-sm font-bold text-slate-700">No Pending Human Verifications</h3>
+              <p className="mt-1 text-xs text-slate-400">
+                All lost and found ownership challenges are currently up to date. Incoming physical verification requests will appear here immediately.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {verifications.map((v) => {
+                const match = v.match;
+                const lost = match?.lost_report;
+                const found = match?.found_report;
+
+                return (
+                  <div key={v.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    {/* Header */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${
+                          v.status === 'APPROVED'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : v.status === 'REJECTED'
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                            : 'bg-amber-100 text-amber-900 border border-amber-200'
+                        }`}>
+                          {v.status === 'PENDING' ? 'ACTION REQUIRED: PENDING REVIEW' : v.status}
+                        </span>
+                        <span className="font-mono text-xs text-slate-400">Verification #{v.id}</span>
+                        <span className="font-mono text-xs text-slate-400">Match #{v.match_id}</span>
+                        {match && (
+                          <span className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+                            {Math.round((match.combined_score || 0.9) * 100)}% AI Match Confidence
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {v.status === 'PENDING' ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                setReviewingVerification(v);
+                                setVerificationReviewNotes('Physical verification rejected due to lack of matching identifiers.');
+                                setVerificationReviewScore(30);
+                              }}
+                              className="rounded-xl border border-rose-200 px-3.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => {
+                                setReviewingVerification(v);
+                                setVerificationReviewNotes('Physical inspection confirmed match. Ownership authorized for handover.');
+                                setVerificationReviewScore(95);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs"
+                            >
+                              <ShieldCheck size={14} />
+                              Review & Authorize Handover
+                            </button>
+                          </>
+                        ) : v.status === 'APPROVED' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
+                            <CheckCircle2 size={14} /> Handover Authorized
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200">
+                            <X size={14} /> Verification Rejected
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Content Columns: Lost vs Found */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs">
+                      {/* Lost Article */}
+                      <div className="rounded-xl bg-slate-50 p-4 border border-slate-100 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between text-slate-400 font-mono text-[11px] mb-1">
+                            <span className="font-bold text-slate-700">LOST ARTICLE (OWNER)</span>
+                            <span>Report #{lost?.id || '—'}</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900">{lost?.title || 'Reported Lost Item'}</h4>
+                          <p className="mt-1 text-slate-600 leading-relaxed">{lost?.description}</p>
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                            <span className="rounded bg-white px-2 py-0.5 border border-slate-200">
+                              Owner: <strong className="text-slate-800">{lost?.reporter_name || 'Student'}</strong>
+                            </span>
+                            {lost?.location_name && (
+                              <span className="rounded bg-white px-2 py-0.5 border border-slate-200 flex items-center gap-1">
+                                <MapPin size={10} /> {lost.location_name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {lost?.primary_image_url && (
+                          <div className="mt-3">
+                            <img src={lost.primary_image_url} alt="Lost article" className="h-24 w-auto rounded-lg object-cover border border-slate-200" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Found Article */}
+                      <div className="rounded-xl bg-slate-50 p-4 border border-slate-100 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between text-slate-400 font-mono text-[11px] mb-1">
+                            <span className="font-bold text-slate-700">FOUND ARTICLE IN CUSTODY</span>
+                            <span>Deposit #{found?.id || '—'}</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900">{found?.title || 'Reported Found Item'}</h4>
+                          <p className="mt-1 text-slate-600 leading-relaxed">{found?.description}</p>
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                            <span className="rounded bg-white px-2 py-0.5 border border-slate-200">
+                              Finder: <strong className="text-slate-800">{found?.finder_name || 'Community Member'}</strong>
+                            </span>
+                            <span className="rounded bg-white px-2 py-0.5 border border-slate-200">
+                              Desk: <strong className="text-slate-800">{found?.custody_desk || 'Custody Desk'}</strong>
+                            </span>
+                            {found?.inventory_tag && (
+                              <span className="rounded bg-white px-2 py-0.5 border border-slate-200 font-mono">
+                                Tag: {found.inventory_tag}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {found?.primary_image_url && (
+                          <div className="mt-3">
+                            <img src={found.primary_image_url} alt="Found article" className="h-24 w-auto rounded-lg object-cover border border-slate-200" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Challenge & Secret Response Box */}
+                    <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-xs">
+                      <div className="flex items-center gap-2 text-blue-900 font-bold mb-1">
+                        <Lock size={14} className="text-blue-600" />
+                        <span>Owner's Verification Challenge Response:</span>
+                      </div>
+                      <p className="text-slate-600 mb-2 italic">Question: &quot;{v.challenge_question}&quot;</p>
+                      <div className="rounded-lg bg-white p-3 border border-blue-200 text-slate-800 font-medium">
+                        {v.owner_response ? (
+                          <span className="text-sm text-slate-900">{v.owner_response}</span>
+                        ) : (
+                          <span className="text-slate-400 italic">No specific secret response provided; refer to lost report description.</span>
+                        )}
+                      </div>
+                      {v.officer_notes && (
+                        <div className="mt-2 text-[11px] text-slate-500">
+                          Officer notes: {v.officer_notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: AI CANDIDATE VERIFICATION (ADMIN MANUAL VERIFICATION) */}
       {activeTab === 'matches' && (
@@ -759,6 +991,85 @@ export default function AdminLostFoundManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: HUMAN VERIFICATION REVIEW */}
+      {reviewingVerification && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="text-blue-600" size={20} />
+                Review Physical Verification Challenge #{reviewingVerification.id}
+              </h3>
+              <button onClick={() => setReviewingVerification(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 text-xs">
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+                <p className="font-semibold text-slate-500">Challenge Question:</p>
+                <p className="text-xs text-slate-700 mt-0.5 italic">
+                  &quot;{reviewingVerification.challenge_question}&quot;
+                </p>
+                <p className="font-semibold text-slate-500 mt-2">Owner's Secret Response:</p>
+                <p className="text-sm font-bold text-slate-900 mt-0.5">
+                  {reviewingVerification.owner_response || reviewingVerification.match?.lost_report?.description || 'No challenge answer provided'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Officer Inspection Notes *</label>
+                <textarea
+                  rows={3}
+                  value={verificationReviewNotes}
+                  onChange={(e) => setVerificationReviewNotes(e.target.value)}
+                  placeholder="Describe physical verification results, serial number match, or reason for decision..."
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Concordance Score (0 - 100%)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={verificationReviewScore}
+                  onChange={(e) => setVerificationReviewScore(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+              <button
+                type="button"
+                onClick={() => setReviewingVerification(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => handleReviewVerificationAction('REJECTED')}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700"
+              >
+                Reject Challenge
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => handleReviewVerificationAction('APPROVED')}
+                className="rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs"
+              >
+                Approve & Authorize Handover
+              </button>
+            </div>
           </div>
         </div>
       )}

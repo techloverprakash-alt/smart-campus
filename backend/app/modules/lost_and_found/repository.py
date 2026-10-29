@@ -10,6 +10,7 @@ from app.modules.lost_and_found.models import (
     FoundReport,
     ItemCategory,
     ItemClaim,
+    ItemEmbedding,
     ItemHandover,
     ItemMatch,
     LostReport,
@@ -456,6 +457,186 @@ class LostAndFoundRepository:
         self.db.commit()
         self.db.refresh(v)
         return v
+
+    def get_verification(self, verification_id: Union[int, str]) -> Optional[MatchVerification]:
+        try:
+            vid = int(verification_id)
+        except (ValueError, TypeError):
+            return None
+        return (
+            self.db.query(MatchVerification)
+            .options(
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.reporter),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.media),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.category),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.last_seen_location),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.finder),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.media),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.category),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.found_location),
+                joinedload(MatchVerification.verifier),
+            )
+            .filter(MatchVerification.id == vid)
+            .first()
+        )
+
+    def list_verifications(
+        self,
+        status: Optional[str] = None,
+        match_id: Optional[Union[int, str]] = None
+    ) -> List[MatchVerification]:
+        query = (
+            self.db.query(MatchVerification)
+            .options(
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.reporter),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.media),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.category),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.lost_report).joinedload(LostReport.last_seen_location),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.finder),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.media),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.category),
+                joinedload(MatchVerification.match).joinedload(ItemMatch.found_report).joinedload(FoundReport.found_location),
+                joinedload(MatchVerification.verifier),
+            )
+        )
+        if status:
+            query = query.filter(MatchVerification.status.ilike(status.strip()))
+        if match_id is not None:
+            try:
+                mid = int(match_id)
+                query = query.filter(MatchVerification.match_id == mid)
+            except (ValueError, TypeError):
+                pass
+
+        return query.order_by(MatchVerification.created_at.desc()).all()
+
+    def update_verification(
+        self,
+        verification_id: Union[int, str],
+        status: str,
+        officer_notes: Optional[str] = None,
+        concordance_score: Optional[float] = None,
+        verified_by: Optional[int] = None
+    ) -> Optional[MatchVerification]:
+        v = self.get_verification(verification_id)
+        if not v:
+            return None
+        v.status = status
+        if officer_notes is not None:
+            v.officer_notes = officer_notes
+        if concordance_score is not None:
+            v.concordance_score = concordance_score
+        if verified_by is not None:
+            v.verified_by = verified_by
+        self.db.commit()
+        self.db.refresh(v)
+        return v
+
+    # =========================================================================
+    # Multimodal Item Embeddings (Table: item_embeddings & PostgreSQL pgvector)
+    # =========================================================================
+
+    def save_item_embedding(
+        self,
+        report_type: str,
+        report_id: int,
+        vector: List[float],
+        modality: str = "text",
+        model_name: str = "jina-clip-v2",
+        qdrant_point_id: Optional[str] = None
+    ) -> ItemEmbedding:
+        """
+        Dual-persists 1024-dimensional multimodal vector:
+        1. Stores JSON representation directly on LostReport/FoundReport (embedding_json)
+        2. Records structured row in item_embeddings table
+        """
+        clean_type = report_type.lower().strip()
+        vec_json = json.dumps([round(float(x), 6) for x in vector])
+
+        # 1. Update report column
+        if clean_type == "lost":
+            report = self.get_lost_report(report_id)
+            if report:
+                report.embedding_json = vec_json
+        elif clean_type == "found":
+            report = self.get_found_report(report_id)
+            if report:
+                report.embedding_json = vec_json
+
+        # 2. Update or insert in item_embeddings table
+        existing = (
+            self.db.query(ItemEmbedding)
+            .filter(
+                ItemEmbedding.report_type == clean_type,
+                (ItemEmbedding.lost_report_id == report_id) if clean_type == "lost" else (ItemEmbedding.found_report_id == report_id),
+                ItemEmbedding.modality == modality
+            )
+            .first()
+        )
+
+        if existing:
+            existing.vector_json = vec_json
+            existing.vector_dim = len(vector)
+            existing.model_name = model_name
+            if qdrant_point_id:
+                existing.qdrant_point_id = str(qdrant_point_id)
+            self.db.commit()
+            self.db.refresh(existing)
+            return existing
+
+        item_emb = ItemEmbedding(
+            report_type=clean_type,
+            lost_report_id=report_id if clean_type == "lost" else None,
+            found_report_id=report_id if clean_type == "found" else None,
+            modality=modality,
+            model_name=model_name,
+            vector_dim=len(vector),
+            vector_json=vec_json,
+            qdrant_point_id=str(qdrant_point_id) if qdrant_point_id else None
+        )
+        self.db.add(item_emb)
+        self.db.commit()
+        self.db.refresh(item_emb)
+        return item_emb
+
+    def get_item_embedding(
+        self,
+        report_type: str,
+        report_id: int,
+        modality: str = "text"
+    ) -> Optional[List[float]]:
+        clean_type = report_type.lower().strip()
+        emb_record = (
+            self.db.query(ItemEmbedding)
+            .filter(
+                ItemEmbedding.report_type == clean_type,
+                (ItemEmbedding.lost_report_id == report_id) if clean_type == "lost" else (ItemEmbedding.found_report_id == report_id),
+                ItemEmbedding.modality == modality
+            )
+            .first()
+        )
+        if emb_record and emb_record.vector_json:
+            try:
+                return json.loads(emb_record.vector_json)
+            except Exception:
+                pass
+
+        # Fallback to column
+        if clean_type == "lost":
+            r = self.get_lost_report(report_id)
+            if r and r.embedding_json:
+                try:
+                    return json.loads(r.embedding_json)
+                except Exception:
+                    pass
+        elif clean_type == "found":
+            fr = self.get_found_report(report_id)
+            if fr and fr.embedding_json:
+                try:
+                    return json.loads(fr.embedding_json)
+                except Exception:
+                    pass
+        return None
 
     # =========================================================================
     # Item Claims (Table 40)

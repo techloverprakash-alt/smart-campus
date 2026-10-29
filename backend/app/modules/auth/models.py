@@ -89,6 +89,19 @@ class User(Base):
         return self.primary_role
 
     @property
+    def is_hod(self) -> bool:
+        """True if user has HOD role or designation (Head of Department)."""
+        if any("HOD" in r.name.upper() for r in (self.roles or [])):
+            return True
+        if self.staff_profile and self.staff_profile.designation:
+            desig = self.staff_profile.designation.upper()
+            if "HOD" in desig or "HEAD" in desig:
+                return True
+        if self.primary_role == "ADMIN":
+            return True
+        return False
+
+    @property
     def name(self) -> str:
         if self.full_name:
             return self.full_name

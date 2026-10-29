@@ -492,10 +492,20 @@ class AuthService:
             role_name="Staff",
         )
 
+        # Attempt to resolve department by name
+        dept_id = 1
+        if data.department_name:
+            from app.modules.academic.models import Department
+            dept = self.db.query(Department).filter(
+                (Department.name.ilike(f"%{data.department_name}%")) | (Department.code.ilike(f"%{data.department_name}%"))
+            ).first()
+            if dept:
+                dept_id = dept.id
+
         staff_profile = StaffProfile(
             user_id=user.id,
             faculty_id=data.faculty_id,
-            department_id=1,
+            department_id=dept_id,
             designation=data.designation,
             cabin_number=data.cabin_number or "CS-B204",
             mentor_capacity=data.mentor_capacity or 15,
@@ -514,6 +524,61 @@ class AuthService:
             "generated_password": password,
         }
 
+    def delete_staff_member(self, staff_id: int) -> Dict[str, Any]:
+        """
+        Deletes a faculty member profile and login account, cleaning up
+        mentorship links and course allocations safely.
+        """
+        from app.modules.academic.models import Section
+        from app.modules.attendance.models import CourseOffering, AttendanceSession
+
+        # Find staff profile by ID or user ID
+        staff = self.db.query(StaffProfile).filter(
+            (StaffProfile.id == staff_id) | (StaffProfile.user_id == staff_id)
+        ).first()
+
+        if not staff:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Staff member with ID {staff_id} not found.",
+            )
+
+        user = staff.user
+        faculty_id = staff.faculty_id
+        full_name = user.full_name if user else faculty_id
+
+        # 1. Unassign mentees
+        students = self.db.query(StudentProfile).filter(StudentProfile.mentor_id == staff.id).all()
+        for s in students:
+            s.mentor_id = None
+
+        # 2. Delete CourseOfferings assigned to this staff member
+        offerings = self.db.query(CourseOffering).filter(CourseOffering.staff_id == staff.id).all()
+        for o in offerings:
+            self.db.delete(o)
+
+        # 3. Clean up attendance sessions marked by this staff
+        sessions = self.db.query(AttendanceSession).filter(AttendanceSession.marked_by == staff.id).all()
+        for sess in sessions:
+            sess.marked_by = None
+
+        # 4. Delete staff profile and user
+        user_to_delete = user
+        self.db.delete(staff)
+        self.db.flush()
+
+        if user_to_delete:
+            self.db.delete(user_to_delete)
+
+        self.db.commit()
+
+        return {
+            "success": True,
+            "message": f"Faculty member '{full_name}' ({faculty_id}) was successfully deleted.",
+            "deleted_staff_id": staff_id,
+            "deleted_faculty_id": faculty_id,
+        }
+
     # =========================================================================
     # Mentor & Proctor Allocation
     # =========================================================================
@@ -525,6 +590,8 @@ class AuthService:
             mentees_count = len(m.mentees)
             results.append({
                 "id": m.id,
+                "staff_id": m.id,
+                "user_id": m.user_id,
                 "faculty_id": m.faculty_id,
                 "name": user.name if user else m.faculty_id,
                 "full_name": user.name if user else m.faculty_id,
@@ -534,7 +601,11 @@ class AuthService:
                 "assigned_students_count": mentees_count,
                 "capacity": m.mentor_capacity,
                 "mentor_capacity": m.mentor_capacity,
-                "department": "CSE" if m.department_id == 1 else "IT",
+                "department": m.department.name if m.department else "Computer Science and Engineering",
+                "cabin": m.cabin_number or "Cabin 204",
+                "cabin_number": m.cabin_number or "Cabin 204",
+                "email": user.email if user else "",
+                "phone": user.phone if user else "",
             })
         return results
 

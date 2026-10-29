@@ -9,12 +9,13 @@ from sqlalchemy.orm import Session
 from app.infrastructure.embedding import embedding_adapter
 from app.infrastructure.vector_search import vector_search_adapter
 from app.modules.academic.models import MediaAttachment
-from app.modules.auth.models import User
+from app.modules.auth.models import Role, User
 from app.modules.notifications.models import Notification
 from app.modules.lost_and_found.models import (
     FoundReport,
     ItemCategory,
     ItemClaim,
+    ItemEmbedding,
     ItemHandover,
     ItemMatch,
     LostReport,
@@ -29,6 +30,7 @@ from app.modules.lost_and_found.schemas import (
     LostReportCreate,
     MoveToVerificationRequest,
     VerificationCreate,
+    VerificationReview,
 )
 
 logger = logging.getLogger("smart_campus.lost_found_service")
@@ -97,12 +99,12 @@ class LostAndFoundService:
             except Exception as e:
                 logger.warning(f"Could not attach media to lost report: {e}")
 
-        # Generate Jina CLIP v2 text embedding
+        # Generate Jina CLIP v2 multimodal text embedding & persist to Qdrant and DB
         try:
             text_content = f"{data.title}. {data.brand_model or ''}. {data.description}"
             vector = embedding_adapter.get_text_vector(text_content)
             if vector is not None:
-                vector_search_adapter.upsert_item(
+                point_id = vector_search_adapter.upsert_item(
                     record_id=report.id,
                     vector=vector,
                     modality="text",
@@ -117,8 +119,16 @@ class LostAndFoundService:
                         "image_url": media_urls[0] if media_urls else "",
                     }
                 )
+                self.repo.save_item_embedding(
+                    report_type="lost",
+                    report_id=report.id,
+                    vector=vector,
+                    modality="text",
+                    model_name="jina-clip-v2",
+                    qdrant_point_id=str(point_id) if point_id else None
+                )
         except Exception as e:
-            logger.warning(f"Vector search upsert skipped: {e}")
+            logger.warning(f"Vector search upsert / embedding persistence failed for lost report: {e}")
 
         # Automatic cross-modal triage against existing found items
         try:
@@ -202,41 +212,76 @@ class LostAndFoundService:
                 found_report_id=report.id
             )
 
-        # Generate Jina CLIP v2 text embedding
-        text_content = f"{data.title}. {data.description}"
-        vector = embedding_adapter.get_text_vector(text_content)
-        if vector is not None:
-            vector_search_adapter.upsert_item(
-                record_id=report.id,
-                vector=vector,
-                modality="text",
-                payload={
-                    "report_id": report.id,
-                    "type": "found",
-                    "title": data.title,
-                    "category_id": category_id,
-                    "description": data.description,
-                    "location_id": loc_id or "",
-                    "created_at": datetime.datetime.utcnow().isoformat(),
-                    "image_url": media_urls[0] if media_urls else "",
-                }
-            )
+        # Generate Jina CLIP v2 text embedding & persist to Qdrant and DB
+        try:
+            text_content = f"{data.title}. {data.description}"
+            vector = embedding_adapter.get_text_vector(text_content)
+            if vector is not None:
+                point_id = vector_search_adapter.upsert_item(
+                    record_id=report.id,
+                    vector=vector,
+                    modality="text",
+                    payload={
+                        "report_id": report.id,
+                        "type": "found",
+                        "title": data.title,
+                        "category_id": category_id,
+                        "description": data.description,
+                        "location_id": loc_id or "",
+                        "created_at": datetime.datetime.utcnow().isoformat(),
+                        "image_url": media_urls[0] if media_urls else "",
+                    }
+                )
+                self.repo.save_item_embedding(
+                    report_type="found",
+                    report_id=report.id,
+                    vector=vector,
+                    modality="text",
+                    model_name="jina-clip-v2",
+                    qdrant_point_id=str(point_id) if point_id else None
+                )
+        except Exception as e:
+            logger.warning(f"Vector search upsert / embedding persistence failed for found report: {e}")
 
         # Automatic cross-modal triage against existing lost items
-        self.evaluate_matches_for_found(report.id)
+        try:
+            self.evaluate_matches_for_found(report.id)
+        except Exception as e:
+            logger.warning(f"Triage evaluation skipped: {e}")
+
         return self.repo.get_found_report(report.id) or report
 
     # =========================================================================
-    # AI Candidate Matching Engine (Jina CLIP v2 + Qdrant)
+    # AI Candidate Matching Engine (Jina CLIP v2 + Qdrant Dual-Persistence)
     # =========================================================================
 
-    def evaluate_matches_for_lost(self, lost_report_id: int, top_k: int = 5) -> List[ItemMatch]:
+    def evaluate_matches_for_lost(self, lost_report_id: int, top_k: int = 3) -> List[ItemMatch]:
         lost = self.repo.get_lost_report(lost_report_id)
         if not lost:
             return []
 
-        lost_text = f"{lost.title}. {lost.brand_model or ''}. {lost.description}"
-        query_vector = embedding_adapter.get_text_vector(lost_text)
+        # Retrieve stored embedding or compute and dual-persist
+        query_vector = self.repo.get_item_embedding("lost", lost.id)
+        if query_vector is None:
+            lost_text = f"{lost.title}. {lost.brand_model or ''}. {lost.description}"
+            query_vector = embedding_adapter.get_text_vector(lost_text)
+            if query_vector is not None:
+                try:
+                    point_id = vector_search_adapter.upsert_item(
+                        record_id=lost.id,
+                        vector=query_vector,
+                        modality="text",
+                        payload={"report_id": lost.id, "type": "lost", "title": lost.title}
+                    )
+                    self.repo.save_item_embedding(
+                        report_type="lost",
+                        report_id=lost.id,
+                        vector=query_vector,
+                        qdrant_point_id=str(point_id) if point_id else None
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to persist query vector: {e}")
+
         if query_vector is None:
             return []
 
@@ -248,11 +293,36 @@ class LostAndFoundService:
             if found.storage_status == "HANDED_OVER":
                 continue
 
-            found_text = f"{found.title}. {found.description}"
-            found_vec = embedding_adapter.get_text_vector(found_text)
-            
-            # Text similarity
-            text_sim = float(embedding_adapter.service.compute_similarity(query_vector, found_vec)) if found_vec is not None else 0.5
+            # Retrieve found vector from DB or compute & dual-persist
+            found_vec = self.repo.get_item_embedding("found", found.id)
+            if found_vec is None:
+                found_text = f"{found.title}. {found.description}"
+                found_vec = embedding_adapter.get_text_vector(found_text)
+                if found_vec is not None:
+                    try:
+                        p_id = vector_search_adapter.upsert_item(
+                            record_id=found.id,
+                            vector=found_vec,
+                            modality="text",
+                            payload={"report_id": found.id, "type": "found", "title": found.title}
+                        )
+                        self.repo.save_item_embedding(
+                            report_type="found",
+                            report_id=found.id,
+                            vector=found_vec,
+                            qdrant_point_id=str(p_id) if p_id else None
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to persist found vector: {e}")
+
+            # Vector text similarity & lexical keyword concordance
+            vec_sim = float(embedding_adapter.service.compute_similarity(query_vector, found_vec)) if found_vec is not None else 0.0
+            stopwords = {'a', 'an', 'the', 'and', 'or', 'with', 'on', 'in', 'at', 'near', 'by', 'of', 'for', 'is', 'it', 'to', 'from', 'found', 'lost'}
+            l_words = set(re.findall(r'\w+', f"{lost.title} {lost.brand_model or ''} {lost.description}".lower())) - stopwords
+            f_words = set(re.findall(r'\w+', f"{found.title} {found.description}".lower())) - stopwords
+            k_overlap = l_words & f_words
+            token_sim = (len(k_overlap) / max(1, min(len(l_words), len(f_words)))) if (l_words and f_words) else 0.0
+            text_sim = max(vec_sim, token_sim)
 
             # Image similarity if available
             img_sim = None
@@ -276,13 +346,13 @@ class LostAndFoundService:
 
             bonus = 0.0
             if category_match:
-                bonus += 0.05
+                bonus += 0.08
             if location_match:
-                bonus += 0.05
+                bonus += 0.08
             combined = min(1.0, base_score + bonus)
 
-            # Record candidate if score meets threshold
-            if combined >= 0.50:
+            # Record candidate if score meets threshold (0.45)
+            if combined >= 0.45:
                 crit = {
                     "model": "jina-clip-v2",
                     "dimension": 1024,
@@ -302,9 +372,24 @@ class LostAndFoundService:
                 )
                 created_matches.append(match)
 
-        return created_matches
+                # High-confidence notification to the owner if not already verified
+                if combined >= 0.70 and match.status == "CANDIDATE":
+                    try:
+                        self.db.add(Notification(
+                            user_id=lost.reporter_id,
+                            title=f"AI Match Alert: {lost.title}",
+                            message=f"A matching item '{found.title}' ({round(combined*100)}% match) was recorded at {found.custody_desk or 'Admin Custody Desk'}. Review and confirm details.",
+                            notification_type="LOST_AND_FOUND",
+                            is_read=False
+                        ))
+                        self.db.commit()
+                    except Exception as e:
+                        logger.warning(f"Could not alert user of match: {e}")
 
-    def evaluate_matches_for_found(self, found_report_id: int, top_k: int = 5) -> List[ItemMatch]:
+        created_matches.sort(key=lambda m: m.combined_score, reverse=True)
+        return created_matches[:top_k]
+
+    def evaluate_matches_for_found(self, found_report_id: int, top_k: int = 3) -> List[ItemMatch]:
         found = self.repo.get_found_report(found_report_id)
         if not found:
             return []
@@ -312,9 +397,25 @@ class LostAndFoundService:
         lost_reports = self.repo.list_lost_reports(status="OPEN")
         created = []
         for lost in lost_reports:
-            matches = self.evaluate_matches_for_lost(lost.id)
-            created.extend([m for m in matches if m.found_report_id == found.id])
-        return created
+            matches = self.evaluate_matches_for_lost(lost.id, top_k=top_k)
+            for m in matches:
+                if m.found_report_id == found.id:
+                    created.append(m)
+                    # Notify lost item owner of candidate discovery
+                    if m.combined_score >= 0.45:
+                        try:
+                            self.db.add(Notification(
+                                user_id=lost.reporter_id,
+                                title=f"AI Candidate Match: {lost.title}",
+                                message=f"A matching found article '{found.title}' ({round(m.combined_score*100)}% confidence) was deposited at {found.custody_desk or 'Custody Desk'}. Review details and request verification if it's yours.",
+                                notification_type="LOST_AND_FOUND",
+                                is_read=False
+                            ))
+                            self.db.commit()
+                        except Exception as e:
+                            logger.warning(f"Could not alert lost report owner: {e}")
+        created.sort(key=lambda m: m.combined_score, reverse=True)
+        return created[:top_k]
 
     # =========================================================================
     # Peer Discovery Found Request & Human Verification Flow
@@ -358,11 +459,28 @@ class LostAndFoundService:
         if data.image_url:
             self.repo.attach_media(media_url=data.image_url, found_report_id=found.id)
 
-        # 2. Compute similarity score
+        # 2. Compute similarity score and persist embeddings
         text_lost = f"{lost.title}. {lost.brand_model or ''}. {lost.description}"
         text_found = f"{found.title}. {found.description}"
-        v1 = embedding_adapter.get_text_vector(text_lost)
+        v1 = self.repo.get_item_embedding("lost", lost.id)
+        if v1 is None:
+            v1 = embedding_adapter.get_text_vector(text_lost)
+            if v1 is not None:
+                self.repo.save_item_embedding("lost", lost.id, v1)
+
         v2 = embedding_adapter.get_text_vector(text_found)
+        if v2 is not None:
+            try:
+                p_id = vector_search_adapter.upsert_item(
+                    record_id=found.id,
+                    vector=v2,
+                    modality="text",
+                    payload={"report_id": found.id, "type": "found", "title": found.title}
+                )
+                self.repo.save_item_embedding("found", found.id, v2, qdrant_point_id=str(p_id) if p_id else None)
+            except Exception as e:
+                logger.warning(f"Could not persist peer found request vector: {e}")
+
         sim = float(embedding_adapter.service.compute_similarity(v1, v2)) if (v1 is not None and v2 is not None) else 0.88
         combined = max(0.88, sim)
 
@@ -432,10 +550,13 @@ class LostAndFoundService:
         # 2. Update Lost Report status to 'VERIFICATION_PENDING'
         self.repo.update_lost_report(match.lost_report_id, status="VERIFICATION_PENDING")
 
-        # 3. Create or update MatchVerification record awaiting Admin / Custody Desk review
+        # 3. Update Found Report storage status to 'VERIFICATION_PENDING'
+        self.repo.update_found_report(match.found_report_id, storage_status="VERIFICATION_PENDING")
+
+        # 4. Create or update MatchVerification record awaiting HOD / Custody review
         challenge_q = data.challenge_question or "Confirm unique identifying marks, contents, or color shade."
         owner_resp = data.owner_response or (match.lost_report.description if match.lost_report else "")
-        officer_notes = data.officer_notes or "Owner reviewed found request and initiated human verification."
+        officer_notes = data.officer_notes or "Owner reviewed candidate match and initiated HOD physical verification."
 
         verification = self.repo.create_verification(
             match_id=match.id,
@@ -446,30 +567,142 @@ class LostAndFoundService:
             status="PENDING"
         )
 
-        # 4. Notify admin / custody desk
+        # 5. Notify HOD and Campus Custody Desk
         try:
-            admin_user = self.db.query(User).filter(User.primary_role == "ADMIN").first()
-            if admin_user:
+            from sqlalchemy import or_
+            hod_and_admins = (
+                self.db.query(User)
+                .join(User.roles)
+                .filter(or_(Role.name.ilike("%ADMIN%"), Role.name.ilike("%HOD%")), User.is_active == True)
+                .all()
+            )
+            if not hod_and_admins:
+                hod_and_admins = self.db.query(User).filter(User.id == 1).all()
+
+            for officer in hod_and_admins:
                 notif = Notification(
-                    user_id=admin_user.id,
-                    title=f"Human Verification Queue: Match #{match.id}",
-                    message=f"Lost item '{match.lost_report.title}' moved to human verification by owner. Ready for physical challenge inspection and handover authorization.",
+                    user_id=officer.id,
+                    title=f"Action Required: HOD Verification Queue (Match #{match.id})",
+                    message=f"Owner requested physical custody verification for '{match.lost_report.title}'. Review challenge response and authorize handover.",
                     notification_type="LOST_AND_FOUND_ADMIN",
                     is_read=False
                 )
                 self.db.add(notif)
-                self.db.commit()
+            self.db.commit()
         except Exception as e:
-            logger.warning(f"Could not alert admin: {e}")
+            logger.warning(f"Could not alert HOD/admin: {e}")
 
         return verification
+
+    def review_verification(
+        self,
+        verification_id: int,
+        status: str,
+        officer_notes: Optional[str] = None,
+        concordance_score: Optional[float] = None,
+        verified_by: Optional[int] = None
+    ) -> MatchVerification:
+        """
+        Flow Step: Campus Administrator reviews pending human verification challenge.
+        Approves or rejects handover authorization and notifies the involved parties.
+        """
+        v = self.repo.get_verification(verification_id)
+        if not v:
+            raise ValueError(f"Verification #{verification_id} not found.")
+
+        updated_v = self.repo.update_verification(
+            verification_id=verification_id,
+            status=status,
+            officer_notes=officer_notes,
+            concordance_score=concordance_score or 95.0,
+            verified_by=verified_by
+        )
+
+        match = v.match
+        if not match:
+            return updated_v
+
+        if status == "APPROVED":
+            self.repo.update_match_status(match.id, "VERIFIED")
+            self.repo.update_lost_report(match.lost_report_id, status="VERIFIED")
+            self.repo.update_found_report(match.found_report_id, storage_status="VERIFIED")
+
+            # Auto-prepare an approved claim so physical handover receipt can immediately be issued
+            existing_claim = (
+                self.db.query(ItemClaim)
+                .filter(
+                    ItemClaim.found_report_id == match.found_report_id,
+                    ItemClaim.lost_report_id == match.lost_report_id
+                )
+                .first()
+            )
+            if not existing_claim:
+                claim = self.repo.create_claim(
+                    found_report_id=match.found_report_id,
+                    lost_report_id=match.lost_report_id,
+                    claimed_by=match.lost_report.reporter_id,
+                    status="APPROVED"
+                )
+                claim.reviewed_by = verified_by
+                self.db.commit()
+            else:
+                existing_claim.status = "APPROVED"
+                existing_claim.reviewed_by = verified_by
+                self.db.commit()
+
+            # Push notification to lost item owner
+            try:
+                notif_owner = Notification(
+                    user_id=match.lost_report.reporter_id,
+                    title=f"Verification Approved: {match.lost_report.title}",
+                    message=f"HOD physical verification confirmed! Your item is marked VERIFIED. Please visit {match.found_report.custody_desk or 'Admin Custody Desk'} with your ID to complete handover.",
+                    notification_type="LOST_AND_FOUND",
+                    is_read=False
+                )
+                self.db.add(notif_owner)
+            except Exception as e:
+                logger.warning(f"Could not notify owner: {e}")
+
+            # Push notification to finder
+            try:
+                if match.found_report.reported_by:
+                    notif_finder = Notification(
+                        user_id=match.found_report.reported_by,
+                        title=f"Item Verified: {match.lost_report.title}",
+                        message=f"The item you turned in has been successfully verified by the HOD for return to its rightful owner. Thank you for your campus citizenship!",
+                        notification_type="LOST_AND_FOUND",
+                        is_read=False
+                    )
+                    self.db.add(notif_finder)
+            except Exception as e:
+                logger.warning(f"Could not notify finder: {e}")
+            self.db.commit()
+
+        elif status == "REJECTED":
+            self.repo.update_match_status(match.id, "REJECTED")
+            self.repo.update_lost_report(match.lost_report_id, status="OPEN")
+            self.repo.update_found_report(match.found_report_id, storage_status="IN_CUSTODY")
+            try:
+                notif = Notification(
+                    user_id=match.lost_report.reporter_id,
+                    title=f"Verification Rejected: {match.lost_report.title}",
+                    message=f"HOD physical inspection could not confirm ownership. Reason: {officer_notes or 'Physical criteria discordance'}.",
+                    notification_type="LOST_AND_FOUND",
+                    is_read=False
+                )
+                self.db.add(notif)
+                self.db.commit()
+            except Exception as e:
+                logger.warning(f"Could not notify owner of rejection: {e}")
+
+        return self.repo.get_verification(verification_id) or updated_v
 
     def search_similar_found_items(
         self,
         query: str,
         category_id: Optional[Union[int, str]] = None,
         location_id: Optional[Union[int, str]] = None,
-        top_k: int = 10
+        top_k: int = 3
     ) -> List[Dict[str, Any]]:
         """
         Flow Step: If a found item is already assigned/turned in before the lost item,

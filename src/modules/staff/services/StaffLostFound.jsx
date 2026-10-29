@@ -17,7 +17,8 @@ import {
   createFoundReport,
   deleteLostReport,
   submitClaim,
-  sendFoundRequest
+  sendFoundRequest,
+  requestHumanVerification
 } from '../../../services/api/lostAndFound';
 
 export default function StaffLostFound() {
@@ -50,6 +51,11 @@ export default function StaffLostFound() {
   const [showClaimModal, setShowClaimModal] = useState(null);
   const [claimProof, setClaimProof] = useState('');
   const [showFoundRequestModal, setShowFoundRequestModal] = useState(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(null);
+  const [verifyForm, setVerifyForm] = useState({
+    owner_response: '',
+    challenge_question: 'Confirm unique identifying marks, contents, or serial suffix.',
+  });
   const [foundRequestForm, setFoundRequestForm] = useState({
     description: '',
     custody_desk: 'Faculty Staff Room Desk 4',
@@ -267,6 +273,32 @@ export default function StaffLostFound() {
       await loadData();
     } catch (err) {
       notify('Failed to send found request: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Move match to Human Verification Queue
+  const handleMoveToHumanVerification = async (e) => {
+    e.preventDefault();
+    if (!showVerifyModal) return;
+
+    try {
+      setLoading(true);
+      await requestHumanVerification(showVerifyModal.id, {
+        owner_response: verifyForm.owner_response,
+        challenge_question: verifyForm.challenge_question,
+      });
+
+      notify('Moved to Human Verification! Campus Custody Officer alerted for physical inspection.', 'success');
+      setShowVerifyModal(null);
+      setVerifyForm({
+        owner_response: '',
+        challenge_question: 'Confirm unique identifying marks, contents, or serial suffix.',
+      });
+      await loadData();
+    } catch (err) {
+      notify('Failed to request human verification: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -600,12 +632,32 @@ export default function StaffLostFound() {
                     <h4 className="mt-1 text-sm font-bold text-slate-900">{m.lost_title} &harr; {m.found_title}</h4>
                     <p className="text-xs text-slate-500">Status: {m.status}</p>
                   </div>
-                  <button
-                    onClick={() => setShowClaimModal(m)}
-                    className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
-                  >
-                    Claim Item
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {m.status === 'HUMAN_VERIFICATION' ? (
+                      <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-200 px-3 py-1 text-xs font-bold">
+                        In Human Verification Queue
+                      </span>
+                    ) : m.status === 'VERIFIED' ? (
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 text-xs font-bold">
+                        Verified for Handover
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setShowVerifyModal(m)}
+                          className="rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700 shadow-xs"
+                        >
+                          Move to Human Verification
+                        </button>
+                        <button
+                          onClick={() => setShowClaimModal(m)}
+                          className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
+                        >
+                          Claim Item
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -819,6 +871,64 @@ export default function StaffLostFound() {
                 </button>
                 <button type="submit" disabled={loading} className="rounded-xl bg-emerald-600 px-5 py-2 font-bold text-white">
                   Log Found Article
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: MOVE TO HUMAN VERIFICATION */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Request Human Verification</h3>
+                <p className="text-xs text-slate-500">Initiate physical challenge verification for candidate match #{showVerifyModal.id}</p>
+              </div>
+              <button onClick={() => setShowVerifyModal(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleMoveToHumanVerification} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700">Verification Challenge Question</label>
+                <input
+                  type="text"
+                  value={verifyForm.challenge_question}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, challenge_question: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Your Identifying Secret Marks or Details *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={verifyForm.owner_response}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, owner_response: e.target.value })}
+                  placeholder="Describe unique marks, internal contents, serial numbers, stickers, or scratches that only the true owner would know..."
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowVerifyModal(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 font-bold text-slate-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-xl bg-amber-600 px-5 py-2 font-bold text-white hover:bg-amber-700 shadow-xs"
+                >
+                  {loading ? 'Submitting...' : 'Send to Campus Custody Queue'}
                 </button>
               </div>
             </form>

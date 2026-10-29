@@ -40,7 +40,7 @@ def build_engine(url: str):
             {"check_same_thread": False}
             if is_sqlite
             else {
-                "connect_timeout": 15,
+                "connect_timeout": 3,
                 "keepalives": 1,
                 "keepalives_idle": 30,
                 "keepalives_interval": 10,

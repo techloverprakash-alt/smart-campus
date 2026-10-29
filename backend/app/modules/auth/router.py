@@ -261,6 +261,16 @@ def get_all_staff(
     return {"data": mentors, "staff": mentors}
 
 
+@profile_router.delete("/staff/{staff_id}", summary="Admin: Delete faculty member profile and account")
+def delete_staff(
+    staff_id: int,
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+    return service.delete_staff_member(staff_id)
+
+
 @profile_router.get("/staff/template", summary="Download staff onboarding template")
 def get_staff_template():
     csv_content = (

@@ -204,6 +204,28 @@ class ItemMatchOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MatchVerificationDetailedOut(BaseModel):
+    id: Union[int, str]
+    match_id: Union[int, str]
+    challenge_question: str
+    owner_response: Optional[str] = None
+    officer_notes: Optional[str] = None
+    concordance_score: Optional[float] = None
+    verified_by: Optional[Union[int, str]] = None
+    verifier_name: Optional[str] = None
+    status: str
+    created_at: datetime
+    match: Optional[ItemMatchOut] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VerificationReview(BaseModel):
+    status: str = Field(..., pattern="^(APPROVED|REJECTED)$")
+    officer_notes: Optional[str] = None
+    concordance_score: Optional[float] = Field(default=95.0, ge=0.0, le=100.0)
+
+
 class RunMatchingRequest(BaseModel):
     lost_report_id: Optional[Union[int, str]] = None
     found_report_id: Optional[Union[int, str]] = None
