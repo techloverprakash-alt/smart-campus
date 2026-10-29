@@ -52,14 +52,7 @@ const StaffLogin = ({ navigation }) => {
           <Text style={styles.backButtonText}>Roles</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.campusHubButton}
-          onPress={() => navigation.navigate('CommonPortal', { role: 'staff' })}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="public" size={16} color="#003fb1" />
-          <Text style={styles.campusHubButtonText}>Campus Hub</Text>
-        </TouchableOpacity>
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
