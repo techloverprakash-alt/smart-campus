@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaView, ScrollView } from '@/ui';
 import { MaterialIcons } from '@/ui';
 import Colors from '../../../constants/colors';
@@ -149,6 +149,7 @@ const ServicesLogin = ({ navigation }) => {
 
             {/* Submit Button */}
             <TouchableOpacity
+              className="auth-submit-btn"
               style={styles.loginButton}
               onPress={() => handleLogin()}
               activeOpacity={0.8}

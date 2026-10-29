@@ -84,6 +84,7 @@ const LoginPage = ({ navigation }) => {
                     <TouchableOpacity
                       key={role.key}
                       style={[styles.roleCard, isSelected && styles.roleCardSelected]}
+                      className="auth-role-card"
                       onPress={() => handleRoleSelect(role.key)}
                       activeOpacity={0.7}
                     >
@@ -101,7 +102,8 @@ const LoginPage = ({ navigation }) => {
               </View>
 
               {/* Navigate Button */}
-              <TouchableOpacity style={[styles.continueButton, isLoading && { opacity: 0.7 }]} onPress={handleNavigate} activeOpacity={0.8} disabled={isLoading}>
+              <TouchableOpacity style={[styles.continueButton, isLoading && { opacity: 0.7 }]}
+                className="auth-submit-btn" onPress={handleNavigate} activeOpacity={0.8} disabled={isLoading}>
                 <Text style={styles.continueButtonText}>Continue to Login</Text>
                 <MaterialIcons name="arrow-forward" size={20} color={Colors.onPrimary} />
               </TouchableOpacity>
@@ -111,6 +113,7 @@ const LoginPage = ({ navigation }) => {
               {/* Campus Hub Quick Access Box */}
               <TouchableOpacity
                 style={styles.commonHubCard}
+                className="auth-hub-card"
                 onPress={() => navigation.navigate('CommonPortal')}
                 activeOpacity={0.8}
               >
