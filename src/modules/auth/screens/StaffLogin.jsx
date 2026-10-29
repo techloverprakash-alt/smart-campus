@@ -146,6 +146,7 @@ const StaffLogin = ({ navigation }) => {
             {/* Login Button */}
             <TouchableOpacity
               style={[styles.submitButton, loading && { opacity: 0.75 }]}
+              className="auth-submit-btn"
               onPress={handleLogin}
               activeOpacity={0.8}
               disabled={loading}
