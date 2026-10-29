@@ -38,44 +38,55 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
         const res = await getMatches().catch(() => []);
         const rawList = Array.isArray(res) ? res : res?.data || [];
         const formatted = rawList.map((m) => {
-          const conf = Math.round(m.combined_score * 100);
+          const conf = Math.round((m.combined_score ?? 0) * 100);
+          const lostRep = m.lost_report || {};
+          const foundRep = m.found_report || {};
+
           return {
             id: m.id,
             confidence: conf,
             confidenceTier: conf >= 85 ? 'high' : conf >= 65 ? 'medium' : 'low',
             confidenceColor: conf >= 85 ? 'emerald' : conf >= 65 ? 'amber' : 'slate',
             strokeDash: `${conf}, 100`,
-            criteria: Array.isArray(m.criteria)
+            criteria: Array.isArray(m.criteria_list) && m.criteria_list.length > 0
+              ? m.criteria_list.map((c) => ({
+                  label: typeof c === 'string' ? c : (c.rule || c.signal || 'Criteria'),
+                  passed: c.passed !== false
+                }))
+              : Array.isArray(m.criteria)
               ? m.criteria.map((c) => ({ label: c.signal || 'Criteria', passed: c.passed !== false }))
               : [{ label: 'Cross-Modal Match', passed: true }],
             lost: {
-              reportId: m.lost_report_id,
-              date: 'Recently reported',
-              reporter: m.reporter_name || 'Reporter',
-              category: 'Item',
-              title: m.lost_title || 'Reported Lost Item',
-              description: m.lost_description || '',
-              location: 'Campus Grounds',
-              image: '',
+              reportId: String(m.lost_report_id ?? ''),
+              date: lostRep.date_lost ? new Date(lostRep.date_lost).toLocaleDateString() : 'Recently reported',
+              reporter: lostRep.reporter_name || m.reporter_name || 'Campus Student',
+              studentId: lostRep.reporter_id ? `ST-${lostRep.reporter_id}` : 'ST-CAMPUS',
+              dept: 'Campus Community',
+              category: lostRep.category || 'Item',
+              title: lostRep.title || m.lost_title || 'Reported Lost Item',
+              description: lostRep.description || m.lost_description || '',
+              location: lostRep.last_seen_location || 'Campus Grounds',
+              image: (lostRep.photo_urls && lostRep.photo_urls[0]) || '',
               imageLabel: 'Reference Photo',
             },
             found: {
-              reportId: m.found_report_id,
-              date: 'In Custody',
-              finder: 'Campus Officer',
+              reportId: String(m.found_report_id ?? ''),
+              date: foundRep.found_date ? new Date(foundRep.found_date).toLocaleDateString() : 'In Custody',
+              finder: foundRep.finder_name || 'Campus Officer',
+              finderRole: 'Security Custody',
               intakeType: 'Logged Deposit',
-              title: m.found_title || 'Found Deposit',
-              description: m.found_description || '',
-              storage: m.custody_desk || 'Security Custody',
-              storageStatus: 'SECURED',
-              tag: '#INV',
-              image: '',
+              title: foundRep.title || m.found_title || 'Found Deposit',
+              description: foundRep.description || m.found_description || '',
+              storage: foundRep.custody_location || m.custody_desk || 'Security Custody',
+              storageStatus: foundRep.storage_status || 'SECURED',
+              tag: foundRep.deposit_tag || `#INV-${m.found_report_id || 'VAULT'}`,
+              image: (foundRep.photo_urls && foundRep.photo_urls[0]) || '',
               imageLabel: 'Intake Scan',
               scansCount: 1,
             },
             doubleBlind: {
               question: 'Unique marking / serial verification',
-              ownerClaim: m.lost_description || 'Student description',
+              ownerClaim: lostRep.description || m.lost_description || 'Student description',
               officerVerification: 'Desk custody verified',
               concordanceScore: conf,
               status: m.status === 'VERIFIED' ? 'Verified Concordance' : 'Concordance Pending',
@@ -253,12 +264,12 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
         return (
-          c.lost.title.toLowerCase().includes(q) ||
-          c.lost.reporter.toLowerCase().includes(q) ||
-          c.lost.studentId.toLowerCase().includes(q) ||
-          c.found.tag.toLowerCase().includes(q) ||
-          c.lost.reportId.toLowerCase().includes(q) ||
-          c.found.reportId.toLowerCase().includes(q)
+          (c.lost?.title || '').toLowerCase().includes(q) ||
+          (c.lost?.reporter || '').toLowerCase().includes(q) ||
+          (c.lost?.studentId || '').toLowerCase().includes(q) ||
+          (c.found?.tag || '').toLowerCase().includes(q) ||
+          String(c.lost?.reportId || '').toLowerCase().includes(q) ||
+          String(c.found?.reportId || '').toLowerCase().includes(q)
         );
       })
       .sort((a, b) => {
@@ -510,7 +521,7 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/70 px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 font-mono text-xs font-extrabold text-blue-800">
-                      {candidate.id.replace('CAND-', '#')}
+                      #{String(candidate.id ?? '').replace(/^CAND-/, '')}
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
@@ -558,14 +569,14 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         {/* Student Info */}
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                            {candidate.lost.reporter.split(' ').map((n) => n[0]).join('')}
+                            {(candidate.lost?.reporter || 'Reporter').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2)}
                           </div>
                           <div>
                             <h3 className="text-xs font-extrabold text-slate-900 leading-tight">
                               {candidate.lost.reporter}
                             </h3>
                             <p className="text-[11px] text-slate-500">
-                              {candidate.lost.studentId} • {candidate.lost.dept}
+                              {[candidate.lost?.studentId, candidate.lost?.dept].filter(Boolean).join(' • ') || 'Campus Member'}
                             </p>
                           </div>
                         </div>
@@ -663,14 +674,14 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                         {/* Finder Info */}
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
-                            {candidate.found.finder.split(' ').map((n) => n[0]).join('')}
+                            {(candidate.found?.finder || 'Finder').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2)}
                           </div>
                           <div>
                             <h3 className="text-xs font-extrabold text-slate-900 leading-tight">
                               {candidate.found.finder}
                             </h3>
                             <p className="text-[11px] text-slate-500">
-                              {candidate.found.finderRole}
+                              {candidate.found?.finderRole || 'Custody Officer'}
                             </p>
                           </div>
                         </div>
