@@ -151,57 +151,54 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
     }
   }, [openReportModal]);
 
+  const [submitting, setSubmitting] = useState(false);
+
   // Load live database reports (zero mock data)
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchLiveItems() {
-      try {
-        const [lostRes, foundRes] = await Promise.all([
-          getLostReports().catch(() => []),
-          getFoundReports().catch(() => [])
-        ]);
+  const fetchLiveItems = async () => {
+    try {
+      const [lostRes, foundRes] = await Promise.all([
+        getLostReports().catch(() => []),
+        getFoundReports().catch(() => [])
+      ]);
 
-        const lostList = (Array.isArray(lostRes) ? lostRes : lostRes?.data || []).map((l) => ({
-          id: l.id,
-          title: l.title,
-          category: l.category_name || 'Electronics',
-          zone: l.location_name || 'Main Canteen Quad 2',
-          location: l.location_name || 'Campus Grounds',
-          age: l.lost_at ? new Date(l.lost_at).toLocaleDateString() : 'Recent',
-          description: l.description,
-          owner: l.reporter_name || 'Student',
-          status: l.status || 'Open Search',
-          tone: 'blue',
-          image: l.primary_image_url || '',
-          found: false,
-        }));
+      const lostList = (Array.isArray(lostRes) ? lostRes : lostRes?.data || []).map((l) => ({
+        id: l.id,
+        title: l.title,
+        category: l.category_name || 'Electronics',
+        zone: l.location_name || 'Main Canteen Quad 2',
+        location: l.location_name || 'Campus Grounds',
+        age: l.lost_at ? new Date(l.lost_at).toLocaleDateString() : 'Recent',
+        description: l.description,
+        owner: l.reporter_name || 'Student',
+        status: l.status || 'Open Search',
+        tone: 'blue',
+        image: l.primary_image_url || '',
+        found: false,
+      }));
 
-        const foundList = (Array.isArray(foundRes) ? foundRes : foundRes?.data || []).map((f) => ({
-          id: f.id,
-          title: f.title,
-          category: f.category_name || 'Electronics',
-          zone: f.custody_desk || 'Central Security Desk',
-          location: f.location_name || f.custody_desk || 'Security Desk',
-          age: f.found_at ? new Date(f.found_at).toLocaleDateString() : 'Recent',
-          description: f.description,
-          owner: f.finder_name || 'Staff Member',
-          status: f.storage_status || 'In Custody',
-          tone: 'purple',
-          image: f.primary_image_url || '',
-          found: true,
-        }));
+      const foundList = (Array.isArray(foundRes) ? foundRes : foundRes?.data || []).map((f) => ({
+        id: f.id,
+        title: f.title,
+        category: f.category_name || 'Electronics',
+        zone: f.custody_desk || 'Central Security Desk',
+        location: f.location_name || f.custody_desk || 'Security Desk',
+        age: f.found_at ? new Date(f.found_at).toLocaleDateString() : 'Recent',
+        description: f.description,
+        owner: f.finder_name || 'Staff Member',
+        status: f.storage_status || 'In Custody',
+        tone: 'purple',
+        image: f.primary_image_url || '',
+        found: true,
+      }));
 
-        if (isMounted) {
-          setItems([...lostList, ...foundList]);
-        }
-      } catch (err) {
-        console.error('Failed to load items:', err);
-      }
+      setItems([...lostList, ...foundList]);
+    } catch (err) {
+      console.error('Failed to load items:', err);
     }
+  };
+
+  useEffect(() => {
     fetchLiveItems();
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const closeModal = () => {
@@ -276,7 +273,7 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
     }
   }
 
-  function submitReport(e) {
+  async function submitReport(e) {
     e.preventDefault();
     if (!form.title.trim()) return;
 
@@ -301,30 +298,66 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
       ? (form.personName ? `${form.personName} • ${form.exactLocation}` : (form.zone ? `${form.zone} • ${form.exactLocation}` : form.exactLocation))
       : (form.personName || form.zone || 'Campus');
 
-    const newItem = {
-      ...form,
-      id: `LNF-${230 + items.length}`,
-      location: locationDisplay,
-      age: formattedAge,
-      owner: form.personName || 'Kamesh S.',
-      status: form.type === 'Found' ? 'Intake Logged' : 'Open Search',
-      tone: form.type === 'Found' ? 'blue' : 'slate',
-      image: finalImage,
-      meta: imagePreview ? 'Visual Signature Attached' : 'New report',
-      found: form.type === 'Found',
-      description: form.description || 'No additional description provided.',
-    };
+    try {
+      setSubmitting(true);
+      if (form.type === 'Found') {
+        const payload = {
+          title: form.title,
+          category_id: form.category || 'Electronics & Audio',
+          found_location_name: locationDisplay,
+          custody_desk: form.exactLocation || form.zone || 'Campus Custody Desk',
+          description: form.description && form.description.length >= 5 ? form.description : `Found article reported on campus: ${form.title}`,
+          found_at: form.date ? new Date(form.date).toISOString() : new Date().toISOString(),
+          image_url: finalImage || null,
+          media_urls: finalImage ? [finalImage] : []
+        };
+        await createFoundReport(payload);
+        setNotice(`Success! Discovered item "${form.title}" saved in database.`);
+      } else {
+        const payload = {
+          title: form.title,
+          category_id: form.category || 'Electronics & Audio',
+          last_seen_location_name: locationDisplay,
+          brand_model: form.brandModel || null,
+          description: form.description && form.description.length >= 5 ? form.description : `Missing belonging reported on campus: ${form.title}`,
+          lost_at: form.date ? new Date(form.date).toISOString() : new Date().toISOString(),
+          image_url: finalImage || null,
+          media_urls: finalImage ? [finalImage] : []
+        };
+        await createLostReport(payload);
+        setNotice(`Success! Lost report for "${form.title}" saved in database and broadcast to campus.`);
+      }
 
-    setItems([newItem, ...items]);
-    closeModal();
-    setForm({ title: '', category: 'Electronics', zone: '', personName: '', exactLocation: '', brandModel: '', description: '', type: 'Lost', date: new Date().toISOString().split('T')[0] });
-    setImageFile(null);
-    setImagePreview(null);
-    if (form.type === 'Found' && onOpenMatchSuggestions) {
-      onOpenMatchSuggestions(newItem);
-    } else {
-      setNotice(`Success! Report for "${newItem.title}" has been broadcast to the campus custody board.`);
+      closeModal();
+      setForm({ title: '', category: 'Electronics', zone: '', personName: '', exactLocation: '', brandModel: '', description: '', type: 'Lost', date: new Date().toISOString().split('T')[0] });
+      setImageFile(null);
+      setImagePreview(null);
       setTimeout(() => setNotice(''), 4500);
+
+      // Refresh list from live database
+      await fetchLiveItems();
+    } catch (err) {
+      console.error('Failed to save lost/found report:', err);
+      // Fallback local display if offline
+      const newItem = {
+        ...form,
+        id: `LNF-${230 + items.length}`,
+        location: locationDisplay,
+        age: formattedAge,
+        owner: form.personName || 'Campus Member',
+        status: form.type === 'Found' ? 'Intake Logged' : 'Open Search',
+        tone: form.type === 'Found' ? 'blue' : 'slate',
+        image: finalImage,
+        meta: imagePreview ? 'Visual Signature Attached' : 'Saved locally',
+        found: form.type === 'Found',
+        description: form.description || 'No additional description provided.',
+      };
+      setItems([newItem, ...items]);
+      closeModal();
+      setNotice(`Saved locally: ${err.message || 'Connecting to database'}`);
+      setTimeout(() => setNotice(''), 5000);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -798,8 +831,12 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
                   >
                     Cancel
                   </button>
-                  <button className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm">
-                    {form.type === 'Found' ? 'Confirm Discovery & Match with AI' : 'Broadcast Report to Board'}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving to Database...' : (form.type === 'Found' ? 'Confirm Discovery & Match with AI' : 'Broadcast Report to Board')}
                   </button>
                 </div>
               </form>

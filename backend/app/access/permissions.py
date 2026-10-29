@@ -90,17 +90,21 @@ def require_role(allowed_roles: List[str]):
     """
     Role-based authorization dependency factory.
     Enforces that the current authenticated user possesses at least one of the allowed roles.
-    Example: Depends(require_role(["ADMIN", "STAFF"]))
+    Recognizes HOD (Head of Department) specifically for verification authorization.
+    Example: Depends(require_role(["ADMIN", "STAFF", "HOD"]))
     """
     def dependency(user: User = Depends(get_current_user)) -> User:
         user_role = (user.primary_role or "").upper()
         normalized_allowed = [r.upper() for r in allowed_roles]
-        if user_role not in normalized_allowed:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied. Required role in {allowed_roles}, but user holds '{user_role}'.",
-            )
-        return user
+        user_roles = [r.name.upper() for r in (user.roles or [])]
+        if "HOD" in normalized_allowed and getattr(user, "is_hod", False):
+            return user
+        if user_role in normalized_allowed or any(r in normalized_allowed for r in user_roles):
+            return user
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Required role in {allowed_roles}, but user holds '{user_role}'.",
+        )
     return dependency
 
 

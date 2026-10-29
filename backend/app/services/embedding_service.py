@@ -58,7 +58,7 @@ class JinaClipEmbeddingService:
         }
 
         try:
-            with httpx.Client(timeout=30.0) as client:
+            with httpx.Client(timeout=5.0) as client:
                 resp = client.post(self.api_url, headers=headers, json=payload)
                 if resp.status_code == 200:
                     data = resp.json().get("data", [])
@@ -139,12 +139,12 @@ class JinaClipEmbeddingService:
         logger.warning("Generating fallback image embedding...")
         return self._generate_fallback_vector("fallback_image")
 
-    def compute_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
+    def compute_similarity(self, vec1: Union[np.ndarray, List[float]], vec2: Union[np.ndarray, List[float]]) -> float:
         """Computes cosine similarity between two 1024-dim vectors."""
         if vec1 is None or vec2 is None:
             return 0.0
-        v1 = vec1.flatten()
-        v2 = vec2.flatten()
+        v1 = np.asarray(vec1, dtype=np.float32).flatten()
+        v2 = np.asarray(vec2, dtype=np.float32).flatten()
         n1 = np.linalg.norm(v1)
         n2 = np.linalg.norm(v2)
         if n1 == 0 or n2 == 0:

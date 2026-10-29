@@ -16,7 +16,7 @@ import {
   View,
   Linking,
 } from '@/ui';
-import { enrollStaff, getStaffTemplateUrl, uploadStaffRosterFile } from '../../../services/api/profiles';
+import { enrollStaff, getStaffTemplateUrl, uploadStaffRosterFile, getAllStaff, deleteStaff } from '../../../services/api/profiles';
 
 /**
  * NEXUS Admin Portal — Admin Staff Onboarding
@@ -180,6 +180,51 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
   const [fileName, setFileName] = useState('');
   const [toast, setToast] = useState('');
   const [busy, setBusy] = useState(false);
+  const [directory, setDirectory] = useState([]);
+  const [loadingDirectory, setLoadingDirectory] = useState(false);
+  const [directorySearch, setDirectorySearch] = useState('');
+
+  const fetchDirectory = async () => {
+    try {
+      setLoadingDirectory(true);
+      const res = await getAllStaff();
+      const list = res?.data || res?.staff || res || [];
+      setDirectory(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.warn('Failed to load faculty directory:', err);
+    } finally {
+      setLoadingDirectory(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDirectory();
+  }, []);
+
+  const handleDeleteStaff = (member) => {
+    const staffId = member.id || member.staff_id || member.user_id;
+    Alert.alert(
+      'Delete Faculty Account',
+      `Are you sure you want to delete "${member.full_name || member.name}" (${member.faculty_id})? This will permanently remove their profile, login credentials, and course allocations.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteStaff(staffId);
+              notify(`Faculty member ${member.full_name || member.name} deleted.`);
+              fetchDirectory();
+            } catch (err) {
+              const msg = err.response?.data?.detail || err.message || 'Failed to delete staff member.';
+              Alert.alert('Error', msg);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const update = (key, value) =>
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -441,6 +486,17 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
                 ▦  Bulk Import <Text style={styles.fastTag}>FAST</Text>
               </Text>
             </Pressable>
+            <Pressable
+              onPress={() => {
+                setMode('directory');
+                fetchDirectory();
+              }}
+              style={[styles.modeTab, mode === 'directory' && styles.modeTabActive]}
+            >
+              <Text style={[styles.modeTabText, mode === 'directory' && styles.modeTabTextActive]}>
+                👥  Faculty Directory ({directory.length})
+              </Text>
+            </Pressable>
           </View>
 
           {mode === 'single' ? (
@@ -554,7 +610,7 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
                 </View>
               </SectionCard>
             </View>
-          ) : (
+          ) : mode === 'bulk' ? (
             <View style={styles.pane}>
               <SectionCard>
                 <SectionTitle symbol="⇧" title="Upload Faculty Roster File" />
@@ -597,8 +653,101 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
                 </Pressable>
               </SectionCard>
             </View>
-          )}
+          ) : mode === 'directory' ? (
+            <View style={styles.pane}>
+              <SectionCard>
+                <SectionTitle
+                  symbol="👥"
+                  title="Faculty Directory & Staff Deletion"
+                  right={
+                    <View style={styles.rolePill}>
+                      <Text style={styles.rolePillText}>Total Staff: {directory.length}</Text>
+                    </View>
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Search faculty by name, ID, department, or cabin..."
+                  placeholderTextColor="#8b8e9d"
+                  value={directorySearch}
+                  onChangeText={setDirectorySearch}
+                />
+              </SectionCard>
 
+              {loadingDirectory ? (
+                <View style={{ padding: 24, alignItems: 'center' }}>
+                  <Text style={{ color: C.muted2 }}>Loading staff directory from database...</Text>
+                </View>
+              ) : (
+                directory
+                  .filter((m) => {
+                    if (!directorySearch.trim()) return true;
+                    const q = directorySearch.toLowerCase();
+                    return (
+                      (m.name && m.name.toLowerCase().includes(q)) ||
+                      (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+                      (m.faculty_id && m.faculty_id.toLowerCase().includes(q)) ||
+                      (m.department && m.department.toLowerCase().includes(q)) ||
+                      (m.cabin && m.cabin.toLowerCase().includes(q))
+                    );
+                  })
+                  .map((m) => (
+                    <View key={m.id || m.faculty_id} style={styles.card}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                            <View style={[styles.sectionIcon, { width: 26, height: 26 }]}>
+                              <Text style={{ fontSize: 13, color: C.primary, fontWeight: '700' }}>
+                                {(m.name || m.full_name || 'F').charAt(0)}
+                              </Text>
+                            </View>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: C.text }}>
+                              {m.name || m.full_name}
+                            </Text>
+                            <View style={styles.rolePill}>
+                              <Text style={styles.rolePillText}>{m.faculty_id}</Text>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 13, color: C.muted, fontWeight: '600' }}>
+                            {m.designation || 'Faculty'} • {m.department || 'Engineering'}
+                          </Text>
+                          <View style={{ flexDirection: 'row', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+                            {m.cabin && (
+                              <Text style={{ fontSize: 11, color: C.muted2 }}>🚪 {m.cabin}</Text>
+                            )}
+                            {m.email && (
+                              <Text style={{ fontSize: 11, color: C.muted2 }}>✉ {m.email}</Text>
+                            )}
+                            {m.phone && (
+                              <Text style={{ fontSize: 11, color: C.muted2 }}>☎ {m.phone}</Text>
+                            )}
+                          </View>
+                        </View>
+
+                        <Pressable
+                          style={{
+                            backgroundColor: '#ffdad6',
+                            paddingHorizontal: 10,
+                            paddingVertical: 6,
+                            borderRadius: 8,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                          onPress={() => handleDeleteStaff(m)}
+                        >
+                          <Text style={{ color: '#ba1a1a', fontSize: 11, fontWeight: '700' }}>
+                            🗑 Delete Staff
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))
+              )}
+            </View>
+          ) : null}
+
+          {mode !== 'directory' && (
           <View style={styles.actionArea}>
             <Pressable
               style={[styles.primaryButton, busy && styles.disabledButton]}
@@ -622,6 +771,7 @@ export default function AdminStaffOnboardingScreen({ navigation }) {
               </Pressable>
             </View>
           </View>
+          )}
 
           <View style={styles.footerNote}>
             <Text style={styles.footerNoteText}>NEXUS Admin Portal  •  Staff provisioning</Text>

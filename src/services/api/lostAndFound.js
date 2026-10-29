@@ -34,9 +34,15 @@ export const requestHumanVerification = (matchId, data = {}) =>
 export const searchSimilarFoundItems = (params = {}) =>
   api.get('/lost-found/similarity-search', params);
 
-// ── Double-Blind Match Verification (Table 39) ─────────────────────────────
+// ── Double-Blind Match Verification & Human Review Queue (Table 39) ───────
 export const verifyMatchChallenge = (matchId, data) =>
   api.post(`/lost-found/matches/${matchId}/verify`, data);
+export const getVerifications = (params = {}) =>
+  api.get('/lost-found/verifications', params);
+export const getVerification = (id) =>
+  api.get(`/lost-found/verifications/${id}`);
+export const reviewVerification = (id, data) =>
+  api.patch(`/lost-found/verifications/${id}/review`, data);
 
 // ── Ownership Claims (Table 40) ────────────────────────────────────────────
 export const submitClaim = (data) => api.post('/lost-found/claims', data);

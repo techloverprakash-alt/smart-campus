@@ -5,7 +5,7 @@ import {
   PackageSearch, Plus, MapPin, Tag, Calendar, Clock,
   Sparkles, CheckCircle2, AlertTriangle, ShieldCheck,
   RefreshCw, Trash2, ArrowLeft, Camera, Search, Filter,
-  FileCheck, X, Eye, Briefcase
+  FileCheck, X, Eye, Briefcase, Hand, Users
 } from 'lucide-react';
 import {
   getLostReports,
@@ -16,7 +16,9 @@ import {
   createLostReport,
   createFoundReport,
   deleteLostReport,
-  submitClaim
+  submitClaim,
+  sendFoundRequest,
+  requestHumanVerification
 } from '../../../services/api/lostAndFound';
 
 export default function StaffLostFound() {
@@ -29,6 +31,10 @@ export default function StaffLostFound() {
 
   // State
   const [activeTab, setActiveTab] = useState('lost'); // 'lost' | 'found' | 'matches'
+  const [lostScope, setLostScope] = useState('all'); // 'all' | 'mine'
+  const [foundScope, setFoundScope] = useState('all'); // 'all' | 'mine'
+  const [allLostItems, setAllLostItems] = useState([]);
+  const [allFoundItems, setAllFoundItems] = useState([]);
   const [myLostItems, setMyLostItems] = useState([]);
   const [myFoundItems, setMyFoundItems] = useState([]);
   const [myMatches, setMyMatches] = useState([]);
@@ -44,6 +50,17 @@ export default function StaffLostFound() {
   const [showFoundModal, setShowFoundModal] = useState(false);
   const [showClaimModal, setShowClaimModal] = useState(null);
   const [claimProof, setClaimProof] = useState('');
+  const [showFoundRequestModal, setShowFoundRequestModal] = useState(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(null);
+  const [verifyForm, setVerifyForm] = useState({
+    owner_response: '',
+    challenge_question: 'Confirm unique identifying marks, contents, or serial suffix.',
+  });
+  const [foundRequestForm, setFoundRequestForm] = useState({
+    description: '',
+    custody_desk: 'Faculty Staff Room Desk 4',
+    finder_notes: '',
+  });
 
   // Lost Form State
   const [lostForm, setLostForm] = useState({
@@ -78,8 +95,8 @@ export default function StaffLostFound() {
       const [catsRes, locsRes, lostRes, foundRes, matchRes] = await Promise.all([
         getCategories().catch(() => []),
         getLocations().catch(() => []),
-        getLostReports({ reporter_id: staffId }).catch(() => []),
-        getFoundReports({ reported_by: staffId }).catch(() => []),
+        getLostReports().catch(() => []), // Visible to all users
+        getFoundReports().catch(() => []), // Visible to all users
         getMatches({ user_id: staffId }).catch(() => [])
       ]);
 
@@ -91,8 +108,10 @@ export default function StaffLostFound() {
 
       setCategories(catList);
       setLocations(locList);
-      setMyLostItems(lostList);
-      setMyFoundItems(foundList);
+      setAllLostItems(lostList);
+      setAllFoundItems(foundList);
+      setMyLostItems(lostList.filter(l => l.reporter_id === staffId || l.reporter_name === staffName));
+      setMyFoundItems(foundList.filter(f => f.reported_by === staffId || f.reported_by_name === staffName));
       setMyMatches(matchList);
 
       if (catList.length > 0 && !lostForm.category_id) {
@@ -117,25 +136,27 @@ export default function StaffLostFound() {
 
   const handleSubmitLost = async (e) => {
     e.preventDefault();
-    if (!lostForm.title.trim() || !lostForm.category_id) {
-      notify('Title and category are required.', 'error');
+    if (!lostForm.title.trim()) {
+      notify('Please enter a title for the lost article.', 'error');
       return;
     }
 
     try {
       setLoading(true);
       const payload = {
-        title: lostForm.title,
-        category_id: lostForm.category_id,
+        title: lostForm.title.trim(),
+        category_id: lostForm.category_id || categories[0]?.id || 1,
         last_seen_location_id: lostForm.last_seen_location_id || null,
-        brand_model: lostForm.brand_model || null,
-        description: lostForm.description,
+        brand_model: lostForm.brand_model?.trim() || null,
+        description: lostForm.description?.trim() && lostForm.description.trim().length >= 5
+          ? lostForm.description.trim()
+          : `Reported missing item on campus: ${lostForm.title.trim()}`,
         lost_at: lostForm.lost_at ? new Date(lostForm.lost_at).toISOString() : new Date().toISOString(),
         media_urls: lostForm.image_url ? [lostForm.image_url] : []
       };
 
       await createLostReport(payload);
-      notify('Faculty lost report logged. AI similarity active.', 'success');
+      notify('Faculty lost report saved and broadcasted to campus!', 'success');
       setShowLostModal(false);
       setLostForm({
         title: '',
@@ -226,15 +247,88 @@ export default function StaffLostFound() {
     }
   };
 
+  const handleSendFoundRequest = async (e) => {
+    e.preventDefault();
+    if (!showFoundRequestModal) return;
+    if (!foundRequestForm.description.trim()) {
+      notify('Please describe the found item details.', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await sendFoundRequest(showFoundRequestModal.id, {
+        description: foundRequestForm.description,
+        custody_desk: foundRequestForm.custody_desk || 'Faculty Staff Room Desk 4',
+        finder_notes: foundRequestForm.finder_notes || null,
+      });
+
+      notify(`Found notification sent to ${showFoundRequestModal.reporter_name || 'the owner'}!`, 'success');
+      setShowFoundRequestModal(null);
+      setFoundRequestForm({
+        description: '',
+        custody_desk: 'Faculty Staff Room Desk 4',
+        finder_notes: '',
+      });
+      await loadData();
+    } catch (err) {
+      notify('Failed to send found request: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Move match to Human Verification Queue
+  const handleMoveToHumanVerification = async (e) => {
+    e.preventDefault();
+    if (!showVerifyModal) return;
+
+    try {
+      setLoading(true);
+      await requestHumanVerification(showVerifyModal.id, {
+        owner_response: verifyForm.owner_response,
+        challenge_question: verifyForm.challenge_question,
+      });
+
+      notify('Moved to Human Verification! Campus Custody Officer alerted for physical inspection.', 'success');
+      setShowVerifyModal(null);
+      setVerifyForm({
+        owner_response: '',
+        challenge_question: 'Confirm unique identifying marks, contents, or serial suffix.',
+      });
+      await loadData();
+    } catch (err) {
+      notify('Failed to request human verification: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredLost = useMemo(() => {
-    if (!searchQuery.trim()) return myLostItems;
+    const base = lostScope === 'mine' ? myLostItems : allLostItems;
+    if (!searchQuery.trim()) return base;
     const q = searchQuery.toLowerCase();
-    return myLostItems.filter(
+    return base.filter(
       (item) =>
         item.title?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q)
+        item.description?.toLowerCase().includes(q) ||
+        item.brand_model?.toLowerCase().includes(q) ||
+        item.location_name?.toLowerCase().includes(q)
     );
-  }, [myLostItems, searchQuery]);
+  }, [lostScope, myLostItems, allLostItems, searchQuery]);
+
+  const filteredFound = useMemo(() => {
+    const base = foundScope === 'mine' ? myFoundItems : allFoundItems;
+    if (!searchQuery.trim()) return base;
+    const q = searchQuery.toLowerCase();
+    return base.filter(
+      (item) =>
+        item.title?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q) ||
+        item.inventory_tag?.toLowerCase().includes(q) ||
+        item.custody_desk?.toLowerCase().includes(q)
+    );
+  }, [foundScope, myFoundItems, allFoundItems, searchQuery]);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto bg-slate-50 font-sans text-slate-800 antialiased p-4 sm:p-6 lg:p-8">
@@ -254,7 +348,7 @@ export default function StaffLostFound() {
             Faculty Lost & Found Portal
           </h1>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-            Staff ID: <span className="font-semibold text-slate-700">{staffId}</span> • Items logged by you remain confidential to your department account.
+            Staff ID: <span className="font-semibold text-slate-700">{staffId}</span> • Open campus board connects all missing belongings across departments.
           </p>
         </div>
 
@@ -299,6 +393,20 @@ export default function StaffLostFound() {
         </div>
       )}
 
+      {/* Search Input Bar */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search all campus lost/found articles by title, room, or desc..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-4 text-xs font-medium text-slate-800 shadow-xs placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden"
+          />
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6">
         <button
@@ -310,7 +418,7 @@ export default function StaffLostFound() {
           }`}
         >
           <Tag size={14} />
-          My Reported Lost Items ({myLostItems.length})
+          Campus Lost Board ({allLostItems.length})
         </button>
 
         <button
@@ -322,7 +430,7 @@ export default function StaffLostFound() {
           }`}
         >
           <CheckCircle2 size={14} />
-          Items Discovered in Labs/Classes ({myFoundItems.length})
+          Campus Custody Vault ({allFoundItems.length})
         </button>
 
         <button
@@ -341,43 +449,98 @@ export default function StaffLostFound() {
       {/* TAB 1: LOST ITEMS */}
       {activeTab === 'lost' && (
         <div className="space-y-4">
+          {/* Sub-scope toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLostScope('all')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                lostScope === 'all'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              All Campus Reports ({allLostItems.length})
+            </button>
+            <button
+              onClick={() => setLostScope('mine')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                lostScope === 'mine'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              My Reported Items ({myLostItems.length})
+            </button>
+          </div>
+
           {filteredLost.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
               <PackageSearch className="mx-auto text-slate-300" size={48} />
-              <h3 className="mt-3 text-sm font-bold text-slate-700">No Personal Lost Reports Logged</h3>
+              <h3 className="mt-3 text-sm font-bold text-slate-700">No Lost Reports Found</h3>
               <p className="mt-1 text-xs text-slate-400 max-w-md mx-auto">
-                Misplaced your belongings on campus? Register the details here and security will coordinate recovery.
+                No active missing item reports match your current filters.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredLost.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700">
-                        {item.category_name || 'Category'}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                        {item.status}
-                      </span>
+              {filteredLost.map((item) => {
+                const isMyItem = item.reporter_id === staffId || item.reporter_name === staffName;
+                return (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700">
+                          {item.category_name || 'Category'}
+                        </span>
+                        <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                          {item.status || 'MISSING'}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3 text-sm font-bold text-slate-900">{item.title}</h3>
+                      {item.brand_model && (
+                        <p className="text-xs text-slate-500 font-medium">{item.brand_model}</p>
+                      )}
+                      <p className="mt-2 text-xs text-slate-600 line-clamp-3">{item.description}</p>
+                      
+                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
+                        <MapPin size={13} className="text-slate-400" />
+                        <span className="truncate">{item.location_name || 'Campus Grounds'}</span>
+                      </div>
                     </div>
 
-                    <h3 className="mt-3 text-sm font-bold text-slate-900">{item.title}</h3>
-                    {item.brand_model && (
-                      <p className="text-xs text-slate-500 font-medium">{item.brand_model}</p>
-                    )}
-                    <p className="mt-2 text-xs text-slate-600 line-clamp-3">{item.description}</p>
-                  </div>
+                    <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-slate-400">
+                        <span>{item.lost_at ? new Date(item.lost_at).toLocaleDateString() : 'Recent'}</span>
+                        <span className="block text-[10px] text-slate-500">Owner: {item.reporter_name || 'Student'}</span>
+                      </div>
 
-                  <div className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-400 flex items-center justify-between">
-                    <span>{new Date(item.lost_at).toLocaleDateString()}</span>
-                    <button onClick={() => handleDeleteLost(item.id)} className="text-rose-500 hover:text-rose-700">
-                      <Trash2 size={14} />
-                    </button>
+                      {isMyItem ? (
+                        <button
+                          onClick={() => handleDeleteLost(item.id)}
+                          className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-semibold"
+                        >
+                          <Trash2 size={14} /> Withdraw
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setShowFoundRequestModal(item);
+                            setFoundRequestForm((prev) => ({
+                              ...prev,
+                              description: `Found article matching '${item.title}' in campus area`,
+                            }));
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700"
+                        >
+                          <Hand size={13} />
+                          I Found This!
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -386,17 +549,41 @@ export default function StaffLostFound() {
       {/* TAB 2: FOUND ITEMS */}
       {activeTab === 'found' && (
         <div className="space-y-4">
-          {myFoundItems.length === 0 ? (
+          {/* Sub-scope toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFoundScope('all')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                foundScope === 'all'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              All Campus Custody ({allFoundItems.length})
+            </button>
+            <button
+              onClick={() => setFoundScope('mine')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                foundScope === 'mine'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Logged By Me ({myFoundItems.length})
+            </button>
+          </div>
+
+          {filteredFound.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
               <CheckCircle2 className="mx-auto text-slate-300" size={48} />
-              <h3 className="mt-3 text-sm font-bold text-slate-700">No Found Articles Turned In</h3>
+              <h3 className="mt-3 text-sm font-bold text-slate-700">No Found Articles in Vault</h3>
               <p className="mt-1 text-xs text-slate-400 max-w-md mx-auto">
                 Articles collected in seminar halls, labs, or faculty desks can be logged here and tagged for student claims.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {myFoundItems.map((item) => (
+              {filteredFound.map((item) => (
                 <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
                   <div>
                     <div className="flex items-start justify-between gap-2">
@@ -404,7 +591,7 @@ export default function StaffLostFound() {
                         {item.category_name}
                       </span>
                       <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {item.inventory_tag}
+                        {item.inventory_tag || `#FND-${item.id?.slice(0, 6)}`}
                       </span>
                     </div>
 
@@ -413,8 +600,8 @@ export default function StaffLostFound() {
                   </div>
 
                   <div className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-                    <p>Desk: {item.custody_desk}</p>
-                    <p className="text-slate-400 mt-0.5">Status: {item.storage_status}</p>
+                    <p>Desk: <span className="font-semibold text-slate-700">{item.custody_desk || 'Campus Custody Desk'}</span></p>
+                    <p className="text-slate-400 mt-0.5">Status: {item.storage_status || 'IN_VAULT'}</p>
                   </div>
                 </div>
               ))}
@@ -445,16 +632,99 @@ export default function StaffLostFound() {
                     <h4 className="mt-1 text-sm font-bold text-slate-900">{m.lost_title} &harr; {m.found_title}</h4>
                     <p className="text-xs text-slate-500">Status: {m.status}</p>
                   </div>
-                  <button
-                    onClick={() => setShowClaimModal(m)}
-                    className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
-                  >
-                    Claim Item
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {m.status === 'HUMAN_VERIFICATION' ? (
+                      <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-200 px-3 py-1 text-xs font-bold">
+                        In Human Verification Queue
+                      </span>
+                    ) : m.status === 'VERIFIED' ? (
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 text-xs font-bold">
+                        Verified for Handover
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setShowVerifyModal(m)}
+                          className="rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700 shadow-xs"
+                        >
+                          Move to Human Verification
+                        </button>
+                        <button
+                          onClick={() => setShowClaimModal(m)}
+                          className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
+                        >
+                          Claim Item
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* MODAL: REPORT FOUND REQUEST TO OWNER */}
+      {showFoundRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Found Item Notification</h3>
+                <p className="text-xs text-slate-500">Notify {showFoundRequestModal.reporter_name || 'the owner'} about: {showFoundRequestModal.title}</p>
+              </div>
+              <button onClick={() => setShowFoundRequestModal(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendFoundRequest} className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700">Where/How did you find it? *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={foundRequestForm.description}
+                  onChange={(e) => setFoundRequestForm({ ...foundRequestForm, description: e.target.value })}
+                  placeholder="e.g. Found on desk in Lab 302 after 2nd period class..."
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Current Holding Location / Desk *</label>
+                <input
+                  type="text"
+                  required
+                  value={foundRequestForm.custody_desk}
+                  onChange={(e) => setFoundRequestForm({ ...foundRequestForm, custody_desk: e.target.value })}
+                  placeholder="e.g. Faculty Room 12 Desk #4, or Admin Custody"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Finder Notes (Optional)</label>
+                <input
+                  type="text"
+                  value={foundRequestForm.finder_notes}
+                  onChange={(e) => setFoundRequestForm({ ...foundRequestForm, finder_notes: e.target.value })}
+                  placeholder="e.g. Kept safely in faculty drawer"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onClick={() => setShowFoundRequestModal(null)} className="rounded-xl border border-slate-200 px-4 py-2 font-bold text-slate-600">
+                  Cancel
+                </button>
+                <button type="submit" disabled={loading} className="rounded-xl bg-blue-600 px-5 py-2 font-bold text-white hover:bg-blue-700">
+                  Send Found Alert
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -601,6 +871,64 @@ export default function StaffLostFound() {
                 </button>
                 <button type="submit" disabled={loading} className="rounded-xl bg-emerald-600 px-5 py-2 font-bold text-white">
                   Log Found Article
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: MOVE TO HUMAN VERIFICATION */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Request Human Verification</h3>
+                <p className="text-xs text-slate-500">Initiate physical challenge verification for candidate match #{showVerifyModal.id}</p>
+              </div>
+              <button onClick={() => setShowVerifyModal(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleMoveToHumanVerification} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700">Verification Challenge Question</label>
+                <input
+                  type="text"
+                  value={verifyForm.challenge_question}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, challenge_question: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Your Identifying Secret Marks or Details *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={verifyForm.owner_response}
+                  onChange={(e) => setVerifyForm({ ...verifyForm, owner_response: e.target.value })}
+                  placeholder="Describe unique marks, internal contents, serial numbers, stickers, or scratches that only the true owner would know..."
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowVerifyModal(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 font-bold text-slate-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-xl bg-amber-600 px-5 py-2 font-bold text-white hover:bg-amber-700 shadow-xs"
+                >
+                  {loading ? 'Submitting...' : 'Send to Campus Custody Queue'}
                 </button>
               </div>
             </form>

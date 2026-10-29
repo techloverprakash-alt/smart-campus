@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getStudentAttendanceSummary } from '../../../services/api/attendance';
 import { getAnnouncements } from '../../../services/api/announcements';
+import { getLostReports } from '../../../services/api/lostAndFound';
 import { useAuth } from '../../auth/context/AuthContext';
 import {
   SafeAreaView,
@@ -317,6 +318,67 @@ function AttendanceOverview({ onPress, summary }) {
   );
 }
 
+function CampusLostAlerts({ items, navigation }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <View style={styles.lostAlertSection}>
+      <View style={styles.lostAlertHeader}>
+        <View style={styles.lostAlertTitleRow}>
+          <MaterialIcons name="campaign" size={20} color="#dc2626" />
+          <Text style={styles.lostAlertHeading}>Campus Lost Item Alert</Text>
+        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation?.navigate("StudentLostFound")}
+          style={styles.lostAlertViewAllBtn}
+        >
+          <Text style={styles.lostAlertViewAllText}>View All ({items.length})</Text>
+          <MaterialIcons name="chevron-right" size={16} color="#003fb1" />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.lostAlertSub}>
+        The following items were recently reported missing on campus. If you spot them, tap &quot;I Found This!&quot; to help return them.
+      </Text>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lostAlertScroll}>
+        {items.map((item) => (
+          <View key={item.id} style={styles.lostAlertCard}>
+            <View style={styles.lostAlertCardTop}>
+              <View style={styles.lostBadge}>
+                <Text style={styles.lostBadgeText}>MISSING</Text>
+              </View>
+              <Text style={styles.lostDateText}>
+                {item.lost_at ? new Date(item.lost_at).toLocaleDateString() : 'Recent'}
+              </Text>
+            </View>
+
+            <Text style={styles.lostItemTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.lostItemDesc} numberOfLines={2}>{item.description}</Text>
+
+            <View style={styles.lostLocationRow}>
+              <MaterialIcons name="place" size={13} color="#64748b" />
+              <Text style={styles.lostLocationText} numberOfLines={1}>
+                {item.location_name || 'Campus Grounds'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.iFoundThisBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation?.navigate("StudentLostFound")}
+            >
+              <MaterialIcons name="pan-tool" size={13} color="#ffffff" />
+              <Text style={styles.iFoundThisBtnText}>I Found This!</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 function ServiceHeader() {
   return (
     <View style={styles.serviceHeader}>
@@ -474,6 +536,7 @@ export default function StudentDashboard({ navigation }) {
   const [activeModal, setActiveModal] = useState(null);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [liveCirculars, setLiveCirculars] = useState([]);
+  const [recentLostItems, setRecentLostItems] = useState([]);
 
   // Fetch live attendance summary and announcements on mount
   useEffect(() => {
@@ -496,6 +559,18 @@ export default function StudentDashboard({ navigation }) {
       })
       .catch((err) => {
         console.warn("Failed to fetch live announcements:", err);
+      });
+
+    getLostReports({ status: "OPEN" })
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        if (list && list.length > 0) {
+          setRecentLostItems(list.slice(0, 5));
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch live lost items:", err);
       });
 
     return () => {
@@ -555,6 +630,9 @@ export default function StudentDashboard({ navigation }) {
             onPress={() => navigation?.navigate("StudentAttendanceDetail")}
             summary={attendanceSummary}
           />
+
+          {/* Campus Lost Belongings Bulletin (Broadcast to all students) */}
+          <CampusLostAlerts items={recentLostItems} navigation={navigation} />
 
           {/* Campus Services */}
           <View style={styles.servicesSection}>
@@ -1587,5 +1665,129 @@ const styles = StyleSheet.create({
   creditsText: {
     fontSize: 12,
     color: "#191b23",
+  },
+
+  lostAlertSection: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    shadowColor: "#dc2626",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  lostAlertHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  lostAlertTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  lostAlertHeading: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#991b1b",
+  },
+  lostAlertViewAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#eff6ff",
+  },
+  lostAlertViewAllText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#003fb1",
+  },
+  lostAlertSub: {
+    fontSize: 12,
+    color: "#64748b",
+    marginBottom: 12,
+    lineHeight: 17,
+  },
+  lostAlertScroll: {
+    gap: 12,
+    paddingRight: 8,
+  },
+  lostAlertCard: {
+    width: 240,
+    backgroundColor: "#fff5f5",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#fee2e2",
+    justifyContent: "space-between",
+  },
+  lostAlertCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  lostBadge: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  lostBadgeText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  lostDateText: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+  lostItemTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  lostItemDesc: {
+    fontSize: 12,
+    color: "#475569",
+    lineHeight: 16,
+    marginBottom: 8,
+    minHeight: 32,
+  },
+  lostLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 10,
+  },
+  lostLocationText: {
+    fontSize: 11,
+    color: "#64748b",
+    flex: 1,
+  },
+  iFoundThisBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#003fb1",
+    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    gap: 6,
+  },
+  iFoundThisBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

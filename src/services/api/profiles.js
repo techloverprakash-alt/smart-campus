@@ -98,6 +98,11 @@ export const uploadStaffRosterFile = (file, options = {}) => {
  */
 export const getAllStaff = () => api.get('/profiles/staff');
 
+/**
+ * Admin: delete faculty member profile and account.
+ */
+export const deleteStaff = (staffId) => api.delete(`/profiles/staff/${staffId}`);
+
 // ─────────────────────────────────────────────────────────────
 // Mentor & Proctor Allocation API
 // ─────────────────────────────────────────────────────────────

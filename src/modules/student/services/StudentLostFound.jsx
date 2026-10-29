@@ -206,25 +206,27 @@ export default function StudentLostFound() {
   // Handle Lost Report Submission
   const handleSubmitLost = async (e) => {
     e.preventDefault();
-    if (!lostForm.title.trim() || !lostForm.category_id) {
-      notify('Please enter a title and select a category.', 'error');
+    if (!lostForm.title.trim()) {
+      notify('Please enter a title for the lost item.', 'error');
       return;
     }
 
     try {
       setLoading(true);
       const payload = {
-        title: lostForm.title,
-        category_id: lostForm.category_id,
+        title: lostForm.title.trim(),
+        category_id: lostForm.category_id || categories[0]?.id || 1,
         last_seen_location_id: lostForm.last_seen_location_id || null,
-        brand_model: lostForm.brand_model || null,
-        description: lostForm.description,
+        brand_model: lostForm.brand_model?.trim() || null,
+        description: lostForm.description?.trim() && lostForm.description.trim().length >= 5
+          ? lostForm.description.trim()
+          : `Reported missing item on campus: ${lostForm.title.trim()}`,
         lost_at: lostForm.lost_at ? new Date(lostForm.lost_at).toISOString() : new Date().toISOString(),
         media_urls: lostForm.image_url ? [lostForm.image_url] : []
       };
 
       await createLostReport(payload);
-      notify('Lost report broadcasted! AI cross-modal matching active against campus custody.', 'success');
+      notify('Lost report saved and broadcasted to all campus members!', 'success');
       setShowLostModal(false);
       setLostForm({
         title: '',
