@@ -507,6 +507,11 @@ export default function StaffLostFound() {
                         <MapPin size={13} className="text-slate-400" />
                         <span className="truncate">{item.location_name || 'Campus Grounds'}</span>
                       </div>
+                      {item.primary_image_url && (
+                        <div className="mt-2.5 h-32 w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                          <img src={item.primary_image_url} alt={item.title} className="h-full w-full object-cover" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
@@ -597,6 +602,11 @@ export default function StaffLostFound() {
 
                     <h3 className="mt-3 text-sm font-bold text-slate-900">{item.title}</h3>
                     <p className="mt-2 text-xs text-slate-600 line-clamp-3">{item.description}</p>
+                    {item.primary_image_url && (
+                      <div className="mt-2.5 h-32 w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                        <img src={item.primary_image_url} alt={item.title} className="h-full w-full object-cover" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">

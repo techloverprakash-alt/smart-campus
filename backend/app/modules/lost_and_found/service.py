@@ -90,11 +90,38 @@ class LostAndFoundService:
         if data.image_url and data.image_url not in media_urls:
             media_urls.append(data.image_url)
 
-        for m_url in media_urls:
+        media_id_list = list(data.media_ids or [])
+        if getattr(data, 'media_id', None) and data.media_id not in media_id_list:
+            media_id_list.append(data.media_id)
+
+        # If media_id provided but no URL, fetch from MediaAttachment
+        if media_id_list and not media_urls:
+            for mid in media_id_list:
+                try:
+                    ma = self.db.query(MediaAttachment).filter(MediaAttachment.id == int(mid)).first()
+                    if ma and ma.storage_key:
+                        media_urls.append(ma.storage_key)
+                except Exception:
+                    pass
+
+        for idx, m_url in enumerate(media_urls):
+            mid = None
+            if idx < len(media_id_list):
+                try:
+                    mid = int(media_id_list[idx])
+                except (ValueError, TypeError):
+                    mid = None
+            elif media_id_list:
+                try:
+                    mid = int(media_id_list[0])
+                except (ValueError, TypeError):
+                    mid = None
+
             try:
                 self.repo.attach_media(
                     media_url=m_url,
-                    lost_report_id=report.id
+                    lost_report_id=report.id,
+                    media_id=mid
                 )
             except Exception as e:
                 logger.warning(f"Could not attach media to lost report: {e}")
@@ -206,11 +233,41 @@ class LostAndFoundService:
         if data.image_url and data.image_url not in media_urls:
             media_urls.append(data.image_url)
 
-        for m_url in media_urls:
-            self.repo.attach_media(
-                media_url=m_url,
-                found_report_id=report.id
-            )
+        media_id_list = list(data.media_ids or [])
+        if getattr(data, 'media_id', None) and data.media_id not in media_id_list:
+            media_id_list.append(data.media_id)
+
+        # If media_id provided but no URL, fetch from MediaAttachment
+        if media_id_list and not media_urls:
+            for mid in media_id_list:
+                try:
+                    ma = self.db.query(MediaAttachment).filter(MediaAttachment.id == int(mid)).first()
+                    if ma and ma.storage_key:
+                        media_urls.append(ma.storage_key)
+                except Exception:
+                    pass
+
+        for idx, m_url in enumerate(media_urls):
+            mid = None
+            if idx < len(media_id_list):
+                try:
+                    mid = int(media_id_list[idx])
+                except (ValueError, TypeError):
+                    mid = None
+            elif media_id_list:
+                try:
+                    mid = int(media_id_list[0])
+                except (ValueError, TypeError):
+                    mid = None
+
+            try:
+                self.repo.attach_media(
+                    media_url=m_url,
+                    found_report_id=report.id,
+                    media_id=mid
+                )
+            except Exception as e:
+                logger.warning(f"Could not attach media to found report: {e}")
 
         # Generate Jina CLIP v2 text embedding & persist to Qdrant and DB
         try:
@@ -456,8 +513,23 @@ class LostAndFoundService:
             storage_status="INTAKE_PENDING"
         )
 
-        if data.image_url:
-            self.repo.attach_media(media_url=data.image_url, found_report_id=found.id)
+        if data.image_url or getattr(data, 'media_id', None):
+            mid = None
+            if getattr(data, 'media_id', None):
+                try:
+                    mid = int(data.media_id)
+                except (ValueError, TypeError):
+                    mid = None
+            img_url = data.image_url
+            if not img_url and mid:
+                try:
+                    ma = self.db.query(MediaAttachment).filter(MediaAttachment.id == mid).first()
+                    if ma:
+                        img_url = ma.storage_key
+                except Exception:
+                    pass
+            if img_url:
+                self.repo.attach_media(media_url=img_url, found_report_id=found.id, media_id=mid)
 
         # 2. Compute similarity score and persist embeddings
         text_lost = f"{lost.title}. {lost.brand_model or ''}. {lost.description}"

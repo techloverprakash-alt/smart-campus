@@ -594,6 +594,11 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                             <MapPin size={13} className="shrink-0 text-slate-400" />
                             <span>{candidate.lost.location}</span>
                           </div>
+                          {candidate.lost.image && (
+                            <div className="mt-2.5 h-32 w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                              <img src={candidate.lost.image} alt={candidate.lost.title} className="h-full w-full object-cover" />
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -702,6 +707,11 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
                               {candidate.found.storageStatus}
                             </span>
                           </div>
+                          {candidate.found.image && (
+                            <div className="mt-2.5 h-32 w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                              <img src={candidate.found.image} alt={candidate.found.title} className="h-full w-full object-cover" />
+                            </div>
+                          )}
                         </div>
                       </div>
 

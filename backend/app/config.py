@@ -20,6 +20,7 @@ class Settings(BaseModel):
     app_name: str = "Smart Campus Cross-Modal Matching Service"
     app_version: str = "1.0.0"
     debug: bool = os.getenv("DEBUG", "False").lower() in ("true", "1")
+    BASE_DIR: Path = BASE_DIR
     
     # Qdrant Vector DB Settings
     # Supports cloud cluster endpoint if set, otherwise falls back to local host
