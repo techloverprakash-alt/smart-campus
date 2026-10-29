@@ -24,6 +24,8 @@ const NAV = {
   ADMIN: [
     { label: 'Dashboard', icon: 'dashboard', screen: 'AdminDashboard' },
     { label: 'Attendance review', icon: 'fact-check', screen: 'AdminAttendanceReview' },
+    { label: 'Subject Allocation', icon: 'library-books', screen: 'SubjectManagement', also: ['AssignSubjects'] },
+    { label: 'Staff Onboarding', icon: 'person-add', screen: 'AdminStaffOnboarding', also: ['AddStaff'] },
     { label: 'Lost & Found Verification', icon: 'verified-user', screen: 'AdminLostFoundManagement' },
     { label: 'Control Center', icon: 'admin-panel-settings', screen: 'CampusAdminControlCenter' },
     { label: 'Reports', icon: 'assessment', screen: 'ReportManagement' },

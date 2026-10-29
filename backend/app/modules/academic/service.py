@@ -396,3 +396,4 @@ class AcademicService:
                 for sub in subjects
             ],
         }
+

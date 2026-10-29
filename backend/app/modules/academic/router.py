@@ -136,3 +136,4 @@ def get_academic_metadata(
 ):
     service = AcademicService(db)
     return service.get_metadata()
+

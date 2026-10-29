@@ -1,2 +1,1 @@
-// Admin subjects management module
-export default {};
+export { default as SubjectManagement } from './SubjectManagement';

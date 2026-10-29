@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable,
   TextInput,
+  Alert,
 } from '@/ui';
 import { MaterialIcons } from '@/ui';
 import Colors from '../../../constants/colors';
@@ -20,6 +21,8 @@ import BottomNavBar from '../../../components/common/BottomNavBar';
 import { useAuth } from '../../auth/context/AuthContext';
 import { getAttendanceHistory } from '../../../services/api/attendance';
 import { getDepartmentSummary } from '../../../services/api/reports';
+import { getStaffWorkload } from '../../../services/api/academic';
+import { deleteStaff } from '../../../services/api/profiles';
 
 /**
  * Institutional Assigned Faculty & Subject Workload Data
@@ -211,26 +214,76 @@ const AdminDashboard = ({ navigation }) => {
   });
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [staffModalVisible, setStaffModalVisible] = useState(false);
+  const [facultyWorkload, setFacultyWorkload] = useState([]);
+  const [loadingWorkload, setLoadingWorkload] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredFaculty = FACULTY_WORKLOAD_DATA.filter((teacher) => {
+  const activeFacultyList = facultyWorkload.length > 0 ? facultyWorkload : FACULTY_WORKLOAD_DATA;
+
+  const filteredFaculty = activeFacultyList.filter((teacher) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const matchesTeacher =
-      teacher.name.toLowerCase().includes(q) ||
-      teacher.facultyId.toLowerCase().includes(q) ||
-      teacher.designation.toLowerCase().includes(q);
-    const matchesSubject = teacher.subjects.some(
+      (teacher.name && teacher.name.toLowerCase().includes(q)) ||
+      (teacher.facultyId && teacher.facultyId.toLowerCase().includes(q)) ||
+      (teacher.designation && teacher.designation.toLowerCase().includes(q)) ||
+      (teacher.department && teacher.department.toLowerCase().includes(q));
+    const matchesSubject = teacher.subjects?.some(
       (s) =>
-        s.code.toLowerCase().includes(q) ||
-        s.title.toLowerCase().includes(q) ||
-        s.type.toLowerCase().includes(q)
+        (s.code && s.code.toLowerCase().includes(q)) ||
+        (s.title && s.title.toLowerCase().includes(q)) ||
+        (s.type && s.type.toLowerCase().includes(q))
     );
     return matchesTeacher || matchesSubject;
   });
 
+  const fetchWorkload = async () => {
+    try {
+      setLoadingWorkload(true);
+      const res = await getStaffWorkload();
+      const data = res?.data || res || [];
+      if (Array.isArray(data) && data.length > 0) {
+        setFacultyWorkload(data);
+      }
+    } catch (err) {
+      console.warn('Live staff workload notice:', err);
+    } finally {
+      setLoadingWorkload(false);
+    }
+  };
+
+  const handleDeleteStaff = (teacher) => {
+    const staffId = teacher.id || teacher.staffId || teacher.userId;
+    Alert.alert(
+      'Delete Faculty Member',
+      `Are you sure you want to permanently delete faculty member "${teacher.name}" (${teacher.facultyId})? This will unassign all their courses and student mentees.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteStaff(staffId);
+              Alert.alert('Faculty Deleted', `Staff member ${teacher.name} has been removed.`);
+              fetchWorkload();
+              getDepartmentSummary().then((r) => {
+                if (r) setKpis(r.data || r);
+              }).catch(() => {});
+            } catch (err) {
+              const msg = err.response?.data?.detail || err.message || 'Failed to delete staff member.';
+              Alert.alert('Error', msg);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
     let isMounted = true;
+
+    fetchWorkload();
 
     // 1. Fetch live institutional department KPIs
     getDepartmentSummary()
@@ -495,7 +548,7 @@ const AdminDashboard = ({ navigation }) => {
                     if (action.label === 'Campus Services') navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' });
                     else if (action.label === 'Add Student') navigation?.navigate('EnrollStudent');
                     else if (action.label === 'Add Staff') navigation?.navigate('AdminStaffOnboarding');
-                    else if (action.label === 'Assign Subjects') navigation?.navigate('MentorProctorAllocation');
+                    else if (action.label === 'Assign Subjects') navigation?.navigate('SubjectManagement', { tab: 'allocations' });
                     else if (action.label === 'Generate Reports') navigation?.navigate('ReportManagement');
                   }}
                 >
@@ -599,7 +652,7 @@ const AdminDashboard = ({ navigation }) => {
               <View style={styles.modalStatChip}>
                 <MaterialIcons name="badge" size={15} color="#003fb1" />
                 <Text style={styles.modalStatChipText}>
-                  <Text style={{ fontWeight: '700', color: '#003fb1' }}>{FACULTY_WORKLOAD_DATA.length}</Text> Active Teachers
+                  <Text style={{ fontWeight: '700', color: '#003fb1' }}>{activeFacultyList.length}</Text> Active Teachers
                 </Text>
               </View>
 
@@ -607,7 +660,7 @@ const AdminDashboard = ({ navigation }) => {
                 <MaterialIcons name="library-books" size={15} color="#166534" />
                 <Text style={styles.modalStatChipText}>
                   <Text style={{ fontWeight: '700', color: '#166534' }}>
-                    {FACULTY_WORKLOAD_DATA.reduce((acc, f) => acc + f.subjects.length, 0)}
+                    {activeFacultyList.reduce((acc, f) => acc + (f.subjects ? f.subjects.length : 0), 0)}
                   </Text> Total Subjects Taken
                 </Text>
               </View>
@@ -678,12 +731,22 @@ const AdminDashboard = ({ navigation }) => {
                         </View>
                       </View>
 
-                      {/* Taking Subjects Count Badge */}
-                      <View style={styles.subjectsCountBadge}>
-                        <MaterialIcons name="menu-book" size={14} color="#003fb1" />
-                        <Text style={styles.subjectsCountText}>
-                          {teacher.subjects.length} Subjects Taken
-                        </Text>
+                      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                        {/* Taking Subjects Count Badge */}
+                        <View style={styles.subjectsCountBadge}>
+                          <MaterialIcons name="menu-book" size={14} color="#003fb1" />
+                          <Text style={styles.subjectsCountText}>
+                            {(teacher.subjects || []).length} Subjects Taken
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.deleteTeacherBtn}
+                          onPress={() => handleDeleteStaff(teacher)}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialIcons name="person-remove" size={13} color="#ba1a1a" />
+                          <Text style={styles.deleteTeacherBtnText}>Delete Staff</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
 
@@ -755,15 +818,28 @@ const AdminDashboard = ({ navigation }) => {
             {/* Modal Footer */}
             <View style={styles.modalFooter}>
               <Text style={styles.modalFooterHint}>
-                Showing verified teaching assignments for Academic Year 2026–2027
+                Showing verified teaching assignments directly from campus database
               </Text>
-              <TouchableOpacity
-                style={styles.modalDoneBtn}
-                onPress={() => setStaffModalVisible(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalDoneBtnText}>Done</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity
+                  style={styles.modalAssignActionBtn}
+                  onPress={() => {
+                    setStaffModalVisible(false);
+                    navigation?.navigate('SubjectManagement', { tab: 'allocations' });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="assignment-ind" size={15} color="#ffffff" />
+                  <Text style={styles.modalAssignActionBtnText}>Assign Subjects</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalDoneBtn}
+                  onPress={() => setStaffModalVisible(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalDoneBtnText}>Done</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -1197,9 +1273,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   modalDoneBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
     color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  deleteTeacherBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffdad6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  deleteTeacherBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ba1a1a',
+  },
+  modalAssignActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#003fb1',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  modalAssignActionBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

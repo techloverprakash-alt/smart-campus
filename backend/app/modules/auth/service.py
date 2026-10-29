@@ -563,12 +563,10 @@ class AuthService:
             sess.marked_by = None
 
         # 4. Delete staff profile and user
-        user_to_delete = user
-        self.db.delete(staff)
-        self.db.flush()
-
-        if user_to_delete:
-            self.db.delete(user_to_delete)
+        if user:
+            self.db.delete(user)
+        else:
+            self.db.delete(staff)
 
         self.db.commit()
 

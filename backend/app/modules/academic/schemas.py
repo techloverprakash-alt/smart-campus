@@ -72,3 +72,4 @@ class StaffWorkloadItem(BaseModel):
     avatarBg: str = "#dbeafe"
     avatarText: str = "#003fb1"
     subjects: List[StaffWorkloadSubject] = []
+

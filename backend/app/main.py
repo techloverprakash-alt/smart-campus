@@ -43,18 +43,16 @@ logger = logging.getLogger("smart_campus")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("=== LIFESPAN: START ===")
+    logger.info("=== Starting Smart Campus Automated Matching Service ===")
     
     # 1. Initialize relational database tables
     try:
-        print("=== LIFESPAN: 1. Base.metadata.create_all ===")
         Base.metadata.create_all(bind=db_engine)
-        print("=== LIFESPAN: 1. DONE ===")
+        logger.info("Relational database tables (Lost & Found Tables 34-41) initialized.")
     except Exception as e:
         logger.error(f"Failed to initialize database tables: {e}", exc_info=True)
 
     # 2. Seed initial categories and campus locations if empty
-    print("=== LIFESPAN: 2. Seeding ===")
     db = SessionLocal()
     try:
         # Seed default auth data (Roles, 23 Users, Profiles, Refresh Tokens)
@@ -86,11 +84,9 @@ async def lifespan(app: FastAPI):
         db.rollback()
     finally:
         db.close()
-    print("=== LIFESPAN: 2. DONE ===")
 
     # 3. Initialize Embedding Service
     try:
-        print("=== LIFESPAN: 3. Embedding initialize ===")
         embedding_service.initialize()
     except Exception as e:
         logger.error(f"Failed to initialize embedding service: {e}", exc_info=True)
@@ -108,10 +104,6 @@ async def lifespan(app: FastAPI):
             pass
 
     asyncio.create_task(_init_qdrant_bg())
-    print("=== LIFESPAN: YIELDING ===")
-    yield
-    print("=== LIFESPAN: SHUTDOWN ===")
-
     yield
 
     logger.info("=== Shutting down Smart Campus Service ===")

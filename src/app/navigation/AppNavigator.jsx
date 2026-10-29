@@ -16,7 +16,7 @@ import {
 import {
   AdminDashboard, CampusAdminControlCenter, ReportManagement, AdminTimetable, AdminStaffOnboardingScreen,
   MentorProctorAllocationScreen, EnrollStudent, EnrollmentSuccess, AdminProfile, AdminEditProfile,
-  AdminLostFoundManagement, AdminAttendanceReview,
+  AdminLostFoundManagement, AdminAttendanceReview, SubjectManagement,
 } from '../../modules/admin';
 import { StudentFacultyDashboard, CampusServiceDashboard } from '../../modules/services';
 
@@ -74,6 +74,8 @@ export const ROUTES = [
   { name: 'EnrollmentSuccess', path: '/admin/students/enrolled', component: EnrollmentSuccess, role: 'ADMIN' },
   { name: 'AdminStaffOnboarding', path: '/admin/faculty/onboarding', component: AdminStaffOnboardingScreen, role: 'ADMIN' },
   { name: 'AddStaff', path: '/admin/faculty/add', component: AdminStaffOnboardingScreen, role: 'ADMIN' },
+  { name: 'SubjectManagement', path: '/admin/subjects', component: SubjectManagement, role: 'ADMIN' },
+  { name: 'AssignSubjects', path: '/admin/subjects/assign', component: (props) => <SubjectManagement {...props} route={{ params: { tab: 'allocations' } }} />, role: 'ADMIN' },
   { name: 'MentorProctorAllocation', path: '/admin/faculty/mentor-proctor', component: MentorProctorAllocationScreen, role: 'ADMIN' },
   { name: 'AssignStudent', path: '/admin/faculty/assign', component: MentorProctorAllocationScreen, role: 'ADMIN' },
   { name: 'AdminProfile', path: '/admin/profile', component: AdminProfile, role: 'ADMIN' },
