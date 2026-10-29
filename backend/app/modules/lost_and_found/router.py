@@ -18,6 +18,7 @@ from app.modules.lost_and_found.models import (
     MatchVerification,
     ReportMedia,
 )
+from app.modules.notifications.models import Notification
 from app.modules.lost_and_found.repository import LostAndFoundRepository
 from app.modules.lost_and_found.schemas import (
     CategoryCreate,
@@ -801,3 +802,53 @@ async def upload_media_file(
         },
         message="Media uploaded successfully."
     )
+
+
+# =============================================================================
+# User Notifications & Discovery Alerts
+# =============================================================================
+
+@router.get("/notifications", response_model=StandardResponse[List[dict]])
+def get_user_notifications(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Retrieve campus lost & found discovery alerts and system notifications for the current user."""
+    notifs = db.query(Notification).filter(
+        Notification.user_id == user.id
+    ).order_by(Notification.created_at.desc()).limit(limit).all()
+
+    return StandardResponse(
+        data=[
+            {
+                "id": n.id,
+                "title": n.title,
+                "message": n.message,
+                "notification_type": n.notification_type,
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat() if n.created_at else None
+            }
+            for n in notifs
+        ],
+        message=f"Retrieved {len(notifs)} notifications."
+    )
+
+
+@router.patch("/notifications/{notif_id}/read", response_model=StandardResponse[dict])
+def mark_notification_read(
+    notif_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Mark a user notification as read."""
+    notif = db.query(Notification).filter(
+        Notification.id == notif_id,
+        Notification.user_id == user.id
+    ).first()
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    notif.is_read = True
+    db.commit()
+    return StandardResponse(data={"id": notif.id, "is_read": True}, message="Notification marked as read.")
+
