@@ -13,7 +13,7 @@ from app.modules.attendance.router import attendance_router, timetable_router
 from app.modules.materials.router import materials_router, announcements_router
 from app.modules.academic.router import academic_router
 from app.modules.reports.router import reports_router
-from app.modules.complaints.router import control_center_router
+from app.modules.complaints.router import control_center_router, complaints_router
 from app.modules.academic.seeder import seed_academic_csvs
 from app.modules.materials.seeder import seed_materials_and_announcements
 from app.modules.lost_and_found.seeder import seed_lost_and_found_csvs
@@ -155,6 +155,8 @@ app.include_router(academic_router, prefix="/api/v1/academic", tags=["Academic &
 app.include_router(academic_router, prefix="/api/academic", tags=["Academic & Course Allocation"])
 app.include_router(control_center_router, prefix="/api/v1/admin/control-center", tags=["Admin Control Center (v1)"])
 app.include_router(control_center_router, prefix="/api/admin/control-center", tags=["Admin Control Center"])
+app.include_router(complaints_router, prefix="/api/v1/complaints", tags=["Complaints & Grievances (v1)"])
+app.include_router(complaints_router, prefix="/api/complaints", tags=["Complaints & Grievances"])
 app.include_router(engine_router)
 app.include_router(embeddings_router)
 app.include_router(matching_router)

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { getComplaints, updateComplaintStatus } from '../../../services/api/complaints';
 import { useRouter } from '../../../router';
 import { useAuth } from '../../auth/context/AuthContext';
 import {
@@ -50,6 +51,55 @@ export default function CampusAdminControlCenter() {
   const [showProfile, setShowProfile] = useState(false);
   const [requests, setRequests] = useState(INITIAL_REQUESTS);
   const [searchQuery, setSearchQuery] = useState('');
+  const [complaintsList, setComplaintsList] = useState([]);
+  const [loadingComplaints, setLoadingComplaints] = useState(false);
+  const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'STUDENT' | 'STAFF'
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [resolutionStatus, setResolutionStatus] = useState('IN_PROGRESS');
+  const [resolutionRemarks, setResolutionRemarks] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
+
+  const fetchLiveComplaints = () => {
+    setLoadingComplaints(true);
+    getComplaints()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setComplaintsList(data);
+        }
+      })
+      .catch((err) => console.warn('Could not load live complaints:', err))
+      .finally(() => setLoadingComplaints(false));
+  };
+
+  useEffect(() => {
+    fetchLiveComplaints();
+  }, []);
+
+  const handleOpenInspect = (item) => {
+    setSelectedComplaint(item);
+    setResolutionStatus(item.status || 'IN_PROGRESS');
+    setResolutionRemarks(item.admin_remarks || '');
+  };
+
+  const handleSaveResolution = async () => {
+    if (!selectedComplaint) return;
+    setSavingStatus(true);
+    try {
+      await updateComplaintStatus(selectedComplaint.id, {
+        status: resolutionStatus,
+        admin_remarks: resolutionRemarks.trim() || undefined,
+      });
+      showToast(`Complaint #${selectedComplaint.ticket_number} marked as ${resolutionStatus}.`);
+      setSelectedComplaint(null);
+      fetchLiveComplaints();
+    } catch (err) {
+      console.error('Failed to update complaint status:', err);
+      showToast(`Error updating status: ${err.message || 'Check connection.'}`);
+    } finally {
+      setSavingStatus(false);
+    }
+  };
   const [activeModal, setActiveModal] = useState(null); // 'broadcast' | 'assign'
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastTarget, setBroadcastTarget] = useState('All Campus Devices');
@@ -107,6 +157,36 @@ export default function CampusAdminControlCenter() {
     setActiveModal(null);
     showToast(`Ticket #${ticket.id} auto-dispatched to nearest available field staff.`);
   };
+
+  const displayedComplaints = useMemo(() => {
+    let list = complaintsList;
+    if (roleFilter !== 'ALL') {
+      list = list.filter((c) => (c.reporter?.role || '').toUpperCase() === roleFilter);
+    }
+    if (statusFilter !== 'ALL') {
+      list = list.filter((c) => (c.status || '').toUpperCase() === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((c) => {
+        const ticketMatch = (c.ticket_number || '').toLowerCase().includes(q);
+        const titleMatch = (c.title || '').toLowerCase().includes(q);
+        const descMatch = (c.description || '').toLowerCase().includes(q);
+        const catMatch = (c.category_name || '').toLowerCase().includes(q);
+        const roomMatch = (c.room_identifier || '').toLowerCase().includes(q);
+        const nameMatch = (c.reporter?.name || '').toLowerCase().includes(q);
+        const idMatch = (c.reporter?.identifier || '').toLowerCase().includes(q);
+        const regMatch = (c.reporter?.student_details?.register_number || '').toLowerCase().includes(q);
+        const facMatch = (c.reporter?.staff_details?.faculty_id || '').toLowerCase().includes(q);
+        const deptMatch = (
+          (c.reporter?.student_details?.department || '') +
+          (c.reporter?.staff_details?.department || '')
+        ).toLowerCase().includes(q);
+        return ticketMatch || titleMatch || descMatch || catMatch || roomMatch || nameMatch || idMatch || regMatch || facMatch || deptMatch;
+      });
+    }
+    return list;
+  }, [complaintsList, roleFilter, statusFilter, searchQuery]);
 
   const filteredRequests = useMemo(() => {
     if (!searchQuery.trim()) return requests;
@@ -544,121 +624,279 @@ export default function CampusAdminControlCenter() {
 
         {/* MASTER COMPLAINT DISPATCH CONSOLE (TABLE) */}
         <section className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100">
-            <div>
-              <h3 className="text-base font-black text-slate-900">Master Complaint Dispatch Console</h3>
-              <p className="text-xs text-slate-400">Live feed of campus service requests, assignments & technician routes</p>
+          <div className="flex flex-col gap-3 p-5 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-slate-900">Master Complaint & Grievance Console</h3>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-extrabold text-blue-700">
+                    Live Database
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Real-time grievance tickets submitted by Students and Faculty/Staff with verified user credentials
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchLiveComplaints}
+                  className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition"
+                  title="Refresh complaints"
+                >
+                  <RefreshCw size={14} className={loadingComplaints ? "animate-spin" : ""} />
+                </button>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search name, roll, dept, issue..."
+                    className="rounded-xl border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs outline-none focus:border-blue-500 focus:bg-white w-56 sm:w-64"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' })}
+                  className="rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition whitespace-nowrap"
+                >
+                  Campus Services →
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter requests..."
-                  className="rounded-xl border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs outline-none focus:border-blue-500 focus:bg-white"
-                />
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-bold mr-1">Role:</span>
+                {[
+                  { key: 'ALL', label: `All (${complaintsList.length})` },
+                  { key: 'STUDENT', label: `Students (${complaintsList.filter(c => (c.reporter?.role || '').toUpperCase() === 'STUDENT').length})` },
+                  { key: 'STAFF', label: `Faculty & Staff (${complaintsList.filter(c => (c.reporter?.role || '').toUpperCase() === 'STAFF').length})` },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setRoleFilter(tab.key)}
+                    className={`rounded-lg px-2.5 py-1 text-xs transition ${
+                      roleFilter === tab.key
+                        ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
-              <button
-                type="button"
-                onClick={() => navigation?.navigate('StudentFacultyPortal', { role: 'ADMIN', from: 'admin' })}
-                className="rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition whitespace-nowrap"
-              >
-                View Full Portal →
-              </button>
+
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-bold mr-1">Status:</span>
+                {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED'].map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setStatusFilter(st)}
+                    className={`rounded-lg px-2.5 py-1 text-xs transition ${
+                      statusFilter === st
+                        ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {st === 'ALL' ? 'All Status' : st.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Complaints Table with Submitter Relative Data */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700">
               <thead className="border-b border-slate-100 bg-slate-50/60 font-bold uppercase tracking-wider text-[10px] text-slate-400">
                 <tr>
-                  <th className="px-5 py-3">Request ID</th>
-                  <th className="px-5 py-3">Issue Details</th>
-                  <th className="px-5 py-3">Location</th>
-                  <th className="px-5 py-3">Priority</th>
+                  <th className="px-5 py-3">Ticket / Priority</th>
+                  <th className="px-5 py-3">Complaint Details</th>
+                  <th className="px-5 py-3">Location / Room</th>
+                  <th className="px-5 py-3">Submitter (User Relative Data)</th>
                   <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Assigned Staff</th>
-                  <th className="px-5 py-3 text-right">Action</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-5 py-3 font-mono font-bold text-blue-700">
-                      #{req.id}
-                    </td>
-                    <td className="px-5 py-3">
-                      <strong className="block text-slate-900">{req.category}</strong>
-                      <span className="text-[11px] text-slate-500">{req.detail}</span>
-                    </td>
-                    <td className="px-5 py-3 font-medium text-slate-600">
-                      {req.location}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold ${
-                        req.priority === 'Critical'
-                          ? 'bg-rose-100 text-rose-800'
-                          : req.priority === 'High'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {req.priority}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        req.status === 'In progress'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : req.status === 'Assigned'
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 font-semibold text-slate-800">
-                      {req.assignee}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      {req.status === 'Open' ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAssigningTicket(req);
-                            setActiveModal('assign');
-                          }}
-                          className="rounded-lg bg-blue-600 px-3 py-1 font-bold text-white hover:bg-blue-700 shadow-xs text-[11px]"
-                        >
-                          Auto-assign
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => showToast(`Detailed dispatch telemetry opened for #${req.id}.`)}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-600 hover:bg-slate-50 text-[11px]"
-                        >
-                          Inspect
-                        </button>
-                      )}
+                {displayedComplaints.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-8 text-center text-slate-400 text-xs">
+                      No complaints found matching the selected filter criteria.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  displayedComplaints.map((c) => {
+                    const isStaff = (c.reporter?.role || '').toUpperCase() === 'STAFF';
+                    const isStudent = (c.reporter?.role || '').toUpperCase() === 'STUDENT';
+                    const prio = (c.priority || 'MEDIUM').toUpperCase();
+                    const st = (c.status || 'OPEN').toUpperCase();
+
+                    return (
+                      <tr key={c.id} className="hover:bg-slate-50/60 transition">
+                        {/* Ticket & Priority */}
+                        <td className="px-5 py-3.5 align-top">
+                          <span className="font-mono font-bold text-blue-700 block text-xs">
+                            #{c.ticket_number}
+                          </span>
+                          <span className={`inline-block rounded-md px-1.5 py-0.5 text-[9px] font-extrabold mt-1 border ${
+                            prio === 'URGENT'
+                              ? 'bg-rose-100 text-rose-800 border-rose-200'
+                              : prio === 'HIGH'
+                              ? 'bg-amber-100 text-amber-800 border-amber-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}>
+                            {prio}
+                          </span>
+                          <span className="block text-[10px] text-slate-400 mt-1">
+                            {c.created_at ? new Date(c.created_at).toLocaleDateString() : 'Recent'}
+                          </span>
+                        </td>
+
+                        {/* Complaint Details */}
+                        <td className="px-5 py-3.5 align-top max-w-xs">
+                          <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 mb-1">
+                            {c.category_name}
+                          </span>
+                          <strong className="block text-slate-900 font-bold leading-snug">
+                            {c.title}
+                          </strong>
+                          <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                            {c.description}
+                          </p>
+                          {c.admin_remarks && (
+                            <div className="mt-1.5 rounded-lg bg-blue-50 border border-blue-200 p-1.5 text-[10px] text-blue-800">
+                              <strong>Admin Remark:</strong> {c.admin_remarks}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Location / Room */}
+                        <td className="px-5 py-3.5 align-top font-medium text-slate-600 whitespace-nowrap">
+                          <span className="flex items-center gap-1 text-slate-800 font-semibold">
+                            📍 {c.room_identifier || c.location_name || 'Campus Premises'}
+                          </span>
+                        </td>
+
+                        {/* Submitter User Relative Data */}
+                        <td className="px-5 py-3.5 align-top">
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <strong className="text-slate-900 font-bold text-xs">
+                                {c.reporter?.name || 'Campus Member'}
+                              </strong>
+                              <span className={`rounded-md px-1.5 py-0.2 text-[9px] font-extrabold uppercase tracking-wider ${
+                                isStaff
+                                  ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                  : isStudent
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                  : 'bg-slate-200 text-slate-800'
+                              }`}>
+                                {c.reporter?.role || 'STUDENT'}
+                              </span>
+                            </div>
+
+                            {/* Student Relative Credentials */}
+                            {isStudent && (
+                              <div className="text-[11px] text-slate-600 space-y-0.5 pt-0.5 border-t border-slate-200/60">
+                                <div>
+                                  <span className="text-slate-400 font-semibold">Reg No: </span>
+                                  <strong className="font-mono text-slate-800">{c.reporter?.student_details?.register_number || c.reporter?.identifier}</strong>
+                                  {c.reporter?.student_details?.roll_number && (
+                                    <span className="text-slate-500 font-mono ml-1.5">({c.reporter?.student_details?.roll_number})</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-semibold">Dept: </span>
+                                  <span className="text-slate-700">{c.reporter?.student_details?.department || 'Information Technology'}</span>
+                                  {c.reporter?.student_details?.section && (
+                                    <span className="font-semibold text-slate-600 ml-1">• Sec {c.reporter?.student_details?.section}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Staff Relative Credentials */}
+                            {isStaff && (
+                              <div className="text-[11px] text-slate-600 space-y-0.5 pt-0.5 border-t border-slate-200/60">
+                                <div>
+                                  <span className="text-slate-400 font-semibold">Faculty ID: </span>
+                                  <strong className="font-mono text-slate-800">{c.reporter?.staff_details?.faculty_id || c.reporter?.identifier}</strong>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-semibold">Desig: </span>
+                                  <span className="text-slate-700">{c.reporter?.staff_details?.designation || 'Faculty Member'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-semibold">Dept: </span>
+                                  <span className="text-slate-700">{c.reporter?.staff_details?.department || 'Computer Science'}</span>
+                                  {c.reporter?.staff_details?.cabin_number && (
+                                    <span className="text-slate-600 ml-1">• Cabin {c.reporter?.staff_details?.cabin_number}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Contact Details */}
+                            <div className="text-[10px] text-slate-400 pt-0.5 flex flex-wrap gap-2">
+                              {c.reporter?.email && (
+                                <span>✉️ {c.reporter.email}</span>
+                              )}
+                              {c.reporter?.phone && (
+                                <span>📞 {c.reporter.phone}</span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-5 py-3.5 align-top">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold border ${
+                            st === 'RESOLVED'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : st === 'IN_PROGRESS'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : st === 'REJECTED'
+                              ? 'bg-slate-100 text-slate-600 border-slate-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              st === 'RESOLVED' ? 'bg-emerald-500' : st === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-amber-500'
+                            }`} />
+                            {st === 'IN_PROGRESS' ? 'In Progress' : st.replace('_', ' ')}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-5 py-3.5 align-top text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenInspect(c)}
+                            className="rounded-lg bg-blue-600 px-3 py-1.5 font-bold text-white hover:bg-blue-700 shadow-2xs text-[11px] whitespace-nowrap transition"
+                          >
+                            Inspect & Resolve
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
-            <span>Showing {filteredRequests.length} of 1,248 campus records</span>
-            <div className="flex items-center gap-1">
-              <button disabled className="rounded-lg border border-slate-200 px-3 py-1 font-semibold disabled:opacity-40">
-                Previous
-              </button>
-              <button onClick={() => showToast('Next page loaded.')} className="rounded-lg border border-slate-200 px-3 py-1 font-semibold hover:bg-slate-50 text-slate-700">
-                Next
-              </button>
+            <span>Showing {displayedComplaints.length} of {complaintsList.length} verified submissions</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-500">
+                Live Postgres & SQLite synchronized
+              </span>
             </div>
           </div>
         </section>
@@ -784,6 +1022,200 @@ export default function CampusAdminControlCenter() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADMIN COMPLAINT INSPECT & RESOLVE ================= */}
+      {selectedComplaint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 space-y-5 animate-scale-up my-auto max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Complaint Ticket #{selectedComplaint.ticket_number}
+                  </h3>
+                  <span className="text-[11px] text-slate-400">
+                    Lodged {selectedComplaint.created_at ? new Date(selectedComplaint.created_at).toLocaleString() : 'Recently'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedComplaint(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Submitter Full Relative Profile Card */}
+            <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/70 to-indigo-50/50 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">
+                  Verified Submitter Credentials
+                </span>
+                <span className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                  (selectedComplaint.reporter?.role || '').toUpperCase() === 'STAFF'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-blue-600 text-white'
+                }`}>
+                  {selectedComplaint.reporter?.role || 'STUDENT'}
+                </span>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white border border-blue-200 text-blue-700 font-extrabold text-sm shadow-xs">
+                  {selectedComplaint.reporter?.name?.slice(0, 2).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 space-y-0.5">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {selectedComplaint.reporter?.name || 'Campus Member'}
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                    <span>Identifier: <strong className="font-mono text-slate-800">{selectedComplaint.reporter?.identifier}</strong></span>
+                    {selectedComplaint.reporter?.email && (
+                      <span className="text-slate-500">✉️ {selectedComplaint.reporter.email}</span>
+                    )}
+                    {selectedComplaint.reporter?.phone && (
+                      <span className="text-slate-500">📞 {selectedComplaint.reporter.phone}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Details Grid */}
+              {selectedComplaint.reporter?.student_details && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-blue-200/60 text-xs">
+                  <div className="rounded-xl bg-white/80 p-2 border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Register No</span>
+                    <strong className="font-mono text-slate-900">{selectedComplaint.reporter.student_details.register_number || 'N/A'}</strong>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Roll No</span>
+                    <strong className="font-mono text-slate-900">{selectedComplaint.reporter.student_details.roll_number || 'N/A'}</strong>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Department</span>
+                    <span className="font-medium text-slate-900 truncate block">{selectedComplaint.reporter.student_details.department || 'N/A'}</span>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Section</span>
+                    <span className="font-bold text-slate-900">{selectedComplaint.reporter.student_details.section || 'A'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Staff Details Grid */}
+              {selectedComplaint.reporter?.staff_details && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-purple-200/60 text-xs">
+                  <div className="rounded-xl bg-white/80 p-2 border border-purple-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Faculty ID</span>
+                    <strong className="font-mono text-slate-900">{selectedComplaint.reporter.staff_details.faculty_id || 'N/A'}</strong>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-purple-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Designation</span>
+                    <span className="font-semibold text-slate-900 truncate block">{selectedComplaint.reporter.staff_details.designation || 'Faculty'}</span>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-purple-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Department</span>
+                    <span className="font-medium text-slate-900 truncate block">{selectedComplaint.reporter.staff_details.department || 'N/A'}</span>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-2 border border-purple-100">
+                    <span className="text-[10px] text-slate-400 block font-bold">Cabin</span>
+                    <span className="font-bold text-slate-900">{selectedComplaint.reporter.staff_details.cabin_number || 'N/A'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Complaint Info */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                  {selectedComplaint.category_name}
+                </span>
+                <span className="font-semibold text-slate-600">
+                  📍 {selectedComplaint.room_identifier || selectedComplaint.location_name || 'Campus Premises'}
+                </span>
+              </div>
+              <h4 className="text-sm font-black text-slate-900 pt-1">
+                {selectedComplaint.title}
+              </h4>
+              <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                {selectedComplaint.description}
+              </p>
+            </div>
+
+            {/* Status Update & Resolution Remarks */}
+            <div className="space-y-3 pt-1 border-t border-slate-100">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  Update Resolution Status
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { id: 'OPEN', label: 'Open', color: 'bg-amber-500 text-white' },
+                    { id: 'IN_PROGRESS', label: 'In Progress', color: 'bg-blue-600 text-white' },
+                    { id: 'RESOLVED', label: 'Resolved', color: 'bg-emerald-600 text-white' },
+                    { id: 'REJECTED', label: 'Dismissed', color: 'bg-slate-600 text-white' },
+                  ].map((s) => {
+                    const isCur = resolutionStatus === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setResolutionStatus(s.id)}
+                        className={`rounded-xl py-2 text-xs font-bold transition border ${
+                          isCur
+                            ? `${s.color} border-transparent shadow-xs`
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Admin Resolution Remarks / Custody Notes
+                </label>
+                <textarea
+                  rows={3}
+                  value={resolutionRemarks}
+                  onChange={(e) => setResolutionRemarks(e.target.value)}
+                  placeholder="e.g. Field technician assigned; component replaced and verified; notification sent to user."
+                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedComplaint(null)}
+                className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={savingStatus}
+                onClick={handleSaveResolution}
+                className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
+              >
+                {savingStatus ? 'Saving Updates...' : 'Save Status & Remarks'}
+              </button>
+            </div>
           </div>
         </div>
       )}

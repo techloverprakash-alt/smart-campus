@@ -7,7 +7,105 @@ import {
 } from 'lucide-react';
 import { getMatches, verifyMatchChallenge } from '../../../services/api/lostAndFound';
 
-const INITIAL_CANDIDATES = [];
+const INITIAL_CANDIDATES = [
+  {
+    id: 1,
+    confidence: 93,
+    confidenceTier: 'high',
+    confidenceColor: 'emerald',
+    strokeDash: '93, 100',
+    criteria: [
+      { label: 'Cross-Modal Match', passed: true },
+      { label: 'Visual Embedding Alignment', passed: true },
+      { label: 'Location Proximity (Library Fl 2)', passed: true },
+      { label: 'Category & Brand Concordance', passed: true }
+    ],
+    lost: {
+      reportId: '1',
+      date: '28 Oct 2026',
+      reporter: 'Prakash S',
+      studentId: 'ST-714022104045',
+      dept: 'AI & DS (III Year)',
+      category: 'Electronics',
+      title: 'Black Casio FX-991EX Scientific Calculator',
+      description: 'Matte black casing with silver accent keys. Has a small octocat sticker on battery flap and student roll #714022104045 lightly inscribed.',
+      location: 'Central Digital Library (Floor 2)',
+      image: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80',
+      imageLabel: 'Self-reported item Reference'
+    },
+    found: {
+      reportId: '1',
+      date: '28 Oct 2026',
+      finder: 'Officer R. Raman',
+      finderRole: 'Security Custody',
+      intakeType: 'Logged Deposit',
+      title: 'Black Casio Scientific Calculator',
+      description: 'Discovered on 2nd-floor study cubicle desk. Matte black with adhesive sticker residue on rear panel.',
+      storage: 'Admin Ground Floor Custody Desk',
+      storageStatus: 'SECURED',
+      tag: '#INV-LF-2026-088',
+      image: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80',
+      imageLabel: 'Security Vault Intake Scan',
+      scansCount: 1
+    },
+    doubleBlind: {
+      question: 'Confirm unique identifying marks, stickers, or inscriptions on the calculator casing.',
+      ownerClaim: 'Small Octocat sticker on battery flap, and registration number 714022104045 lightly inscribed on the lower rear panel.',
+      officerVerification: 'Desk custody verified: Octocat sticker & inscribed register number match student physical ID card.',
+      concordanceScore: 93,
+      status: 'Verified Concordance'
+    },
+    status: 'Ready for Handover'
+  },
+  {
+    id: 2,
+    confidence: 90,
+    confidenceTier: 'high',
+    confidenceColor: 'emerald',
+    strokeDash: '90, 100',
+    criteria: [
+      { label: 'Text Semantic Match', passed: true },
+      { label: 'Location Exact Match (Lab 302)', passed: true },
+      { rule: 'Brand & Capacity Match (SanDisk 128GB)', label: 'Brand & Capacity Match', passed: true }
+    ],
+    lost: {
+      reportId: '3',
+      date: 'Today, 09:15 AM',
+      reporter: 'Prof. M. Selvam',
+      studentId: 'FAC-AIDS-018',
+      dept: 'AI & DS Faculty',
+      category: 'Electronics',
+      title: 'SanDisk Extreme 128GB USB Type-C Flash Drive',
+      description: 'Metallic silver dual drive with blue faculty keychain tag labeled \'AIDS-DL-NOTES\'. Contains lecture slides and lab manual files.',
+      location: 'Software Systems Lab 302',
+      image: 'https://images.unsplash.com/photo-1624823183493-24e548238f29?auto=format&fit=crop&w=600&q=80',
+      imageLabel: 'Faculty Asset Photo'
+    },
+    found: {
+      reportId: '2',
+      date: 'Today, 10:00 AM',
+      finder: 'Gnana Prakash (AV Tech)',
+      finderRole: 'Facility Field Support',
+      intakeType: 'Logged Deposit',
+      title: 'Silver SanDisk Dual USB Flash Drive',
+      description: 'Found plugged into instructor console podium at Lab 302. Attached to blue acrylic tag.',
+      storage: 'Science Quad Security Desk (Block B)',
+      storageStatus: 'SECURED',
+      tag: '#INV-LF-2026-092',
+      image: 'https://images.unsplash.com/photo-1624823183493-24e548238f29?auto=format&fit=crop&w=600&q=80',
+      imageLabel: 'Intake Scan',
+      scansCount: 1
+    },
+    doubleBlind: {
+      question: 'Confirm specific files or tag markings on the USB drive.',
+      ownerClaim: 'Blue keychain tag labeled AIDS-DL-NOTES containing deep learning lecture slides.',
+      officerVerification: 'Physical check confirms blue tag labeled AIDS-DL-NOTES.',
+      concordanceScore: 91,
+      status: 'Concordance Pending'
+    },
+    status: 'Pending Verification'
+  }
+];
 
 export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatchItem, onClearSelectedItem }) {
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
@@ -94,7 +192,7 @@ export default function MatchSuggestionsView({ onBack, onViewBoard, selectedMatc
             status: m.status === 'VERIFIED' ? 'Ready for Handover' : 'Pending Verification',
           };
         });
-        if (isMounted) setCandidates(formatted);
+        if (isMounted) setCandidates(formatted.length > 0 ? formatted : INITIAL_CANDIDATES);
       } catch (err) {
         console.error('Failed to load candidate matches:', err);
       }

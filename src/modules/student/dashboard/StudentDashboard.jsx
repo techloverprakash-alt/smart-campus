@@ -3,6 +3,7 @@ import { getStudentAttendanceSummary } from '../../../services/api/attendance';
 import { getAnnouncements } from '../../../services/api/announcements';
 import { getLostReports } from '../../../services/api/lostAndFound';
 import { useAuth } from '../../auth/context/AuthContext';
+import RaiseComplaintModal from '../../complaints/components/RaiseComplaintModal';
 import {
   SafeAreaView,
   View,
@@ -38,6 +39,12 @@ const services = [
     title: "Pay Fees",
     description: "Fee payments, online receipts, and scholarship tracking",
     logo: QFIX_LOGO,
+  },
+  {
+    key: "raise-complaint",
+    title: "Raise Complaint",
+    description: "Personal, hostel, academic & facility grievances",
+    icon: "report-problem",
   },
   {
     key: "services-portal",
@@ -534,6 +541,7 @@ function BottomNavigation({ navigation }) {
 export default function StudentDashboard({ navigation }) {
   const { user, profile } = useAuth();
   const [activeModal, setActiveModal] = useState(null);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [liveCirculars, setLiveCirculars] = useState([]);
   const [recentLostItems, setRecentLostItems] = useState([]);
@@ -595,6 +603,8 @@ export default function StudentDashboard({ navigation }) {
       openSCE();
     } else if (key === "pay-fees") {
       openQFix();
+    } else if (key === "raise-complaint") {
+      setShowComplaintModal(true);
     } else if (key === "services-portal") {
       navigation?.navigate("StudentFacultyPortal", { role: 'STUDENT', from: 'student' });
     } else if (key === "timetable") {
@@ -630,6 +640,34 @@ export default function StudentDashboard({ navigation }) {
             onPress={() => navigation?.navigate("StudentAttendanceDetail")}
             summary={attendanceSummary}
           />
+
+          {/* Personal Grievances & Complaints Banner */}
+          <View style={styles.complaintBanner}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+              <View style={styles.complaintIconWrap}>
+                <MaterialIcons name="report-problem" size={22} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.complaintBannerTitle}>Personal Grievances & Complaints</Text>
+                  <View style={styles.complaintBadge}>
+                    <Text style={styles.complaintBadgeText}>CONFIDENTIAL</Text>
+                  </View>
+                </View>
+                <Text style={styles.complaintBannerSub}>
+                  Lodge academic, hostel room, or personal grievances directly with Campus Administration.
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.complaintActionBtn}
+              onPress={() => setShowComplaintModal(true)}
+              activeOpacity={0.85}
+            >
+              <MaterialIcons name="add-comment" size={15} color="#ffffff" />
+              <Text style={styles.complaintActionText}>Raise Complaint</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Campus Lost Belongings Bulletin (Broadcast to all students) */}
           <CampusLostAlerts items={recentLostItems} navigation={navigation} />
@@ -901,6 +939,12 @@ NEXUS is the next-generation Academic Governance & Student Campus Hub for the In
           </View>
         </View>
       </Modal>
+
+      {/* Raise Personal Complaint Modal */}
+      <RaiseComplaintModal
+        isOpen={showComplaintModal}
+        onClose={() => setShowComplaintModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -1665,6 +1709,77 @@ const styles = StyleSheet.create({
   creditsText: {
     fontSize: 12,
     color: "#191b23",
+  },
+
+  complaintBanner: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  complaintIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#2563eb",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  complaintBannerTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  complaintBadge: {
+    backgroundColor: "#eff6ff",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  complaintBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#1d4ed8",
+    letterSpacing: 0.5,
+  },
+  complaintBannerSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  complaintActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+    shadowColor: "#2563eb",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  complaintActionText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+    whiteSpace: "nowrap",
   },
 
   lostAlertSection: {

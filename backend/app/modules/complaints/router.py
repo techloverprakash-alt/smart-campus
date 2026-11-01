@@ -1,8 +1,8 @@
 import csv
 import io
 import logging
-from typing import Any, Dict, List
-from fastapi import APIRouter, Depends, Response
+from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
@@ -10,16 +10,21 @@ from app.access.permissions import require_role
 from app.database import get_db
 from app.modules.auth.models import User
 from app.modules.complaints.schemas import (
+    ComplaintCreate,
+    ComplaintOut,
+    ComplaintStatusUpdate,
     ControlCenterSummaryResponse,
     EmergencyBroadcastCreate,
     EmergencyBroadcastOut,
     IncidentTicketOut,
+    IssueCategoryOut,
 )
-from app.modules.complaints.service import ControlCenterService
+from app.modules.complaints.service import ComplaintService, ControlCenterService
 
 logger = logging.getLogger("smart_campus.control_center_router")
 
 control_center_router = APIRouter(tags=["Campus Administrator Control Center"])
+complaints_router = APIRouter(tags=["Complaints & Grievances"])
 
 
 @control_center_router.get(
@@ -115,4 +120,88 @@ def export_control_center_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=nexus-campus-report.csv"},
     )
+
+
+# =============================================================================
+# Complaints & Personal Grievance API Endpoints
+# =============================================================================
+
+@complaints_router.get("/categories", summary="List complaint & issue categories")
+def get_complaint_categories(
+    current_user: User = Depends(require_role(["STUDENT", "STAFF", "ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = ComplaintService(db)
+    categories = service.list_categories()
+    return {"data": [c.model_dump() for c in categories]}
+
+
+@complaints_router.get("", summary="List complaints (scoped to user or all for admin)")
+def list_complaints(
+    role: Optional[str] = Query(None, description="Filter by reporter role: STUDENT, STAFF"),
+    status: Optional[str] = Query(None, description="Filter by status: OPEN, IN_PROGRESS, RESOLVED, REJECTED, ALL"),
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
+    search: Optional[str] = Query(None, description="Search keyword in ticket, description, or submitter"),
+    current_user: User = Depends(require_role(["STUDENT", "STAFF", "ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = ComplaintService(db)
+    items = service.list_complaints(
+        current_user=current_user,
+        role=role,
+        status=status,
+        category_id=category_id,
+        search=search,
+    )
+    d_list = [c.model_dump() for c in items]
+    return {"data": d_list, "total": len(d_list)}
+
+
+@complaints_router.post("", status_code=status.HTTP_201_CREATED, summary="Submit a new complaint or grievance")
+def create_complaint(
+    payload: ComplaintCreate,
+    current_user: User = Depends(require_role(["STUDENT", "STAFF", "ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = ComplaintService(db)
+    complaint = service.create_complaint(current_user=current_user, data=payload)
+    return {"data": complaint.model_dump(), "message": "Complaint submitted successfully."}
+
+
+@complaints_router.get("/{complaint_id}", summary="Get complaint details by ID")
+def get_complaint_detail(
+    complaint_id: int,
+    current_user: User = Depends(require_role(["STUDENT", "STAFF", "ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = ComplaintService(db)
+    complaint = service.get_complaint(complaint_id=complaint_id, current_user=current_user)
+    if not complaint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint ticket not found or access denied.",
+        )
+    return {"data": complaint.model_dump()}
+
+
+@complaints_router.patch("/{complaint_id}", summary="Update complaint status & admin resolution remarks")
+def update_complaint_status(
+    complaint_id: int,
+    payload: ComplaintStatusUpdate,
+    current_user: User = Depends(require_role(["ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    service = ComplaintService(db)
+    updated = service.update_complaint_status(
+        complaint_id=complaint_id,
+        current_user=current_user,
+        data=payload,
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint ticket not found.",
+        )
+    return {"data": updated.model_dump(), "message": "Complaint status updated successfully."}
+
 

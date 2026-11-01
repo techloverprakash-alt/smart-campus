@@ -8,6 +8,7 @@ import BottomNavBar from '../../../components/common/BottomNavBar';
 import { getTodaySchedule } from '../../../services/api/timetable';
 import { getAttendanceHistory } from '../../../services/api/attendance';
 import { useAuth } from '../../auth/context/AuthContext';
+import RaiseComplaintModal from '../../complaints/components/RaiseComplaintModal';
 
 const MOCK_CLASSES = [
   { id: null, start_time: '10:00', subject_name: 'CS-101: Data Structures', section_name: 'B.Tech Sem 3', room_name: 'Room 402', attendance_marked: false },
@@ -25,6 +26,7 @@ const StaffDashboard = ({ navigation }) => {
   const [schedule, setSchedule] = useState([]);
   const [loadingSchedule, setLoadingSchedule] = useState(true);
   const [historyList, setHistoryList] = useState(MOCK_HISTORY);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
 
   // Load today's timetable and attendance history from backend
   useEffect(() => {
@@ -139,6 +141,54 @@ const StaffDashboard = ({ navigation }) => {
             <MaterialIcons name="arrow-forward" size={18} color="#2563eb" />
           </TouchableOpacity>
 
+          {/* Faculty Workplace & Maintenance Complaint Action */}
+          <View
+            style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: 12,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#4f46e5', alignItems: 'center', justifyContent: 'center' }}>
+                <MaterialIcons name="report-problem" size={22} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1e1b4b' }}>Faculty Grievance & Maintenance</Text>
+                  <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#6d28d9' }}>STAFF DESK</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>
+                  Log cabin facilities, AV/lab equipment, or departmental issues directly to Admin
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#4f46e5',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              activeOpacity={0.85}
+              onPress={() => setShowComplaintModal(true)}
+            >
+              <MaterialIcons name="add-comment" size={14} color="#ffffff" />
+              <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>Raise Complaint</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Upcoming Classes */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionCardHeader}>
@@ -224,6 +274,11 @@ const StaffDashboard = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      <RaiseComplaintModal
+        isOpen={showComplaintModal}
+        onClose={() => setShowComplaintModal(false)}
+      />
 
       <BottomNavBar
         activeItem="home"

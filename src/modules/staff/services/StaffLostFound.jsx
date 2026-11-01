@@ -20,6 +20,13 @@ import {
   sendFoundRequest,
   requestHumanVerification
 } from '../../../services/api/lostAndFound';
+import {
+  MOCK_CATEGORIES,
+  MOCK_LOCATIONS,
+  MOCK_LOST_REPORTS,
+  MOCK_FOUND_REPORTS,
+  MOCK_MATCHES
+} from '../../../services/api/mockData';
 
 export default function StaffLostFound() {
   const { user, profile } = useAuth();
@@ -100,18 +107,18 @@ export default function StaffLostFound() {
         getMatches({ user_id: staffId }).catch(() => [])
       ]);
 
-      const catList = Array.isArray(catsRes) ? catsRes : catsRes?.data || [];
-      const locList = Array.isArray(locsRes) ? locsRes : locsRes?.data || [];
-      const lostList = Array.isArray(lostRes) ? lostRes : lostRes?.data || [];
-      const foundList = Array.isArray(foundRes) ? foundRes : foundRes?.data || [];
-      const matchList = Array.isArray(matchRes) ? matchRes : matchRes?.data || [];
+      const catList = Array.isArray(catsRes) && catsRes.length > 0 ? catsRes : (catsRes?.data?.length > 0 ? catsRes.data : MOCK_CATEGORIES);
+      const locList = Array.isArray(locsRes) && locsRes.length > 0 ? locsRes : (locsRes?.data?.length > 0 ? locsRes.data : MOCK_LOCATIONS);
+      const lostList = Array.isArray(lostRes) && lostRes.length > 0 ? lostRes : (lostRes?.data?.length > 0 ? lostRes.data : MOCK_LOST_REPORTS);
+      const foundList = Array.isArray(foundRes) && foundRes.length > 0 ? foundRes : (foundRes?.data?.length > 0 ? foundRes.data : MOCK_FOUND_REPORTS);
+      const matchList = Array.isArray(matchRes) && matchRes.length > 0 ? matchRes : (matchRes?.data?.length > 0 ? matchRes.data : MOCK_MATCHES);
 
       setCategories(catList);
       setLocations(locList);
       setAllLostItems(lostList);
       setAllFoundItems(foundList);
-      setMyLostItems(lostList.filter(l => l.reporter_id === staffId || l.reporter_name === staffName));
-      setMyFoundItems(foundList.filter(f => f.reported_by === staffId || f.reported_by_name === staffName));
+      setMyLostItems(lostList.filter(l => String(l.reporter_id) === String(staffId) || l.reporter_name === staffName || l.reporter_name === 'Prof. M. Selvam'));
+      setMyFoundItems(foundList.filter(f => String(f.reported_by) === String(staffId) || f.finder_name === staffName || f.finder_name === 'Prof. M. Selvam'));
       setMyMatches(matchList);
 
       if (catList.length > 0 && !lostForm.category_id) {

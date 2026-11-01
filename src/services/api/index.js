@@ -7,3 +7,4 @@ export * from './profiles';
 export * from './announcements';
 export * from './reports';
 export * from './lostAndFound';
+export * from './complaints';
