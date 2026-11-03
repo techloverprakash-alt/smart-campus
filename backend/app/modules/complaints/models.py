@@ -48,6 +48,7 @@ class Complaint(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     ticket_number = Column(String(64), unique=True, nullable=False, index=True)
+    title = Column(String(255), nullable=True)
     reported_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     location_id = Column(Integer, ForeignKey("campus_locations.id", ondelete="SET NULL"), nullable=True, index=True)
     category_id = Column(Integer, ForeignKey("issue_categories.id", ondelete="RESTRICT"), nullable=False, index=True)
@@ -55,6 +56,7 @@ class Complaint(Base):
     description = Column(Text, nullable=False)
     priority = Column(String(32), default="MEDIUM", nullable=False, index=True)
     status = Column(String(32), default="OPEN", nullable=False, index=True)
+    admin_remarks = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     resolved_at = Column(DateTime, nullable=True)
 

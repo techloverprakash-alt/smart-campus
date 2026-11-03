@@ -23,6 +23,15 @@ import {
   getVerifications,
   reviewVerification
 } from '../../../services/api/lostAndFound';
+import {
+  MOCK_MATCHES,
+  MOCK_FOUND_REPORTS,
+  MOCK_LOST_REPORTS,
+  MOCK_CLAIMS,
+  MOCK_LOCATIONS,
+  MOCK_CATEGORIES,
+  MOCK_VERIFICATIONS
+} from '../../../services/api/mockData';
 
 export default function AdminLostFoundManagement() {
   const { user, profile } = useAuth();
@@ -89,13 +98,13 @@ export default function AdminLostFoundManagement() {
         getVerifications().catch(() => [])
       ]);
 
-      const matchList = Array.isArray(matchesRes) ? matchesRes : matchesRes?.data || [];
-      const foundList = Array.isArray(foundRes) ? foundRes : foundRes?.data || [];
-      const lostList = Array.isArray(lostRes) ? lostRes : lostRes?.data || [];
-      const claimsList = Array.isArray(claimsRes) ? claimsRes : claimsRes?.data || [];
-      const locList = Array.isArray(locsRes) ? locsRes : locsRes?.data || [];
-      const catList = Array.isArray(catsRes) ? catsRes : catsRes?.data || [];
-      const verifList = Array.isArray(verifRes) ? verifRes : verifRes?.data || [];
+      const matchList = Array.isArray(matchesRes) && matchesRes.length > 0 ? matchesRes : (matchesRes?.data?.length > 0 ? matchesRes.data : MOCK_MATCHES);
+      const foundList = Array.isArray(foundRes) && foundRes.length > 0 ? foundRes : (foundRes?.data?.length > 0 ? foundRes.data : MOCK_FOUND_REPORTS);
+      const lostList = Array.isArray(lostRes) && lostRes.length > 0 ? lostRes : (lostRes?.data?.length > 0 ? lostRes.data : MOCK_LOST_REPORTS);
+      const claimsList = Array.isArray(claimsRes) && claimsRes.length > 0 ? claimsRes : (claimsRes?.data?.length > 0 ? claimsRes.data : MOCK_CLAIMS);
+      const locList = Array.isArray(locsRes) && locsRes.length > 0 ? locsRes : (locsRes?.data?.length > 0 ? locsRes.data : MOCK_LOCATIONS);
+      const catList = Array.isArray(catsRes) && catsRes.length > 0 ? catsRes : (catsRes?.data?.length > 0 ? catsRes.data : MOCK_CATEGORIES);
+      const verifList = Array.isArray(verifRes) && verifRes.length > 0 ? verifRes : (verifRes?.data?.length > 0 ? verifRes.data : MOCK_VERIFICATIONS);
 
       setMatches(matchList);
       setFoundItems(foundList);

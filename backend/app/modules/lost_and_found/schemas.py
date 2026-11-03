@@ -72,6 +72,8 @@ class LostReportCreate(BaseModel):
     reward_text: Optional[str] = None
     image_url: Optional[str] = None
     media_urls: Optional[List[str]] = None
+    media_id: Optional[Union[int, str]] = None
+    media_ids: Optional[List[Union[int, str]]] = None
 
 
 class LostReportUpdate(BaseModel):
@@ -116,6 +118,8 @@ class FoundReportCreate(BaseModel):
     storage_status: Optional[str] = "IN_CUSTODY"
     image_url: Optional[str] = None
     media_urls: Optional[List[str]] = None
+    media_id: Optional[Union[int, str]] = None
+    media_ids: Optional[List[Union[int, str]]] = None
 
 
 class FoundReportUpdate(BaseModel):
@@ -155,6 +159,7 @@ class FoundRequestCreate(BaseModel):
     found_location_name: Optional[str] = None
     custody_desk: Optional[str] = "Admin Ground Floor Custody Desk"
     image_url: Optional[str] = None
+    media_id: Optional[Union[int, str]] = None
     finder_notes: Optional[str] = None
 
 

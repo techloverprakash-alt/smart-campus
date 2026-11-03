@@ -23,6 +23,14 @@ import {
   searchSimilarFoundItems,
   getMyNotifications
 } from '../../../services/api/lostAndFound';
+import {
+  MOCK_CATEGORIES,
+  MOCK_LOCATIONS,
+  MOCK_LOST_REPORTS,
+  MOCK_FOUND_REPORTS,
+  MOCK_MATCHES,
+  MOCK_NOTIFICATIONS
+} from '../../../services/api/mockData';
 
 export default function StudentLostFound() {
   const { user, profile } = useAuth();
@@ -67,6 +75,7 @@ export default function StudentLostFound() {
     custody_desk: 'Admin Ground Floor Custody Desk',
     finder_notes: '',
     image_url: '',
+    media_id: null,
   });
 
   // Human Verification Request Form State (Owner confirming and moving to human verification)
@@ -84,6 +93,7 @@ export default function StudentLostFound() {
     lost_at: new Date().toISOString().slice(0, 16),
     description: '',
     image_url: '',
+    media_id: null,
   });
 
   // Found Form State
@@ -95,7 +105,41 @@ export default function StudentLostFound() {
     found_at: new Date().toISOString().slice(0, 16),
     description: '',
     image_url: '',
+    media_id: null,
   });
+
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handleImageUpload = async (e, formType) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingPhoto(true);
+      notify('Uploading photo to Supabase S3 storage bucket...', 'info');
+      const res = await uploadMediaAsset(file, String(studentId));
+      const fileUrl = res?.data?.file_url;
+      const mediaId = res?.data?.media_id;
+
+      if (!fileUrl) throw new Error('No file URL returned from upload');
+
+      if (formType === 'lost') {
+        setLostForm((prev) => ({ ...prev, image_url: fileUrl, media_id: mediaId }));
+      } else if (formType === 'found') {
+        setFoundForm((prev) => ({ ...prev, image_url: fileUrl, media_id: mediaId }));
+      } else if (formType === 'request') {
+        setFoundRequestForm((prev) => ({ ...prev, image_url: fileUrl, media_id: mediaId }));
+      }
+
+      notify('Photo uploaded to Supabase S3 successfully!', 'success');
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      notify('Failed to upload image. Please try again.', 'error');
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
+  };
 
   const notify = (text, type = 'info') => {
     setFeedback({ text, type });
@@ -115,12 +159,12 @@ export default function StudentLostFound() {
         getMyNotifications().catch(() => [])
       ]);
 
-      const catList = Array.isArray(catsRes) ? catsRes : catsRes?.data || [];
-      const locList = Array.isArray(locsRes) ? locsRes : locsRes?.data || [];
-      const lostList = Array.isArray(lostRes) ? lostRes : lostRes?.data || [];
-      const foundList = Array.isArray(foundRes) ? foundRes : foundRes?.data || [];
-      const matchList = Array.isArray(matchRes) ? matchRes : matchRes?.data || [];
-      const notifList = Array.isArray(notifsRes) ? notifsRes : notifsRes?.data || [];
+      const catList = Array.isArray(catsRes) && catsRes.length > 0 ? catsRes : (catsRes?.data?.length > 0 ? catsRes.data : MOCK_CATEGORIES);
+      const locList = Array.isArray(locsRes) && locsRes.length > 0 ? locsRes : (locsRes?.data?.length > 0 ? locsRes.data : MOCK_LOCATIONS);
+      const lostList = Array.isArray(lostRes) && lostRes.length > 0 ? lostRes : (lostRes?.data?.length > 0 ? lostRes.data : MOCK_LOST_REPORTS);
+      const foundList = Array.isArray(foundRes) && foundRes.length > 0 ? foundRes : (foundRes?.data?.length > 0 ? foundRes.data : MOCK_FOUND_REPORTS);
+      const matchList = Array.isArray(matchRes) && matchRes.length > 0 ? matchRes : (matchRes?.data?.length > 0 ? matchRes.data : MOCK_MATCHES);
+      const notifList = Array.isArray(notifsRes) && notifsRes.length > 0 ? notifsRes : (notifsRes?.data?.length > 0 ? notifsRes.data : MOCK_NOTIFICATIONS);
 
       setCategories(catList);
       setLocations(locList);
@@ -227,7 +271,10 @@ export default function StudentLostFound() {
           ? lostForm.description.trim()
           : `Reported missing item on campus: ${lostForm.title.trim()}`,
         lost_at: lostForm.lost_at ? new Date(lostForm.lost_at).toISOString() : new Date().toISOString(),
-        media_urls: lostForm.image_url ? [lostForm.image_url] : []
+        image_url: lostForm.image_url || null,
+        media_urls: lostForm.image_url ? [lostForm.image_url] : [],
+        media_id: lostForm.media_id || null,
+        media_ids: lostForm.media_id ? [lostForm.media_id] : []
       };
 
       await createLostReport(payload);
@@ -241,6 +288,7 @@ export default function StudentLostFound() {
         lost_at: new Date().toISOString().slice(0, 16),
         description: '',
         image_url: '',
+        media_id: null,
       });
       await loadData();
     } catch (err) {
@@ -267,7 +315,10 @@ export default function StudentLostFound() {
         custody_desk: foundForm.custody_desk || 'Admin Ground Floor Custody Desk',
         description: foundForm.description,
         found_at: foundForm.found_at ? new Date(foundForm.found_at).toISOString() : new Date().toISOString(),
-        media_urls: foundForm.image_url ? [foundForm.image_url] : []
+        image_url: foundForm.image_url || null,
+        media_urls: foundForm.image_url ? [foundForm.image_url] : [],
+        media_id: foundForm.media_id || null,
+        media_ids: foundForm.media_id ? [foundForm.media_id] : []
       };
 
       await createFoundReport(payload);
@@ -281,6 +332,7 @@ export default function StudentLostFound() {
         found_at: new Date().toISOString().slice(0, 16),
         description: '',
         image_url: '',
+        media_id: null,
       });
       await loadData();
     } catch (err) {
@@ -307,6 +359,7 @@ export default function StudentLostFound() {
         custody_desk: foundRequestForm.custody_desk || 'Admin Ground Floor Custody Desk',
         finder_notes: foundRequestForm.finder_notes || null,
         image_url: foundRequestForm.image_url || null,
+        media_id: foundRequestForm.media_id || null,
       });
 
       notify(`Found request sent to ${showFoundRequestModal.reporter_name || 'the owner'}! They can now move to human verification.`, 'success');
@@ -317,6 +370,7 @@ export default function StudentLostFound() {
         custody_desk: 'Admin Ground Floor Custody Desk',
         finder_notes: '',
         image_url: '',
+        media_id: null,
       });
       await loadData();
     } catch (err) {
@@ -917,27 +971,61 @@ export default function StudentLostFound() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-xs">
-                      <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-                        <p className="font-bold text-slate-700 flex items-center justify-between">
-                          <span>Your Lost Item Description:</span>
-                          <span className="text-[10px] text-slate-400">Report #{m.lost_report_id}</span>
-                        </p>
-                        <p className="mt-1 font-semibold text-slate-900">{m.lost_report?.title}</p>
-                        <p className="mt-1 text-slate-500">{m.lost_report?.description || 'No description'}</p>
+                      {/* Left: Lost Item Info & Photo */}
+                      <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100 flex flex-col justify-between">
+                        <div>
+                          <p className="font-bold text-slate-700 flex items-center justify-between">
+                            <span>Your Lost Item Description:</span>
+                            <span className="text-[10px] text-slate-400">Report #{m.lost_report_id}</span>
+                          </p>
+                          <p className="mt-1 font-semibold text-slate-900">{m.lost_report?.title}</p>
+                          <p className="mt-1 text-slate-500 leading-relaxed">{m.lost_report?.description || 'No description'}</p>
+                        </div>
+                        {m.lost_report?.primary_image_url && (
+                          <div className="mt-3">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Lost Item Photo
+                            </span>
+                            <div className="h-36 w-full overflow-hidden rounded-xl bg-slate-200 border border-slate-200">
+                              <img
+                                src={m.lost_report.primary_image_url}
+                                alt={m.lost_report.title}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="rounded-xl bg-indigo-50/50 p-3.5 border border-indigo-100">
-                        <p className="font-bold text-indigo-900 flex items-center justify-between">
-                          <span>Discovered Intake Record:</span>
-                          <span className="font-mono text-[10px] text-indigo-700 font-extrabold">
-                            Tag: {m.found_report?.inventory_tag}
-                          </span>
-                        </p>
-                        <p className="mt-1 font-semibold text-slate-900">{m.found_report?.title}</p>
-                        <p className="mt-1 text-slate-500">{m.found_report?.description || 'In campus custody'}</p>
-                        <p className="mt-2 text-[11px] font-semibold text-indigo-800">
-                          Intake Custody: {m.found_report?.custody_desk}
-                        </p>
+                      {/* Right: Found Item Info & Photo */}
+                      <div className="rounded-xl bg-indigo-50/50 p-3.5 border border-indigo-100 flex flex-col justify-between">
+                        <div>
+                          <p className="font-bold text-indigo-900 flex items-center justify-between">
+                            <span>Discovered Intake Record:</span>
+                            <span className="font-mono text-[10px] text-indigo-700 font-extrabold">
+                              Tag: {m.found_report?.inventory_tag}
+                            </span>
+                          </p>
+                          <p className="mt-1 font-semibold text-slate-900">{m.found_report?.title}</p>
+                          <p className="mt-1 text-slate-500 leading-relaxed">{m.found_report?.description || 'In campus custody'}</p>
+                          <p className="mt-2 text-[11px] font-semibold text-indigo-800">
+                            Intake Custody: {m.found_report?.custody_desk}
+                          </p>
+                        </div>
+                        {m.found_report?.primary_image_url && (
+                          <div className="mt-3">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
+                              Discovered Intake Photo
+                            </span>
+                            <div className="h-36 w-full overflow-hidden rounded-xl bg-indigo-100 border border-indigo-200">
+                              <img
+                                src={m.found_report.primary_image_url}
+                                alt={m.found_report.title}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1017,13 +1105,39 @@ export default function StudentLostFound() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700">Discovery Photo URL (Optional)</label>
+                <label className="block font-bold text-slate-700 mb-1">Discovery Photo (Optional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors">
+                    <Camera size={14} />
+                    <span>{uploadingPhoto ? 'Uploading to S3...' : 'Upload Discovery Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingPhoto}
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, 'request')}
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400">or paste link below</span>
+                </div>
+                {foundRequestForm.image_url && (
+                  <div className="mt-2.5 relative inline-block h-20 w-20 overflow-hidden rounded-xl border border-emerald-300">
+                    <img src={foundRequestForm.image_url} alt="Discovery Preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFoundRequestForm((prev) => ({ ...prev, image_url: '', media_id: null }))}
+                      className="absolute top-1 right-1 rounded-full bg-slate-900/70 p-1 text-white hover:bg-slate-900"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
                 <input
                   type="url"
-                  placeholder="https://... photo link"
+                  placeholder="https://... photo link (auto-filled on upload)"
                   value={foundRequestForm.image_url}
                   onChange={(e) => setFoundRequestForm({ ...foundRequestForm, image_url: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-emerald-500 focus:outline-hidden"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1216,13 +1330,39 @@ export default function StudentLostFound() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700">Reference Image URL (Optional)</label>
+                <label className="block font-bold text-slate-700 mb-1">Item Photo (Optional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors">
+                    <Camera size={14} />
+                    <span>{uploadingPhoto ? 'Uploading to S3...' : 'Upload Item Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingPhoto}
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, 'lost')}
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400">or paste link below</span>
+                </div>
+                {lostForm.image_url && (
+                  <div className="mt-2.5 relative inline-block h-20 w-20 overflow-hidden rounded-xl border border-blue-300">
+                    <img src={lostForm.image_url} alt="Lost Item Preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setLostForm((prev) => ({ ...prev, image_url: '', media_id: null }))}
+                      className="absolute top-1 right-1 rounded-full bg-slate-900/70 p-1 text-white hover:bg-slate-900"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
                 <input
                   type="url"
-                  placeholder="https://... or photo link"
+                  placeholder="https://... photo link (auto-filled on upload)"
                   value={lostForm.image_url}
                   onChange={(e) => setLostForm({ ...lostForm, image_url: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-blue-500 focus:outline-hidden"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-blue-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1328,13 +1468,39 @@ export default function StudentLostFound() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700">Intake Photo URL (Optional)</label>
+                <label className="block font-bold text-slate-700 mb-1">Intake Photo (Optional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors">
+                    <Camera size={14} />
+                    <span>{uploadingPhoto ? 'Uploading to S3...' : 'Upload Intake Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingPhoto}
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, 'found')}
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400">or paste link below</span>
+                </div>
+                {foundForm.image_url && (
+                  <div className="mt-2.5 relative inline-block h-20 w-20 overflow-hidden rounded-xl border border-emerald-300">
+                    <img src={foundForm.image_url} alt="Found Item Preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFoundForm((prev) => ({ ...prev, image_url: '', media_id: null }))}
+                      className="absolute top-1 right-1 rounded-full bg-slate-900/70 p-1 text-white hover:bg-slate-900"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
                 <input
                   type="url"
-                  placeholder="https://..."
+                  placeholder="https://... photo link (auto-filled on upload)"
                   value={foundForm.image_url}
                   onChange={(e) => setFoundForm({ ...foundForm, image_url: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-emerald-500 focus:outline-hidden"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 font-medium focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 

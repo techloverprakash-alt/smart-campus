@@ -2,11 +2,24 @@ import csv
 import sqlite3
 import os
 from pathlib import Path
-import psycopg
+try:
+    import psycopg2 as psycopg
+except ImportError:
+    import psycopg
 
-PG_URL = "postgresql://postgres:VmJAuSEGo94YbYAi@db.svxpszxdzlmceiahtqmj.supabase.co:5432/postgres"
-SQLITE_PATH = Path("d:/smart-campus/backend/campus_lost_found.db")
-CSV_DIR = Path("d:/smart-campus/backend/db")
+BASE_DIR = Path(__file__).resolve().parent.parent
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    with open(env_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+PG_URL = os.getenv("DATABASE_URL", "postgresql://postgres.svxpszxdzlmceiahtqmj:rxa1vVf2JQbB1zMN@aws-0-ap-south-1.pooler.supabase.com:5432/postgres")
+SQLITE_PATH = BASE_DIR / "campus_lost_found.db"
+CSV_DIR = BASE_DIR / "db"
 
 TABLES = [
     # Phase 1: Foundation
@@ -87,7 +100,11 @@ def migrate():
     sqlite_conn = sqlite3.connect(SQLITE_PATH)
     sqlite_cur = sqlite_conn.cursor()
 
-    pg_conn = psycopg.connect(PG_URL, autocommit=False)
+    try:
+        pg_conn = psycopg.connect(PG_URL)
+        pg_conn.autocommit = False
+    except TypeError:
+        pg_conn = psycopg.connect(PG_URL, autocommit=False)
     pg_cur = pg_conn.cursor()
 
     print("=== Starting Full Data Migration to Supabase PostgreSQL ===")

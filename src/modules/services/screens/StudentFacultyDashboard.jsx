@@ -271,6 +271,8 @@ export default function StudentFacultyDashboard(props) {
   const { navigation, loc } = useRouter();
   const { user, profile, role: authRole } = useAuth();
 
+  const [selectedRoleOverride, setSelectedRoleOverride] = useState(null);
+
   // Resolve role from navigation params, props, or authenticated session
   const rawFrom = props.from || route?.params?.from || loc?.params?.from;
   const rawRole = props.role || route?.params?.role || loc?.params?.role || authRole || user?.role || profile?.role || 'STUDENT';
@@ -280,21 +282,31 @@ export default function StudentFacultyDashboard(props) {
   const isFromStudentOrStaff = rawFrom === 'student' || rawFrom === 'staff';
   const isServices = currentRole === 'SERVICES' || rawFrom === 'services';
 
-  // Admin access is granted ONLY if explicitly coming from admin or having ADMIN role, and not explicitly navigating as student/staff
-  const isAdmin = isFromAdmin && !isFromStudentOrStaff && !isServices;
-  const isStudentOrStaff = !isAdmin && !isServices;
+  const defaultEffectiveRole = isFromAdmin && !isFromStudentOrStaff
+    ? 'ADMIN'
+    : rawFrom === 'staff' || currentRole === 'STAFF'
+    ? 'STAFF'
+    : isServices
+    ? 'SERVICES'
+    : 'STUDENT';
+
+  const effectiveRole = (selectedRoleOverride || defaultEffectiveRole).toUpperCase();
+
+  const isAdmin = effectiveRole === 'ADMIN';
+  const isServicesRole = effectiveRole === 'SERVICES';
+  const isStudentOrStaff = !isAdmin && !isServicesRole;
   const roleDisplay = isAdmin
     ? 'Admin'
-    : isServices
+    : isServicesRole
     ? 'Services'
-    : currentRole === 'STAFF' || rawFrom === 'staff'
+    : effectiveRole === 'STAFF'
     ? 'Faculty'
     : 'Student';
   const role = roleDisplay;
 
   const [activeNav, setActiveNav] = useState(
     (initialTab === 'Campus Admin Control Center' && !isAdmin) ||
-      (isServices && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification')) ||
+      (isServicesRole && (initialTab === 'Lost & Found Claims' || initialTab === 'Match Suggestions & Verification')) ||
       (isStudentOrStaff && initialTab === 'Field Operations & Work Orders')
       ? 'Report Infrastructure Issue' : initialTab
   );
@@ -304,13 +316,13 @@ export default function StudentFacultyDashboard(props) {
     if (!isAdmin && activeNav === 'Campus Admin Control Center') {
       setActiveNav('Report Infrastructure Issue');
     }
-    if (isServices && (activeNav === 'Lost & Found Claims' || activeNav === 'Match Suggestions & Verification')) {
+    if (isServicesRole && (activeNav === 'Lost & Found Claims' || activeNav === 'Match Suggestions & Verification')) {
       setActiveNav('Report Infrastructure Issue');
     }
     if (isStudentOrStaff && activeNav === 'Field Operations & Work Orders') {
       setActiveNav('Report Infrastructure Issue');
     }
-  }, [isAdmin, isServices, isStudentOrStaff, activeNav]);
+  }, [isAdmin, isServicesRole, isStudentOrStaff, activeNav]);
 
   // Filter out Admin Center for students and staff, Lost & Found / Match & AI Triage for services, and Field Operations for student & staff
   const filteredNavLinks = useMemo(() => {
@@ -318,7 +330,7 @@ export default function StudentFacultyDashboard(props) {
       if (link.id === 'Campus Admin Control Center' && !isAdmin) {
         return false;
       }
-      if (isServices && (link.id === 'Lost & Found Claims' || link.id === 'Match Suggestions & Verification')) {
+      if (isServicesRole && (link.id === 'Lost & Found Claims' || link.id === 'Match Suggestions & Verification')) {
         return false;
       }
       if (isStudentOrStaff && link.id === 'Field Operations & Work Orders') {
@@ -326,7 +338,7 @@ export default function StudentFacultyDashboard(props) {
       }
       return true;
     });
-  }, [isAdmin, isServices, isStudentOrStaff]);
+  }, [isAdmin, isServicesRole, isStudentOrStaff]);
 
   const [ticketTab, setTicketTab] = useState('All');
   const [modal, setModal] = useState(null);
@@ -448,13 +460,20 @@ export default function StudentFacultyDashboard(props) {
     else navigation.navigate('StudentDashboard');
   };
 
-  const displayName = profile?.name || profile?.full_name || user?.name || (isServices ? 'Er. Rajesh Kumar' : 'Kamesh S.');
+  const displayName = effectiveRole === 'ADMIN'
+    ? (profile?.name || user?.name || 'Dr. K. Arulmozhi')
+    : effectiveRole === 'STAFF'
+    ? (profile?.name || user?.name || 'Prof. M. Selvam')
+    : isServicesRole
+    ? 'Er. Rajesh Kumar'
+    : (profile?.name || user?.name || 'Prakash S');
+
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase() || 'KS';
+    .toUpperCase() || (isAdmin ? 'KA' : effectiveRole === 'STAFF' ? 'MS' : 'PS');
 
   return (
     <div
@@ -510,6 +529,52 @@ export default function StudentFacultyDashboard(props) {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
                 <span>Campus Desks Online</span>
+              </div>
+
+              {/* Interactive Role Switcher Pill */}
+              <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 border border-slate-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRoleOverride('STUDENT');
+                    setActiveNav('Report Infrastructure Issue');
+                  }}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    effectiveRole === 'STUDENT'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRoleOverride('STAFF');
+                    setActiveNav('Report Infrastructure Issue');
+                  }}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    effectiveRole === 'STAFF'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Faculty
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRoleOverride('ADMIN');
+                    setActiveNav('Campus Admin Control Center');
+                  }}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    effectiveRole === 'ADMIN'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Admin
+                </button>
               </div>
 
               {/* User Avatar */}

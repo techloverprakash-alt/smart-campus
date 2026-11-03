@@ -13,7 +13,113 @@ import {
   sendFoundRequest
 } from '../../../services/api/lostAndFound';
 
-const initialItems = [];
+const initialItems = [
+  {
+    id: 1,
+    title: 'Black Casio FX-991EX Scientific Calculator',
+    category: 'Electronics',
+    zone: 'Library Quad',
+    location: 'Central Digital Library (Floor 2)',
+    age: '28 Oct 2026',
+    description: 'Matte black casing with silver accent keys. Has a small octocat sticker on battery flap and student roll #714022104045 lightly inscribed.',
+    owner: 'Prakash S',
+    status: 'Active Search',
+    tone: 'blue',
+    image: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80',
+    found: false,
+    meta: '93% AI Match'
+  },
+  {
+    id: 2,
+    title: 'Official College ID Card with Blue Lanyard',
+    category: 'Documents & Cards',
+    zone: 'Dining Zone',
+    location: 'Main Canteen & Food Court',
+    age: '27 Oct 2026',
+    description: 'Student ID card for Prakash S, Department of AI & DS, 2022-2026 batch in transparent protective case.',
+    owner: 'Prakash S',
+    status: 'Reported Lost',
+    tone: 'blue',
+    image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80',
+    found: false,
+    meta: 'Inquiry Open'
+  },
+  {
+    id: 3,
+    title: 'SanDisk Extreme 128GB USB Type-C Flash Drive',
+    category: 'Electronics',
+    zone: 'Science Quad (Block B)',
+    location: 'Software Systems Lab 302',
+    age: 'Today',
+    description: 'Metallic silver dual drive with blue faculty keychain tag labeled AIDS-DL-NOTES. Contains lecture slides.',
+    owner: 'Prof. M. Selvam',
+    status: 'Active Search',
+    tone: 'blue',
+    image: 'https://images.unsplash.com/photo-1624823183493-24e548238f29?auto=format&fit=crop&w=600&q=80',
+    found: false,
+    meta: '90% AI Match'
+  },
+  {
+    id: 4,
+    title: 'Black Casio Scientific Calculator (Found)',
+    category: 'Electronics',
+    zone: 'Admin Quad',
+    location: 'Admin Ground Floor Custody Desk',
+    age: '28 Oct 2026',
+    description: 'Discovered on 2nd-floor study cubicle desk. Secured in Custody Vault under Tag #LF-2026-088.',
+    owner: 'Officer R. Raman',
+    status: 'In Custody',
+    tone: 'purple',
+    image: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80',
+    found: true,
+    meta: '#INV-LF-2026-088'
+  },
+  {
+    id: 5,
+    title: 'Silver SanDisk Dual USB Flash Drive (Found)',
+    category: 'Electronics',
+    zone: 'Science Quad (Block B)',
+    location: 'Science Quad Security Desk (Block B)',
+    age: 'Today',
+    description: 'Found on instructor podium in Lab 302. Secured under Deposit Tag #LF-2026-092.',
+    owner: 'Gnana Prakash (AV Tech)',
+    status: 'In Custody',
+    tone: 'purple',
+    image: 'https://images.unsplash.com/photo-1624823183493-24e548238f29?auto=format&fit=crop&w=600&q=80',
+    found: true,
+    meta: '#INV-LF-2026-092'
+  },
+  {
+    id: 6,
+    title: 'Set of 3 Godrej Brass Keys on Red Lanyard',
+    category: 'Keys & Accessories',
+    zone: 'Academic Block A',
+    location: 'Faculty Staff Room Desk 4',
+    age: '28 Oct 2026',
+    description: 'Handed over by student outside LH-302. Three brass keys with red lanyard.',
+    owner: 'Prof. M. Selvam',
+    status: 'In Custody',
+    tone: 'purple',
+    image: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=600&q=80',
+    found: true,
+    meta: '#INV-LF-2026-095'
+  },
+  {
+    id: 7,
+    title: 'Matte Black Hydro Flask Insulated Water Bottle',
+    category: 'Keys & Accessories',
+    zone: 'Sports Zone',
+    location: 'Sports Complex Reception',
+    age: '27 Oct 2026',
+    description: 'Recovered from outdoor sports complex bleachers. Stainless steel insulated bottle.',
+    owner: 'Campus Security',
+    status: 'In Custody',
+    tone: 'purple',
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80',
+    found: true,
+    meta: '#INV-LF-2026-079'
+  }
+];
 
 
 const cx = (...classes) => classes.filter(Boolean).join(' ');
@@ -191,7 +297,8 @@ export default function LostAndFoundBoard({ openReportModal = false, onReportMod
         found: true,
       }));
 
-      setItems([...lostList, ...foundList]);
+      const combined = [...lostList, ...foundList];
+      setItems(combined.length > 0 ? combined : initialItems);
     } catch (err) {
       console.error('Failed to load items:', err);
     }

@@ -32,7 +32,7 @@ export function Shell({ children }) {
     }
   }, [required, isLoading, user, role, loginAs]);
 
-  const isCustomLayout = loc.path === '/' || loc.path.startsWith('/login') || loc.path === '/portal' || loc.path === '/services' || loc.path === '/lost-found';
+  const isCustomLayout = loc.path === '/' || loc.path.startsWith('/login') || loc.path === '/portal' || loc.path.startsWith('/services') || loc.path === '/lost-found';
   const isStudentSection = (route?.role === 'STUDENT' || loc.path.startsWith('/student')) && !isCustomLayout;
   const isStaffSection = (route?.role === 'STAFF' || loc.path.startsWith('/staff')) && !isCustomLayout;
   const isAdminSection = (route?.role === 'ADMIN' || loc.path.startsWith('/admin')) && !isCustomLayout;
